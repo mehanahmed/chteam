@@ -13,8 +13,8 @@
  * terminal (case-closed) unanswered episodes.
  */
 
-import { db } from "@wateaminbox/database";
-import { dayjs } from "@wateaminbox/shared";
+import { db } from "@omniteam/database";
+import { dayjs } from "@omniteam/shared";
 import { NotFoundError } from "../../lib/errors.js";
 import { getCurrentSlaPolicy } from "../sla-policy/policy.service.js";
 import {

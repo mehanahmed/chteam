@@ -16,3 +16,4 @@ export {
 export { NotificationSettings } from "./NotificationSettings";
 export { QuickRepliesManager } from "./QuickRepliesManager";
 export { SlaPolicySettings } from "./SlaPolicySettings";
+export { InboxAppearanceSettings } from "./InboxAppearanceSettings";

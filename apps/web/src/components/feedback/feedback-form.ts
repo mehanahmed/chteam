@@ -15,7 +15,7 @@ export const FEEDBACK_MAX_LENGTH = 5000;
 /** Matches the server's `z.string().email().max(254)` upper bound. */
 export const FEEDBACK_EMAIL_MAX_LENGTH = 254;
 
-export const FEEDBACK_DISMISSED_KEY = "wateaminbox-feedback-dismissed";
+export const FEEDBACK_DISMISSED_KEY = "omniteam-feedback-dismissed";
 
 /** i18n suffix under `feedback.*` for the matching error string. */
 export type FeedbackValidationError =

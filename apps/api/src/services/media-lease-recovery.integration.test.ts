@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { db } from "@wateaminbox/database";
+import { db } from "@omniteam/database";
 import { sql } from "kysely";
 import { MEDIA_DOWNLOAD_LEASE_MS } from "../config/media.config.js";
 import type { DownloadResponseEvent } from "../lib/nats/index.js";

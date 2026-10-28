@@ -10,4 +10,4 @@ export {
   extractPhoneFromJid as extractPhoneFromJID,
   formatPhoneLikeText,
   formatPhoneNumber,
-} from "@wateaminbox/shared";
+} from "@omniteam/shared";

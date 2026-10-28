@@ -1,4 +1,4 @@
-import { db } from "@wateaminbox/database";
+import { db } from "@omniteam/database";
 import { sql } from "kysely";
 import { createLogger } from "../lib/logger.js";
 import { parseWhatsAppEvent } from "../lib/nats/client.js";

@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
-import { db } from "@wateaminbox/database";
-import { TelegramLocalFailureError } from "@wateaminbox/adapter-telegram";
+import { db } from "@omniteam/database";
+import { TelegramLocalFailureError } from "@omniteam/adapter-telegram";
 import { ChannelCredentialCipher } from "../../../services/channel-credential.service.js";
 import { sql } from "kysely";
 import {

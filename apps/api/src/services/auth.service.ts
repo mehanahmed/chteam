@@ -1,6 +1,6 @@
 import crypto from "node:crypto";
-import { type AuthTokenType, type Database, db } from "@wateaminbox/database";
-import { nowMs, toDbDate } from "@wateaminbox/shared";
+import { type AuthTokenType, type Database, db } from "@omniteam/database";
+import { nowMs, toDbDate } from "@omniteam/shared";
 import type { Kysely, Transaction } from "kysely";
 import {
   type EmailResult,

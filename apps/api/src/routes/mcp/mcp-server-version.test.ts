@@ -6,7 +6,7 @@ import { writeTools } from "./tools/write.js";
 /**
  * Clients cache the tool list.
  *
- * ChatGPT kept answering "WATeamInbox does not currently expose a
+ * ChatGPT kept answering "OmniTeam does not currently expose a
  * list_connections tool" after that tool shipped, through a disconnect, a
  * reconnect and a fresh OAuth grant - the tool cache is not tied to the
  * authorization. The advertised server version had been "1.0.0" throughout,

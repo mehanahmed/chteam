@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { createDatabase } from "@wateaminbox/database";
+import { createDatabase } from "@omniteam/database";
 import { sql } from "kysely";
 import {
   PostgresRateLimitStore,

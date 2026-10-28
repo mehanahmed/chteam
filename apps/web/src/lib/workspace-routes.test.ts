@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import type { MemberPermissions } from "@wateaminbox/shared";
+import type { MemberPermissions } from "@omniteam/shared";
 import {
   chatViewPath,
   getWorkspaceDestination,

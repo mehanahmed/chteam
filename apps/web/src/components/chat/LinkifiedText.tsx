@@ -151,7 +151,8 @@ export function LinkifiedText({
           );
         }
         if (resolved.type === "mention" && resolved.participant) {
-          const contactId = resolved.participant.contactId;
+          const contactId =
+            resolved.participant.contactId || resolved.participant.jid;
           const mentionClassName = cn(
             "mx-0.5 inline rounded-[0.3rem] px-1 py-0.5 font-semibold",
             isOwn

@@ -1,4 +1,4 @@
-import { toDbDate } from "@wateaminbox/shared";
+import { toDbDate } from "@omniteam/shared";
 import { Hono } from "hono";
 import {
   MAX_FILE_SIZE,

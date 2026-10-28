@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { db, reconcileTenantSchema } from "@wateaminbox/database";
+import { db, reconcileTenantSchema } from "@omniteam/database";
 import { sql } from "kysely";
 import type { EmailOptions } from "../lib/email.js";
 import {

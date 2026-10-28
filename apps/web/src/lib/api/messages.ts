@@ -3,7 +3,7 @@
  * Message related API functions
  */
 
-import type { CreateMessageInput, Message } from "@wateaminbox/shared";
+import type { CreateMessageInput, Message } from "@omniteam/shared";
 import {
   buildQueryString,
   fetchFormDataWithAuth,

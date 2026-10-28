@@ -11,7 +11,8 @@ test("single-choice dropdowns use the shared Select without appearance overrides
   const violations: string[] = [];
   for (const file of readdirSync(sourceRoot, { recursive: true })) {
     if (typeof file !== "string" || !file.endsWith(".tsx")) continue;
-    if (file === "components/ui/select.tsx" || file.includes(".test."))
+    const normalized = file.replace(/\\/g, "/");
+    if (normalized === "components/ui/select.tsx" || normalized.includes(".test."))
       continue;
     const source = ts.createSourceFile(
       file,

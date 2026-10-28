@@ -14,7 +14,7 @@ import type {
   ConversationStatusFilter,
 } from "../../hooks/useChats";
 
-export const CHAT_LIST_FILTERS_KEY = "wateaminbox:chat-list-filters";
+export const CHAT_LIST_FILTERS_KEY = "omniteam:chat-list-filters";
 
 /**
  * "All" leads so the broadest view is the first thing scanned, then the
@@ -78,7 +78,10 @@ export function readChatListFilters(
 ): ChatListFilters {
   let raw: string | null = null;
   try {
-    raw = store?.getItem(CHAT_LIST_FILTERS_KEY) ?? null;
+    raw =
+      store?.getItem(CHAT_LIST_FILTERS_KEY) ??
+      store?.getItem("wateaminbox:chat-list-filters") ??
+      null;
   } catch {
     return DEFAULT_CHAT_LIST_FILTERS;
   }

@@ -4,7 +4,7 @@ import {
   type TelegramOutboundContext,
   type TelegramOutboundTarget,
   type TelegramTransportPorts,
-} from "@wateaminbox/adapter-telegram";
+} from "@omniteam/adapter-telegram";
 import {
   getPresignedUrl,
   resolveMediaKeyForCompany,
@@ -14,7 +14,7 @@ import {
   readChannelCredential,
 } from "../../../services/channel-credential.service.js";
 import { getTenantConnection } from "../../../services/tenant.service.js";
-import type { TenantDatabase } from "@wateaminbox/database";
+import type { TenantDatabase } from "@omniteam/database";
 import type { Kysely } from "kysely";
 
 /**

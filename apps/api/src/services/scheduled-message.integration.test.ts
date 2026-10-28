@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
-import type { MessageStatus } from "@wateaminbox/database";
-import { db } from "@wateaminbox/database";
-import { DEFAULT_SLA_WEEKLY_SCHEDULE, toDbDate } from "@wateaminbox/shared";
+import type { MessageStatus } from "@omniteam/database";
+import { db } from "@omniteam/database";
+import { DEFAULT_SLA_WEEKLY_SCHEDULE, toDbDate } from "@omniteam/shared";
 import type { Kysely } from "kysely";
 import {
   deleteMedia,

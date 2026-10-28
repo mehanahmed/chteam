@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type {
   NewMessagePayload,
   NotificationPayload,
-} from "@wateaminbox/shared";
+} from "@omniteam/shared";
 import {
   createContext,
   useCallback,

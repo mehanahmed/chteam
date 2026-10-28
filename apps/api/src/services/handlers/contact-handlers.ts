@@ -8,7 +8,7 @@ import {
   normalizeJid,
   toDbDate,
   toISOString,
-} from "@wateaminbox/shared";
+} from "@omniteam/shared";
 import { formatError } from "../../lib/logger.js";
 import type {
   ContactEvent,

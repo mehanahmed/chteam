@@ -1,5 +1,7 @@
 import { useVirtualizer } from "@tanstack/react-virtual";
 import {
+  Archive,
+  ArrowLeft,
   ArrowRight,
   Check,
   Inbox,
@@ -33,9 +35,10 @@ import {
 } from "../../hooks/useChats";
 import { usePrefetchContact } from "../../hooks/usePrefetch";
 import { useWhatsAppConnections } from "../../hooks/useWhatsAppConnections";
+import { useArchiveContact } from "../../hooks/contact/useContactDetails";
 import { mergeInboxChats } from "../../lib/api/transformers";
 import { workspacePath } from "../../lib/workspace-routes";
-import type { ChatListProps } from "../../types/chat";
+import type { Chat, ChatListProps } from "../../types/chat";
 import { BrandMark } from "../brand/BrandMark";
 import { AddContactDialog } from "../contacts/AddContactDialog";
 import { TagSearchInput } from "../tags/TagSearchInput";
@@ -47,6 +50,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../ui/select";
+import { ChatContextMenu } from "./ChatContextMenu";
 import { ChatListItem, ChatListItemSkeleton } from "./ChatListItem";
 import { ChatListSearch } from "./ChatListSearch";
 import { getConnectionLabel } from "./ConnectionIdentity";
@@ -85,6 +89,13 @@ export const ChatList = memo(function ChatList({
   const [conversationStatusFilter, setConversationStatusFilter] =
     useState<ConversationStatusFilter>(restoredFilters.status);
   const [isAddContactOpen, setIsAddContactOpen] = useState(false);
+  const [isArchivedView, setIsArchivedView] = useState(false);
+  const [contextMenu, setContextMenu] = useState<{
+    x: number;
+    y: number;
+    chat: Chat;
+  } | null>(null);
+  const archiveContactMutation = useArchiveContact();
   const [accountFilter, setAccountFilter] = useState("all");
   const [selectedTags, setSelectedTags] = useState<Tag[]>([]);
   const selectedTagIds = useMemo(
@@ -141,12 +152,34 @@ export const ChatList = memo(function ChatList({
       : undefined,
     conversationStatusFilter,
     selectedTagIds,
+    isArchivedView,
   );
   // The channel list has to narrow by the same tags as the contact list, or a
   // selected tag filters only the WhatsApp side of the merged inbox.
   const { data: channelConversations = [] } = useChannelConversations(
     100,
     selectedTagIds,
+    isArchivedView,
+  );
+
+  // When not in archived view, fetch archived chats count for the folder row badge
+  const { data: archivedChats = [] } = useChats(
+    "",
+    true,
+    "all",
+    undefined,
+    "all",
+    [],
+    true,
+  );
+  const { data: archivedChannelConversations = [] } = useChannelConversations(
+    100,
+    [],
+    true,
+  );
+  const archivedCount = useMemo(
+    () => mergeInboxChats(archivedChats, archivedChannelConversations).length,
+    [archivedChats, archivedChannelConversations],
   );
 
   const handleSearchChange = useCallback((value: string) => {
@@ -156,6 +189,39 @@ export const ChatList = memo(function ChatList({
   const handleSearchClear = useCallback(() => {
     setSearchQuery("");
   }, []);
+
+  const handleContextMenu = useCallback(
+    (e: React.MouseEvent, chat: Chat) => {
+      e.preventDefault();
+      setContextMenu({
+        x: e.clientX,
+        y: e.clientY,
+        chat,
+      });
+    },
+    [],
+  );
+
+  const handleCloseContextMenu = useCallback(() => {
+    setContextMenu(null);
+  }, []);
+
+  const handleToggleArchive = useCallback(
+    (chat: Chat) => {
+      setContextMenu(null);
+      const contactId = chat.contact.id;
+      const conversationId =
+        chat.contact.conversationId ??
+        (chat.contact.channel ? chat.id : undefined);
+      if (!contactId && !conversationId) return;
+      archiveContactMutation.mutate({
+        contactId: contactId || undefined,
+        conversationId: conversationId || undefined,
+        isArchived: !chat.isArchived,
+      });
+    },
+    [archiveContactMutation],
+  );
 
   const handleChatClick = useCallback(
     (chatId: string) => {
@@ -221,10 +287,14 @@ export const ChatList = memo(function ChatList({
     ];
   }, [channelAccounts, connections]);
 
-  // Filter archived chats for main view
+  // Filter archived chats for main view vs archived view
   const visibleChats = useMemo(() => {
     return mergeInboxChats(chats ?? [], channelConversations).filter((chat) => {
-      if (chat.isArchived) return false;
+      if (isArchivedView) {
+        if (!chat.isArchived) return false;
+      } else {
+        if (chat.isArchived) return false;
+      }
       // Contacts already arrived filtered by the API; this also narrows the
       // channel conversations merged in beside them, which the API never
       // searched. See chat-search.ts for why the display name alone is not
@@ -253,6 +323,7 @@ export const ChatList = memo(function ChatList({
     channelConversations,
     chats,
     conversationStatusFilter,
+    isArchivedView,
     searchQuery,
   ]);
   const connectionState = resolveInboxConnectionState({
@@ -285,6 +356,29 @@ export const ChatList = memo(function ChatList({
       role="navigation"
       aria-label={t("chat.chatListAria", "Chat list")}
     >
+      {/* Archived View Header */}
+      {isArchivedView && (
+        <div className="flex items-center gap-3 border-b border-gray-200 bg-gray-50 px-3 py-2.5 dark:border-dark-border dark:bg-dark-secondary">
+          <button
+            type="button"
+            onClick={() => setIsArchivedView(false)}
+            className="rounded-full p-1.5 text-gray-500 transition-colors hover:bg-gray-200 dark:text-dark-text-secondary dark:hover:bg-dark-tertiary"
+            aria-label={t("chat.backToChats", "Back to chats")}
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </button>
+          <div className="flex items-center gap-2">
+            <Archive className="h-4 w-4 text-whatsapp-teal-green" />
+            <span className="text-sm font-semibold text-gray-900 dark:text-dark-text-primary">
+              {t("chat.archived", "Archived")}
+            </span>
+          </div>
+          <span className="ml-auto text-xs text-gray-400 tabular-nums">
+            {visibleChats.length}
+          </span>
+        </div>
+      )}
+
       {/* Search */}
       <div
         className={
@@ -301,7 +395,7 @@ export const ChatList = memo(function ChatList({
       </div>
 
       {/* Account scope makes the destination number explicit in multi-account inboxes. */}
-      {inboxAccounts.length > 1 && (
+      {inboxAccounts.length > 1 && !isArchivedView && (
         <div className="flex items-center gap-2 border-b border-gray-200 bg-white px-3 py-2 dark:border-dark-border dark:bg-dark-secondary">
           <Inbox
             className="h-4 w-4 shrink-0 text-gray-400 dark:text-dark-text-tertiary"
@@ -358,7 +452,7 @@ export const ChatList = memo(function ChatList({
           (see chat-list-filters.ts). Resolved chats stay browsable. */}
       <div
         className={
-          isFirstRun
+          isFirstRun || isArchivedView
             ? "hidden"
             : "flex items-center border-b border-gray-200 bg-gray-50 dark:border-dark-border dark:bg-dark-secondary"
         }
@@ -575,7 +669,7 @@ export const ChatList = memo(function ChatList({
       {/* Assignment filters remain horizontally reachable at narrow widths. */}
       <div
         className={
-          isFirstRun
+          isFirstRun || isArchivedView
             ? "hidden"
             : "flex items-center border-b border-gray-200 bg-gray-50 dark:border-dark-border dark:bg-dark-secondary"
         }
@@ -633,15 +727,26 @@ export const ChatList = memo(function ChatList({
 
         {/* Keep the primary action visible while the filters scroll. */}
         {connectionState !== "no-connections" && (
-          <button
-            type="button"
-            onClick={() => setIsAddContactOpen(true)}
-            className="mr-1 flex-shrink-0 rounded-full p-1.5 text-whatsapp-teal-green transition-colors hover:bg-whatsapp-teal-green/10 dark:hover:bg-whatsapp-teal-green/20"
-            aria-label={t("contacts.addNew", "Add new contact")}
-            data-testid="add-contact-button"
-          >
-            <UserPlus className="h-4 w-4" aria-hidden="true" />
-          </button>
+          <div className="mr-1 flex items-center gap-1">
+            <button
+              type="button"
+              onClick={() => setIsArchivedView(true)}
+              className="flex-shrink-0 rounded-full p-1.5 text-gray-500 transition-colors hover:bg-whatsapp-teal-green/10 hover:text-whatsapp-teal-green dark:text-dark-text-secondary dark:hover:bg-whatsapp-teal-green/20"
+              aria-label={t("chat.viewArchivedChats", "View archived chats")}
+              title={t("chat.archived", "Archived")}
+            >
+              <Archive className="h-4 w-4" aria-hidden="true" />
+            </button>
+            <button
+              type="button"
+              onClick={() => setIsAddContactOpen(true)}
+              className="flex-shrink-0 rounded-full p-1.5 text-whatsapp-teal-green transition-colors hover:bg-whatsapp-teal-green/10 dark:hover:bg-whatsapp-teal-green/20"
+              aria-label={t("contacts.addNew", "Add new contact")}
+              data-testid="add-contact-button"
+            >
+              <UserPlus className="h-4 w-4" aria-hidden="true" />
+            </button>
+          </div>
         )}
       </div>
 
@@ -650,6 +755,32 @@ export const ChatList = memo(function ChatList({
         open={isAddContactOpen}
         onOpenChange={setIsAddContactOpen}
       />
+
+      {/* Archived folder row */}
+      {!isArchivedView &&
+        !isFirstRun &&
+        archivedCount > 0 &&
+        !searchQuery &&
+        selectedTags.length === 0 && (
+          <button
+            type="button"
+            onClick={() => setIsArchivedView(true)}
+            className="flex w-full items-center gap-3 border-b border-gray-100 bg-white px-3 py-2.5 text-left transition-colors hover:bg-gray-50 dark:border-dark-border/50 dark:bg-dark-secondary dark:hover:bg-dark-tertiary/50"
+            aria-label={t("chat.viewArchivedChats", "View archived chats")}
+          >
+            <span className="grid size-9 shrink-0 place-items-center rounded-full bg-gray-100 text-whatsapp-teal-green dark:bg-dark-tertiary">
+              <Archive className="size-4" />
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-medium text-gray-900 dark:text-dark-text-primary">
+                {t("chat.archived", "Archived")}
+              </p>
+            </div>
+            <span className="rounded-full bg-whatsapp-teal-green/10 px-2 py-0.5 text-xs font-semibold text-whatsapp-teal-green dark:bg-whatsapp-teal-green/20 tabular-nums">
+              {archivedCount}
+            </span>
+          </button>
+        )}
 
       {/* Chat List */}
       <div
@@ -697,36 +828,64 @@ export const ChatList = memo(function ChatList({
           </div>
         )}
 
-        {/* Empty State - No Search Results */}
-        {!isLoading && !isError && visibleChats.length === 0 && searchQuery && (
-          <div className="flex flex-col items-center justify-center h-full px-4 py-8 text-center">
-            <svg
-              className="w-12 h-12 text-gray-400 dark:text-dark-text-tertiary mb-4"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-              />
-            </svg>
-            <p className="text-gray-600 dark:text-dark-text-primary font-medium">
-              {t("chat.noChats", "No chats found")}
+        {/* Empty State - Archived View */}
+        {isArchivedView && !isLoading && !isError && visibleChats.length === 0 && (
+          <div className="flex h-full flex-col items-center justify-center px-4 py-8 text-center">
+            <Archive className="mb-4 h-12 w-12 text-gray-400 dark:text-dark-text-tertiary" />
+            <p className="font-medium text-gray-600 dark:text-dark-text-primary">
+              {searchQuery
+                ? t("chat.noMatchingArchivedChats", "No matching archived chats")
+                : t("chat.noArchivedChats", "No archived chats")}
             </p>
-            <p className="text-sm text-gray-500 dark:text-dark-text-secondary mt-1">
-              {t("chat.noResultsFor", {
-                defaultValue: 'No results for "{{query}}"',
-                query: searchQuery,
-              })}
+            <p className="mt-1 text-sm text-gray-500 dark:text-dark-text-secondary">
+              {searchQuery
+                ? t("chat.noResultsFor", {
+                    defaultValue: 'No results for "{{query}}"',
+                    query: searchQuery,
+                  })
+                : t(
+                    "chat.noArchivedChatsHint",
+                    "Archived chats will appear here",
+                  )}
             </p>
           </div>
         )}
 
+        {/* Empty State - No Search Results */}
+        {!isArchivedView &&
+          !isLoading &&
+          !isError &&
+          visibleChats.length === 0 &&
+          searchQuery && (
+            <div className="flex flex-col items-center justify-center h-full px-4 py-8 text-center">
+              <svg
+                className="w-12 h-12 text-gray-400 dark:text-dark-text-tertiary mb-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                />
+              </svg>
+              <p className="text-gray-600 dark:text-dark-text-primary font-medium">
+                {t("chat.noChats", "No chats found")}
+              </p>
+              <p className="text-sm text-gray-500 dark:text-dark-text-secondary mt-1">
+                {t("chat.noResultsFor", {
+                  defaultValue: 'No results for "{{query}}"',
+                  query: searchQuery,
+                })}
+              </p>
+            </div>
+          )}
+
         {/* Empty State - No conversations match the selected tags */}
-        {!isLoading &&
+        {!isArchivedView &&
+          !isLoading &&
           !isError &&
           visibleChats.length === 0 &&
           !searchQuery &&
@@ -760,6 +919,7 @@ export const ChatList = memo(function ChatList({
             not visible until a conversation is selected. */}
         {!isLoading &&
           !isError &&
+          !isArchivedView &&
           isFirstRun &&
           !searchQuery &&
           selectedTags.length === 0 && (
@@ -857,6 +1017,7 @@ export const ChatList = memo(function ChatList({
         {/* Empty State - No Unread Chats */}
         {!isLoading &&
           !isError &&
+          !isArchivedView &&
           !isFirstRun &&
           connectionState !== "loading" &&
           visibleChats.length === 0 &&
@@ -889,6 +1050,7 @@ export const ChatList = memo(function ChatList({
         {/* Empty State - No Chats */}
         {!isLoading &&
           !isError &&
+          !isArchivedView &&
           !isFirstRun &&
           connectionState !== "loading" &&
           visibleChats.length === 0 &&
@@ -954,6 +1116,7 @@ export const ChatList = memo(function ChatList({
                     onClick={() =>
                       handleChatClick(chat.contact.conversationId ?? chat.id)
                     }
+                    onContextMenu={(e) => handleContextMenu(e, chat)}
                     onPrefetch={prefetchContact}
                   />
                 </div>
@@ -962,6 +1125,16 @@ export const ChatList = memo(function ChatList({
           </div>
         )}
       </div>
+
+      {contextMenu && (
+        <ChatContextMenu
+          x={contextMenu.x}
+          y={contextMenu.y}
+          onClose={handleCloseContextMenu}
+          isArchived={contextMenu.chat.isArchived}
+          onToggleArchive={() => handleToggleArchive(contextMenu.chat)}
+        />
+      )}
     </div>
   );
 });

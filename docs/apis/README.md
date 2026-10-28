@@ -1,4 +1,4 @@
-# WATeamInbox API Documentation
+# OmniTeam API Documentation
 
 Detailed, group-by-group API reference for `apps/api` (the OSS API service). Every group file lists its endpoints with access controls and includes Mermaid sequence diagrams for the important flows.
 

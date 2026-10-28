@@ -165,7 +165,7 @@ function McpSetupGuide({
   const mcpJson = JSON.stringify(
     {
       mcpServers: {
-        wateaminbox: {
+        omniteam: {
           url: mcpUrl,
           headers: { Authorization: `Bearer ${secret}` },
         },
@@ -220,7 +220,7 @@ function McpSetupGuide({
             <p>
               {t(
                 "apiTokens.setup.hostedStep2",
-                "Leave Client ID and Client Secret empty if the app asks. Continue, sign in to WATeamInbox, choose the workspace, and approve.",
+                "Leave Client ID and Client Secret empty if the app asks. Continue, sign in to OmniTeam, choose the workspace, and approve.",
               )}
             </p>
           </SetupStep>
@@ -252,7 +252,7 @@ function McpSetupGuide({
             <p>
               {t(
                 "apiTokens.setup.grokStep2",
-                "Continue, sign in to WATeamInbox, choose the workspace, and approve.",
+                "Continue, sign in to OmniTeam, choose the workspace, and approve.",
               )}
             </p>
           </SetupStep>
@@ -299,7 +299,7 @@ function McpSetupGuide({
             <CopyBlock
               label="Claude Code command"
               caption={t("apiTokens.setup.terminal", "Terminal")}
-              value={`claude mcp add --transport http wateaminbox ${mcpUrl} --header "Authorization: Bearer ${secret}"`}
+              value={`claude mcp add --transport http omniteam ${mcpUrl} --header "Authorization: Bearer ${secret}"`}
             />
             {tokenHint && (
               <p className="text-xs text-muted-foreground">{tokenHint}</p>
@@ -309,7 +309,7 @@ function McpSetupGuide({
             <p>
               {t(
                 "apiTokens.setup.claudeCodeStep2",
-                "Start a new Claude Code session — the WATeamInbox tools are available right away.",
+                "Start a new Claude Code session — the OmniTeam tools are available right away.",
               )}
             </p>
           </SetupStep>

@@ -1,5 +1,5 @@
-import { getTenantSchemaName } from "@wateaminbox/database";
-import { getContactDisplayName } from "@wateaminbox/shared";
+import { getTenantSchemaName } from "@omniteam/database";
+import { getContactDisplayName } from "@omniteam/shared";
 import { Kysely, PostgresDialect, sql, type Transaction } from "kysely";
 import { Pool } from "pg";
 import { env } from "../lib/env.js";

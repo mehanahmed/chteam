@@ -1,6 +1,6 @@
 import { Edit2, Trash2 } from "lucide-react";
 import { useState } from "react";
-import { dayjs } from "@wateaminbox/shared";
+import { dayjs } from "@omniteam/shared";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";

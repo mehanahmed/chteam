@@ -1,4 +1,4 @@
-import { extractPhoneFromJid, normalizeJid } from "@wateaminbox/shared";
+import { extractPhoneFromJid, normalizeJid } from "@omniteam/shared";
 
 /**
  * Contact rows for group members.

@@ -119,6 +119,9 @@ export interface MessageMetadata {
   mediaAlbumId?: string;
   mediaAlbumIndex?: number;
   mediaAlbumCount?: number;
+  isForwarded?: boolean;
+  forwardingScore?: number;
+  isFrequentlyForwarded?: boolean;
   contactCards?: ContactCardData[];
 }
 
@@ -309,6 +312,18 @@ export function buildMessageMetadata(msg: MessageDbRow): MessageMetadata {
     mediaAlbumId: optionalAlbumString(msg.metadata, "mediaAlbumId"),
     mediaAlbumIndex: optionalAlbumInteger(msg.metadata, "mediaAlbumIndex"),
     mediaAlbumCount: optionalAlbumInteger(msg.metadata, "mediaAlbumCount"),
+    isForwarded:
+      Boolean(msg.is_forwarded || msg.metadata?.isForwarded) || undefined,
+    forwardingScore:
+      typeof msg.metadata?.forwardingScore === "number"
+        ? msg.metadata.forwardingScore
+        : undefined,
+    isFrequentlyForwarded:
+      Boolean(
+        msg.metadata?.isFrequentlyForwarded ||
+          (typeof msg.metadata?.forwardingScore === "number" &&
+            msg.metadata.forwardingScore >= 5),
+      ) || undefined,
     ...(contactCards.length > 0 ? { contactCards } : {}),
   };
 }
@@ -408,7 +423,7 @@ export function formatMessageForConversation(
       const quotedKey = msg.quoted_message_id || msg.reply_to_message_id;
       return quotedKey ? quotedMessagesMap.get(quotedKey) || null : undefined;
     })(),
-    isForwarded: msg.is_forwarded,
+    isForwarded: Boolean(msg.is_forwarded || msg.metadata?.isForwarded),
     isStarred: msg.is_starred,
     isDeleted: msg.deleted_by_sender || !!msg.deleted_at,
     deletedAt: msg.deleted_at,
@@ -500,7 +515,7 @@ export function formatMessageForFetch(
     quotedMessage: msg.quoted_message_id
       ? quotedMessages.get(msg.quoted_message_id) || null
       : null,
-    isForwarded: msg.is_forwarded,
+    isForwarded: Boolean(msg.is_forwarded || msg.metadata?.isForwarded),
     isStarred: msg.is_starred,
     deletedBySender: msg.deleted_by_sender,
     deletedAt: msg.deleted_at,

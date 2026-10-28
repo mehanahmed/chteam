@@ -1,6 +1,6 @@
 import { createHash, randomBytes } from "node:crypto";
 import { describe, expect, test } from "bun:test";
-import { db } from "@wateaminbox/database";
+import { db } from "@omniteam/database";
 import { app } from "../app.js";
 import {
   createAuthorizationCode,

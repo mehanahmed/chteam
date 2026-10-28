@@ -20,6 +20,7 @@ import {
   MessageSquareHeart,
   MessageSquareText,
   Package,
+  Paintbrush,
   Plug,
   Save,
   ShieldCheck,
@@ -46,6 +47,7 @@ import {
   NotificationSettings,
   QuickRepliesManager,
   SlaPolicySettings,
+  InboxAppearanceSettings,
 } from "../components/settings";
 import { Button, Input } from "../components/ui";
 import {
@@ -91,6 +93,7 @@ type SettingsSection =
   | "notifications"
   | "data"
   | "appearance"
+  | "inbox-appearance"
   | "privacy"
   | "api-tokens"
   | "feedback";
@@ -198,6 +201,14 @@ export function SettingsPage() {
       label: "Appearance & language",
       group: "Personal",
       icon: Globe2,
+      visible: true,
+    },
+    {
+      id: "inbox-appearance",
+      labelKey: "settings.sections.inboxAppearance",
+      label: "Inbox Appearance",
+      group: "Personal",
+      icon: Paintbrush,
       visible: true,
     },
     {
@@ -449,6 +460,8 @@ function SettingsSectionContent({
       return <NotificationSettings />;
     case "appearance":
       return <AppearanceSettings />;
+    case "inbox-appearance":
+      return <InboxAppearanceSettings />;
     case "privacy":
       return (
         <Panel

@@ -7,12 +7,12 @@ import { describe, expect, test } from "bun:test";
 // business-time/burst/policy-snapshot premise each test is actually
 // checking still holds under the case-boundary model.
 
-import { db } from "@wateaminbox/database";
+import { db } from "@omniteam/database";
 import type {
   SlaScheduleException,
   SlaWeeklySchedule,
-} from "@wateaminbox/shared";
-import { DEFAULT_SLA_WEEKLY_SCHEDULE } from "@wateaminbox/shared";
+} from "@omniteam/shared";
+import { DEFAULT_SLA_WEEKLY_SCHEDULE } from "@omniteam/shared";
 import { AnalyticsRangeTooWideError } from "../../lib/errors.js";
 import { resolveActiveCase } from "../conversation-case.service.js";
 import { getCurrentSlaPolicy, resolveCaseTargets } from "../sla-policy/policy.service.js";

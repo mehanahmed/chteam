@@ -1,5 +1,5 @@
 {
-  "name": "wateaminbox",
+  "name": "omniteam",
   "private": true,
   "workspaces": [
     "apps/*",
@@ -9,9 +9,10 @@
   "scripts": {
     "build": "turbo build --concurrency=3",
     "preview:connection-emails": "bun --preload ./apps/api/src/test-env.ts scripts/preview-connection-emails.ts",
-    "dev": "turbo dev",
+    "dev": "turbo dev --filter=!@omniteam/whatsapp --filter=!@omniteam/orchestrator",
+    "dev:all": "turbo dev",
     "lint": "biome lint apps/api apps/web packages && ./scripts/lint-go.sh",
-    "typecheck": "bun run --filter @wateaminbox/shared build && bun run --filter @wateaminbox/database build && bun run --filter @wateaminbox/adapter-telegram build && tsc -p apps/api/tsconfig.json --noEmit && tsc -p apps/web/tsconfig.json --noEmit",
+    "typecheck": "bun run --filter @omniteam/shared build && bun run --filter @omniteam/database build && bun run --filter @omniteam/adapter-telegram build && tsc -p apps/api/tsconfig.json --noEmit && tsc -p apps/web/tsconfig.json --noEmit",
     "check:unused": "knip",
     "format": "biome format --write apps/api apps/web packages",
     "test": "./scripts/run-tests.sh",
@@ -24,7 +25,8 @@
     "test:go:race": "./scripts/run-go-race.sh",
     "clean": "turbo clean",
     "db:migrate": "turbo db:migrate",
-    "db:generate": "turbo db:generate"
+    "db:generate": "turbo db:generate",
+    "seed:admin": "bun run --cwd apps/api src/scripts/seed-admin.ts"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.12",

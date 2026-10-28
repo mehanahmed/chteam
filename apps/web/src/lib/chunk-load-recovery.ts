@@ -1,4 +1,4 @@
-const RELOAD_ATTEMPT_KEY = "wateaminbox:chunk-load-reload";
+const RELOAD_ATTEMPT_KEY = "omniteam:chunk-load-reload";
 const DEFAULT_RETRY_WINDOW_MS = 60_000;
 
 const STALE_MODULE_ERROR_PATTERNS = [

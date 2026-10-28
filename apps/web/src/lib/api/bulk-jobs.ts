@@ -8,7 +8,7 @@ import type {
   BulkJobAudience,
   BulkJobPreview,
   BulkJobRecipient,
-} from "@wateaminbox/shared";
+} from "@omniteam/shared";
 import { buildQueryString, fetchWithAuth } from "./client.js";
 
 export interface PreviewBulkJobInput {

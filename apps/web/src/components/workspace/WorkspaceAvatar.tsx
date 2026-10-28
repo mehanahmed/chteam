@@ -1,4 +1,4 @@
-import type { Company } from "@wateaminbox/shared";
+import type { Company } from "@omniteam/shared";
 import { cn } from "../../lib/utils";
 
 export function workspaceMonogram(name: string): string {

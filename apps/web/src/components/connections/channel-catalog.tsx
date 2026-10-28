@@ -1,4 +1,4 @@
-import type { Channel, ChannelProvider } from "@wateaminbox/shared";
+import type { Channel, ChannelProvider } from "@omniteam/shared";
 import type { ComponentType } from "react";
 import type { ChannelProviderAvailability } from "@/lib/api/channel-accounts";
 import {

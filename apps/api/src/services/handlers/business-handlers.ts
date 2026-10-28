@@ -2,7 +2,7 @@ import {
   getContactDisplayName,
   normalizeJid,
   toDbDate,
-} from "@wateaminbox/shared";
+} from "@omniteam/shared";
 import type {
   CatalogProductsEvent,
   CatalogsEvent,

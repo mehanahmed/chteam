@@ -1,19 +1,26 @@
-import type { Contact, WhatsAppConnectionIdentity } from "@wateaminbox/shared";
-import { formatLastSeen, isChannel } from "@wateaminbox/shared";
-import { ArrowLeft, Info, MoreVertical, Search } from "lucide-react";
+import type { Contact } from "@omniteam/shared";
+import { formatLastSeen } from "@omniteam/shared";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  ArrowLeft,
+  Info,
+  MoreVertical,
+  Pause,
+  Play,
+  Search,
+} from "lucide-react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { toast } from "sonner";
 import { CONVERSATION_HEADER_INSET_CLASS } from "@/components/layout/conversation-chrome";
 import { useOptionalMobileLayout } from "@/components/layout/MobileLayout";
 import { IdentityAvatarFallback } from "@/components/ui/identity-avatar-fallback";
+import { queryKeys } from "@/hooks/query-keys";
+import { useContact } from "@/hooks/useContact";
 import { useGroup } from "@/hooks/useGroups";
-import { cn, formatPhoneLikeText } from "@/lib/utils";
+import { api } from "@/lib/api/client";
 import type { CustomerChat } from "@/lib/api/contacts";
-import { ChannelBadge, channelLabel } from "./ChannelIdentity";
-import {
-  ChannelRoute,
-  ConnectionBadge,
-  ConnectionRoute,
-} from "./ConnectionIdentity";
+import { cn, formatPhoneLikeText } from "@/lib/utils";
 
 interface MessageHeaderProps {
   contact: Contact | undefined;
@@ -64,7 +71,7 @@ export function MessageHeader({
   showBackButton,
   onBack,
   isTyping = false,
-  thread,
+  thread: _thread,
   threadCount = 1,
 }: MessageHeaderProps) {
   const { t } = useTranslation();
@@ -75,6 +82,78 @@ export function MessageHeader({
   const canGoBack = showBackButton ?? mobileLayout !== null;
   const handleBack = onBack ?? mobileLayout?.goBack;
 
+  const queryClient = useQueryClient();
+  const [isTogglingAi, setIsTogglingAi] = useState(false);
+
+  const contactId = contact?.id;
+  const isGroupChat = Boolean(contact?.isGroup);
+
+  const { data: contactDetail } = useContact(contactId ?? null);
+
+  const { data: aiStatus, refetch: refetchAiStatus } = useQuery({
+    queryKey: ["ai-agent-status", contactId],
+    queryFn: async () => {
+      if (!contactId) return null;
+      try {
+        const res = await api.get<{
+          data: { isPaused: boolean; tags: string[]; lastReason?: string };
+        }>(`/ai-agent/contacts/${contactId}/status`);
+        return res.data;
+      } catch {
+        return null;
+      }
+    },
+    enabled: Boolean(contactId && !isGroupChat),
+    staleTime: 5000,
+  });
+
+  const contactTags = (contactDetail?.tags || []).map((t) =>
+    t.name.toLowerCase(),
+  );
+  const aiTags = (aiStatus?.tags || []).map((t) => t.toLowerCase());
+  const allTagNames = new Set([...contactTags, ...aiTags]);
+
+  const hasNeedsHuman =
+    allTagNames.has("needs-human") ||
+    allTagNames.has("complaint") ||
+    aiStatus?.lastReason === "needs_human" ||
+    aiStatus?.lastReason === "complaint";
+
+  const isAiPaused =
+    hasNeedsHuman ||
+    allTagNames.has("ai-paused") ||
+    Boolean(aiStatus?.isPaused);
+
+  const handleToggleAi = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!contactId || isTogglingAi) return;
+    setIsTogglingAi(true);
+    try {
+      if (isAiPaused) {
+        await api.post(`/ai-agent/contacts/${contactId}/resume`);
+        toast.success(t("chat.aiResumed", "AI assistant resumed"));
+      } else {
+        await api.post(`/ai-agent/contacts/${contactId}/pause`, {
+          reason: "manual_pause",
+        });
+        toast.success(t("chat.aiPaused", "AI assistant paused"));
+      }
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: ["ai-agent-status", contactId],
+        }),
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.contacts.detail(contactId),
+        }),
+        refetchAiStatus(),
+      ]);
+    } catch {
+      toast.error(t("chat.aiToggleFailed", "Failed to update AI status"));
+    } finally {
+      setIsTogglingAi(false);
+    }
+  };
+
   if (!contact) {
     return null;
   }
@@ -82,20 +161,6 @@ export function MessageHeader({
   const displayName = formatPhoneLikeText(
     contact.customName || contact.name || contact.jid || "Unknown",
   );
-  // The thread is the authority on where this conversation runs; the contact
-  // is the fallback for a chat the switcher has not described.
-  const channel = thread?.channel ?? contact.channel;
-  const connection = thread?.connection
-    ? {
-        id: thread.connection.id,
-        name: thread.connection.name,
-        phoneNumber: thread.connection.phoneNumber,
-        // The switcher types the status as the string the API sent; the
-        // badge wants the union, and an unknown value reads as offline.
-        status: thread.connection
-          .status as WhatsAppConnectionIdentity["status"],
-      }
-    : contact.connection;
   const isMerged = threadCount > 1;
   const lastSeenText = contact.isGroup
     ? group?.participantCount
@@ -165,28 +230,36 @@ export function MessageHeader({
             <h2 className="truncate text-[16px] font-semibold leading-5 tracking-[-0.01em] text-[#111b21] dark:text-dark-text-primary">
               {displayName}
             </h2>
-            {/* The account pill needs room to stay legible; on a phone the
-                same routing is carried by the status line below instead. */}
-            {(channel || connection) && (
+            {/* Visual AI Status Badge: AI Active (green) / AI Paused (amber) / Needs Human (red) */}
+            {!isGroupChat && (
               <>
-                <ChannelBadge
-                  channel={channel && isChannel(channel) ? channel : "whatsapp"}
-                  compact
-                  iconOnly
-                  className="hidden md:inline-flex"
-                />
-                {connection ? (
-                  <ConnectionBadge
-                    connection={connection}
-                    compact
-                    className="hidden max-w-[110px] shrink md:inline-flex"
-                  />
+                {hasNeedsHuman ? (
+                  <span
+                    data-testid="ai-status-badge"
+                    className="hidden items-center gap-1 rounded-full bg-red-100 px-2 py-0.5 text-[11px] font-semibold text-red-700 dark:bg-red-950/60 dark:text-red-400 sm:inline-flex"
+                    title={t("chat.aiNeedsHuman", "Needs Human Intervention")}
+                  >
+                    <span className="size-1.5 rounded-full bg-red-500 animate-pulse" />
+                    {t("chat.needsHuman", "Needs Human")}
+                  </span>
+                ) : isAiPaused ? (
+                  <span
+                    data-testid="ai-status-badge"
+                    className="hidden items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-800 dark:bg-amber-950/60 dark:text-amber-400 sm:inline-flex"
+                    title={t("chat.aiPausedStatus", "AI Autoreplies Paused")}
+                  >
+                    <span className="size-1.5 rounded-full bg-amber-500" />
+                    {t("chat.aiPaused", "AI Paused")}
+                  </span>
                 ) : (
-                  thread?.accountName && (
-                    <span className="hidden max-w-[110px] shrink truncate rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-semibold text-gray-700 dark:bg-dark-tertiary dark:text-dark-text-primary md:inline-flex">
-                      {thread.accountName}
-                    </span>
-                  )
+                  <span
+                    data-testid="ai-status-badge"
+                    className="hidden items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-400 sm:inline-flex"
+                    title={t("chat.aiActiveStatus", "AI Assistant Active")}
+                  >
+                    <span className="size-1.5 rounded-full bg-emerald-500" />
+                    {t("chat.aiActive", "AI Active")}
+                  </span>
                 )}
               </>
             )}
@@ -218,35 +291,6 @@ export function MessageHeader({
                 </span>
               )
             )}
-            {(connection || thread?.accountName) && (
-              <>
-                {(isTyping || statusText) && (
-                  <span
-                    className="size-0.5 shrink-0 rounded-full bg-[#aebac1] dark:bg-dark-border"
-                    aria-hidden="true"
-                  />
-                )}
-                {/* Phones get the account name only; the number returns
-                    from `sm` up, where the line has room for both. */}
-                {connection ? (
-                  <ConnectionRoute
-                    connection={connection}
-                    mode="receiving"
-                    compact
-                    className="min-w-0 truncate text-[12px]"
-                  />
-                ) : (
-                  // A Telegram thread has no linked device to name, and
-                  // saying nothing left the line claiming the conversation
-                  // arrived nowhere.
-                  <ChannelRoute
-                    label={thread!.accountName!}
-                    address={channelLabel(channel)}
-                    className="min-w-0 truncate text-[12px]"
-                  />
-                )}
-              </>
-            )}
           </span>
         </span>
       </button>
@@ -263,6 +307,38 @@ export function MessageHeader({
             aria-label={t("chat.contactInfo", "Contact info")}
           >
             <Info className="size-5.5" strokeWidth={1.9} aria-hidden="true" />
+          </button>
+        )}
+
+        {/* One-click Resume / Pause AI button */}
+        {!isGroupChat && (
+          <button
+            type="button"
+            onClick={handleToggleAi}
+            disabled={isTogglingAi}
+            className={cn(
+              actionButtonClass,
+              isAiPaused
+                ? "text-amber-600 hover:text-amber-700 dark:text-amber-400"
+                : "text-[#54656f] hover:text-[#00a884] dark:text-dark-text-secondary dark:hover:text-[#00a884]",
+            )}
+            title={
+              isAiPaused
+                ? t("chat.resumeAi", "Resume AI")
+                : t("chat.pauseAi", "Pause AI")
+            }
+            aria-label={
+              isAiPaused
+                ? t("chat.resumeAi", "Resume AI")
+                : t("chat.pauseAi", "Pause AI")
+            }
+            data-testid="toggle-ai-button"
+          >
+            {isAiPaused ? (
+              <Play className="size-5" strokeWidth={2} aria-hidden="true" />
+            ) : (
+              <Pause className="size-5" strokeWidth={2} aria-hidden="true" />
+            )}
           </button>
         )}
 

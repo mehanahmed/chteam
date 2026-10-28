@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
-import { db } from "@wateaminbox/database";
-import { REMOTE_HISTORY_RESPONSE_TIMEOUT_MS } from "@wateaminbox/shared";
+import { db } from "@omniteam/database";
+import { REMOTE_HISTORY_RESPONSE_TIMEOUT_MS } from "@omniteam/shared";
 import { sql } from "kysely";
 import type { Kysely } from "kysely";
 import { app } from "../../app.js";

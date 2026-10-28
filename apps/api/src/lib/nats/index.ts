@@ -28,6 +28,7 @@ export {
   buildSendReactionCommand,
   publishSendReaction,
   publishTypingCommand,
+  publishMarkChatReadCommand,
   PermanentEventError,
 } from "./client.js";
 

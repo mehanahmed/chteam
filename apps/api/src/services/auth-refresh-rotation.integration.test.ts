@@ -1,5 +1,5 @@
 import { afterAll, describe, expect, test } from "bun:test";
-import { db } from "@wateaminbox/database";
+import { db } from "@omniteam/database";
 import { app } from "../app.js";
 import { generateRefreshToken } from "../lib/jwt.js";
 import { hashPassword } from "../lib/password.js";
@@ -30,7 +30,7 @@ afterAll(async () => {
 
 function refreshCookieValue(response: Response): string {
   const header = response.headers.get("set-cookie") ?? "";
-  const match = header.match(/wateaminbox_refresh=([^;]+)/);
+  const match = header.match(/omniteam_refresh=([^;]+)/);
   if (!match?.[1]) throw new Error(`no refresh cookie in: ${header}`);
   return match[1];
 }
@@ -75,7 +75,7 @@ async function loginFreshSession(): Promise<{
 async function refresh(token: string): Promise<Response> {
   return app.request("/api/auth/refresh", {
     method: "POST",
-    headers: { cookie: `wateaminbox_refresh=${token}` },
+    headers: { cookie: `omniteam_refresh=${token}` },
   });
 }
 

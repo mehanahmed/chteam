@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import type { Message } from "@wateaminbox/shared";
+import type { Message } from "@omniteam/shared";
 import { isReplyDraftStillValid, resolveActiveReplyDraft } from "./reply-draft";
 
 const DRAFT = { id: "message-1", content: "quote me" } as unknown as Message;

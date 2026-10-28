@@ -7,11 +7,11 @@ import {
   type ProviderIngress,
   type ProviderSendResult,
   type ResolvedCapabilities,
-} from "@wateaminbox/shared";
+} from "@omniteam/shared";
 import {
   classifyTelegramSendFailure,
   TelegramBotAdapter,
-} from "@wateaminbox/adapter-telegram";
+} from "@omniteam/adapter-telegram";
 import { WhatsAppLinkedDeviceAdapter } from "../providers/whatsapp-linked-device/adapter";
 import { storedContentType } from "../../services/channel-attachment-fetch.service";
 import {

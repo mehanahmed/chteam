@@ -35,7 +35,7 @@ func loadHTTPBearerToken() (string, error) {
 	if !info.Mode().IsRegular() || info.Mode()&os.ModeSymlink != 0 || info.Mode().Perm()&0o077 != 0 {
 		return "", fmt.Errorf("HTTP bearer token file must be a root-only regular file")
 	}
-	if strings.HasPrefix(path, "/run/wateaminbox-control/") {
+	if strings.HasPrefix(path, "/run/omniteam-control/") || strings.HasPrefix(path, "/run/wateaminbox-control/") {
 		stat, ok := info.Sys().(*syscall.Stat_t)
 		if !ok || stat.Uid != 0 {
 			return "", fmt.Errorf("ephemeral HTTP bearer token file must be owned by root")
@@ -88,7 +88,13 @@ func main() {
 	autoRestartMaxRetries := config.GetIntEnv("AUTO_RESTART_MAX_RETRIES", 5)
 	autoRestartBackoff := config.GetDurationEnv("AUTO_RESTART_BACKOFF", 5*time.Second)
 	maxWorkers := config.GetIntEnv("ORCHESTRATOR_MAX_WORKERS", 15)
-	artifactRoot := config.GetEnv("WORKER_ARTIFACT_ROOT", "/var/lib/wateaminbox/worker-artifacts")
+	defaultArtifactRoot := "/var/lib/omniteam/worker-artifacts"
+	if _, err := os.Stat("/var/lib/wateaminbox/worker-artifacts"); err == nil {
+		if _, omniErr := os.Stat("/var/lib/omniteam/worker-artifacts"); omniErr != nil {
+			defaultArtifactRoot = "/var/lib/wateaminbox/worker-artifacts"
+		}
+	}
+	artifactRoot := config.GetEnv("WORKER_ARTIFACT_ROOT", defaultArtifactRoot)
 	defaultArtifactVersion := config.GetEnv("WORKER_DEFAULT_ARTIFACT_VERSION", "embedded")
 	defaultArtifactSHA256 := config.GetEnv("WORKER_DEFAULT_ARTIFACT_SHA256", "")
 	rolloutReadyTimeout := config.GetDurationEnv("WORKER_ROLLOUT_READY_TIMEOUT", 2*time.Minute)

@@ -1,6 +1,6 @@
 import * as DialogPrimitive from "@radix-ui/react-dialog";
-import type { ScheduledMessage } from "@wateaminbox/shared";
-import { dayjs } from "@wateaminbox/shared";
+import type { ScheduledMessage } from "@omniteam/shared";
+import { dayjs } from "@omniteam/shared";
 import {
   AlertCircle,
   CalendarClock,

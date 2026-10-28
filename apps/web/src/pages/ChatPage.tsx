@@ -1,4 +1,4 @@
-import type { WhatsAppConnectionIdentity } from "@wateaminbox/shared";
+import type { WhatsAppConnectionIdentity } from "@omniteam/shared";
 import {
   ArrowLeft,
   ArrowRight,
@@ -17,7 +17,6 @@ import { toast } from "sonner";
 import { ChannelComposerGate } from "../components/chat/ChannelComposerGate";
 import { ChatSidebar, type SidebarView } from "../components/chat/ChatSidebar";
 import { ComposerLifecycleArea } from "../components/chat/ComposerLifecycleArea";
-import { ConversationLifecycleActions } from "../components/chat/ConversationLifecycleActions";
 import { ConversationSearch } from "../components/chat/ConversationSearch";
 import { ContactProfile } from "../components/chat/contact-profile";
 import { DeleteMessageDialog } from "../components/chat/DeleteMessageDialog";
@@ -153,8 +152,12 @@ export function ChatPage() {
     handleForwardToContact,
     handleCloseForwardDialog,
   } = useChatPageState();
+  const isChannelConversationCandidate =
+    Boolean(selectedChatId) && !selectedContact && Boolean(contactLoadError);
   const { data: channelConversation, isLoading: isChannelConversationLoading } =
-    useChannelConversation(selectedChatId);
+    useChannelConversation(
+      isChannelConversationCandidate ? selectedChatId : null,
+    );
   const conversationContact = useMemo(
     () =>
       channelConversation
@@ -490,12 +493,6 @@ export function ChatPage() {
                       ? `@${channelConversation.account.username}`
                       : null
                   }
-                  trailing={
-                    <ConversationLifecycleActions
-                      contactId={selectedChatId}
-                      isSending={isSending}
-                    />
-                  }
                 />
               </ChannelComposerGate>
             ) : (
@@ -526,12 +523,6 @@ export function ChatPage() {
                 mentionParticipants={selectedGroup?.participants}
                 onSelectChat={handleThreadSelect}
                 channelAddress={null}
-                trailing={
-                  <ConversationLifecycleActions
-                    contactId={selectedChatId}
-                    isSending={isSending}
-                  />
-                }
               />
             )}
           </ComposerLifecycleArea>
@@ -559,7 +550,7 @@ export function ChatPage() {
   return (
     <AppLayout>
       <h1 className="sr-only">
-        {t("chat.pageTitle", "WATeamInbox - Conversations")}
+        {t("chat.pageTitle", "OmniTeam - Conversations")}
       </h1>
       <ResponsiveLayout
         sidebar={sidebar}
@@ -640,7 +631,7 @@ function ConversationLoadingState() {
         />
 
         <div
-          className="relative mx-auto flex h-full w-full max-w-4xl flex-col justify-end gap-3 px-5 py-8 sm:px-10"
+          className="relative flex h-full w-full flex-col justify-end gap-3 px-5 py-8 sm:px-10"
           aria-hidden="true"
         >
           <div className="flex justify-center pb-2">

@@ -1,8 +1,8 @@
 import type { ReactNode } from "react";
 import { useFirstChatAcknowledgment } from "./FirstChatAcknowledgment";
 import { getCompanyId } from "@/lib/api/client";
-import type { Message, WhatsAppConnectionIdentity } from "@wateaminbox/shared";
-import { dayjs } from "@wateaminbox/shared";
+import type { Message, WhatsAppConnectionIdentity } from "@omniteam/shared";
+import { dayjs } from "@omniteam/shared";
 import {
   CalendarClock,
   FileText,
@@ -37,8 +37,6 @@ import type { GroupParticipant } from "../../hooks/useGroups";
 import { useQuickReplySuggestions } from "../../hooks/useQuickReplies";
 import { uploadMedia } from "../../lib/api";
 import { AttachmentPreviewDialog } from "./AttachmentPreviewDialog";
-import { ChatSwitcher } from "./ChatSwitcher";
-import { ChannelRoute, ConnectionRoute } from "./ConnectionIdentity";
 import { useComposerFeatures } from "./composer-capabilities";
 import { shouldSendMessageOnEnter } from "./composer-keyboard";
 import { pickPastedAttachment } from "./composer-paste";
@@ -185,9 +183,6 @@ function AcknowledgedMessageComposer({
   disabled = false,
   connection,
   channelAccount,
-  onSelectChat,
-  channelAddress,
-  trailing,
   mentionParticipants = [],
 }: MessageComposerProps) {
   const { t } = useTranslation();
@@ -828,41 +823,7 @@ function AcknowledgedMessageComposer({
           </div>
         )}
 
-        {/* What this reply is about to do: which thread it leaves on, over
-            which account, and what can be done with the conversation. The
-            operator's own name used to lead this row, which is the one thing
-            they already know. */}
-        <div className="flex min-h-8 min-w-0 items-center gap-2 border-b border-black/[0.055] bg-white/55 px-3 py-1 dark:border-white/[0.06] dark:bg-white/[0.025]">
-          {/* Only rendered for a merged customer, who has a second thread to
-              switch to. It moves between conversations; it never redirects
-              this one's messages onto another. */}
-          {onSelectChat && contactId && (
-            <ChatSwitcher
-              currentChatId={contactId}
-              onSelectChat={onSelectChat}
-            />
-          )}
-          {connection ? (
-            <ConnectionRoute
-              connection={connection}
-              mode="sending"
-              className="min-w-0 text-[11px]"
-            />
-          ) : channelAccount ? (
-            // The same answer for a channel account. Without it a Telegram
-            // thread said nothing about where its reply was going.
-            <ChannelRoute
-              label={
-                channelAccount.displayName?.trim() || channelAccount.channelName
-              }
-              address={channelAddress}
-              className="min-w-0 text-[11px]"
-            />
-          ) : null}
-          {trailing && (
-            <div className="ml-auto flex shrink-0 items-center">{trailing}</div>
-          )}
-        </div>
+
 
         {/* Upcoming scheduled messages for this conversation */}
         {contactId && <ScheduledMessagesBar contactId={contactId} />}

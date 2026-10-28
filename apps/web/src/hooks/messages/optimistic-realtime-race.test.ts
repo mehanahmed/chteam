@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { QueryClient } from "@tanstack/react-query";
-import type { Message } from "@wateaminbox/shared";
+import type { Message } from "@omniteam/shared";
 import {
   addMessageToCache,
   type InfiniteMessageData,

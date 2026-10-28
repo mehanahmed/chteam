@@ -14,7 +14,8 @@ import (
 )
 
 const (
-	defaultArtifactRoot    = "/var/lib/wateaminbox/worker-artifacts"
+	defaultArtifactRoot    = "/var/lib/omniteam/worker-artifacts"
+	legacyArtifactRoot     = "/var/lib/wateaminbox/worker-artifacts"
 	defaultArtifactVersion = "embedded"
 )
 

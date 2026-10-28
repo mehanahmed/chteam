@@ -1,5 +1,5 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
-import type { CreateSlaPolicyInput } from "@wateaminbox/shared";
+import type { CreateSlaPolicyInput } from "@omniteam/shared";
 import {
   createSlaPolicy,
   getCurrentSlaPolicy,

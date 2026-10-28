@@ -1,7 +1,7 @@
 import {
   getTenantSchemaName,
   type TenantDatabase,
-} from "@wateaminbox/database";
+} from "@omniteam/database";
 import type { Kysely, Transaction } from "kysely";
 import { sql } from "kysely";
 

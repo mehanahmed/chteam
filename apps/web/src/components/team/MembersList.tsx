@@ -6,7 +6,7 @@ import {
   SelectItem,
 } from "@/components/ui/select";
 import type { ColumnDef, PaginationState } from "@tanstack/react-table";
-import type { CompanyMember, MemberPermissions } from "@wateaminbox/shared";
+import type { CompanyMember, MemberPermissions } from "@omniteam/shared";
 import { Crown, Settings2, Shield, ShieldCheck, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import {

@@ -1,5 +1,5 @@
-import type { Message } from "@wateaminbox/shared";
-import { formatMessageTime } from "@wateaminbox/shared";
+import type { Message } from "@omniteam/shared";
+import { formatMessageTime } from "@omniteam/shared";
 import type { TFunction } from "i18next";
 import { Smartphone } from "lucide-react";
 import { lazy, memo, Suspense, useCallback, useRef, useState } from "react";
@@ -15,6 +15,7 @@ import type { MentionParticipant } from "./group-mentions";
 import {
   type ParticipantIdentity,
   resolveParticipantContactId,
+  resolveParticipantAvatarUrl,
 } from "./group-participant-identity";
 import { LinkifiedText } from "./LinkifiedText";
 import { MessageContent } from "./MessageContent";
@@ -28,7 +29,12 @@ import {
 const EmojiReactionPicker = lazy(() => import("./EmojiReactionPicker"));
 
 import { MessageContextMenu } from "./MessageContextMenu";
-import { ForwardIcon, ReplyIcon, StarFilledIcon } from "./MessageIcons";
+import {
+  ReplyIcon,
+  StarFilledIcon,
+  WhatsAppForwardIcon,
+  WhatsAppFrequentlyForwardedIcon,
+} from "./MessageIcons";
 import { MessageReactions } from "./MessageReactions";
 import { getErrorMessage, MessageStatusIcon } from "./MessageStatusIcon";
 import {
@@ -106,7 +112,12 @@ interface MessageBubbleProps {
   /** Resolved group members used to display WhatsApp mentions by name. */
   mentionParticipants?: Pick<
     GroupParticipant,
-    "jid" | "phoneNumber" | "mentionIds" | "displayName" | "contactId"
+    | "jid"
+    | "phoneNumber"
+    | "mentionIds"
+    | "displayName"
+    | "contactId"
+    | "profilePictureUrl"
   >[];
   /** Navigate the thread to the original message referenced by a reply. */
   onNavigateToMessage?: (target: MessageNavigationTarget) => void;
@@ -284,6 +295,26 @@ export const MessageBubble = memo(function MessageBubble({
     groupPosition === "middle" || groupPosition === "last";
   const isRunStart = startsGroup(groupPosition);
   const isRunEnd = endsGroup(groupPosition);
+  const isForwarded = Boolean(
+    message.isForwarded ||
+      (message as unknown as { is_forwarded?: boolean }).is_forwarded ||
+      message.metadata?.isForwarded ||
+      (message.metadata as unknown as { is_forwarded?: boolean })?.is_forwarded ||
+      (typeof message.metadata?.forwardingScore === "number" &&
+        message.metadata.forwardingScore > 0) ||
+      (typeof (message.metadata as unknown as { forwarding_score?: number })?.forwarding_score === "number" &&
+        ((message.metadata as unknown as { forwarding_score?: number }).forwarding_score ?? 0) > 0) ||
+      message.metadata?.isFrequentlyForwarded ||
+      (message.metadata as unknown as { is_frequently_forwarded?: boolean })?.is_frequently_forwarded,
+  );
+  const isFrequentlyForwarded = Boolean(
+    message.metadata?.isFrequentlyForwarded ||
+      (message.metadata as unknown as { is_frequently_forwarded?: boolean })?.is_frequently_forwarded ||
+      (typeof message.metadata?.forwardingScore === "number" &&
+        message.metadata.forwardingScore >= 5) ||
+      (typeof (message.metadata as unknown as { forwarding_score?: number })?.forwarding_score === "number" &&
+        ((message.metadata as unknown as { forwarding_score?: number }).forwarding_score ?? 0) >= 5),
+  );
   // The timestamp shares the last text line when it fits, the way a phone
   // messenger does; media and system-ish rows keep their own meta row because
   // their content is not part of an inline formatting context.
@@ -367,11 +398,26 @@ export const MessageBubble = memo(function MessageBubble({
           />
         )}
 
-        {/* Forwarded indicator */}
-        {message.isForwarded && !message.isDeleted && (
-          <div className="flex items-center gap-1 text-xs opacity-70 mb-1">
-            <ForwardIcon className="h-3 w-3" />
-            <span>{t("chat.forwarded")}</span>
+        {/* Forwarded indicator matching WhatsApp Web design */}
+        {isForwarded && !message.isDeleted && (
+          <div
+            className={cn(
+              "flex items-center gap-1.5 text-[12.5px] leading-4 italic mb-1 select-none",
+              isOwn
+                ? "text-black/60 dark:text-white/60"
+                : "text-[#667781] dark:text-[#8696a0]",
+            )}
+          >
+            {isFrequentlyForwarded ? (
+              <WhatsAppFrequentlyForwardedIcon className="h-3 w-4 shrink-0 fill-current" />
+            ) : (
+              <WhatsAppForwardIcon className="h-3 w-3.5 shrink-0 fill-current" />
+            )}
+            <span>
+              {isFrequentlyForwarded
+                ? t("chat.forwardedManyTimes", "Forwarded many times")
+                : t("chat.forwarded", "Forwarded")}
+            </span>
           </div>
         )}
 
@@ -432,6 +478,8 @@ export const MessageBubble = memo(function MessageBubble({
             reactions={message.reactions!}
             isOwn={isOwn}
             onRemoveOwnReaction={() => onReact?.(message, "")}
+            currentUserAvatarUrl={currentUserAvatarUrl}
+            participants={mentionParticipants}
           />
         )}
 
@@ -988,16 +1036,21 @@ function GroupParticipantAvatar({
   const { onOpenParticipantProfile } = useMessageActions();
 
   const label = getParticipantLabel(t, message);
+  const senderIdentity = message.senderJid || message.senderId;
   const contactId = resolveParticipantContactId(
-    message.senderJid || message.senderId,
+    senderIdentity,
+    participants,
+  );
+  const participantAvatarUrl = resolveParticipantAvatarUrl(
+    senderIdentity,
     participants,
   );
 
   const avatar = (
     <SenderAvatar
       label={label}
-      identity={message.senderJid || message.senderId}
-      avatarUrl={message.senderAvatarUrl}
+      identity={senderIdentity}
+      avatarUrl={message.senderAvatarUrl || participantAvatarUrl}
       side="left"
       hidden={hidden}
     />

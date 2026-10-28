@@ -187,7 +187,7 @@ export function RegisterPage() {
               <Trans
                 i18nKey="auth.verificationSentTo"
                 values={{ email: registeredEmail }}
-                defaults="We sent a verification link to <strong>{{email}}</strong>. Open it to activate your WATeamInbox account."
+                defaults="We sent a verification link to <strong>{{email}}</strong>. Open it to activate your OmniTeam account."
                 components={{
                   strong: (
                     <strong className="break-all font-semibold text-slate-900 dark:text-dark-text-primary" />

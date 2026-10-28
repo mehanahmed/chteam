@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
-import { db } from "@wateaminbox/database";
-import { DEFAULT_SLA_WEEKLY_SCHEDULE, toDbDate } from "@wateaminbox/shared";
+import { db } from "@omniteam/database";
+import { DEFAULT_SLA_WEEKLY_SCHEDULE, toDbDate } from "@omniteam/shared";
 import type { Kysely } from "kysely";
 import { sql } from "kysely";
 import { bulkConfig } from "../config/bulk.config.js";

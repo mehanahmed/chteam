@@ -1,4 +1,4 @@
-import type { MemberPermissions } from "@wateaminbox/shared";
+import type { MemberPermissions } from "@omniteam/shared";
 
 export interface PermissionOption {
   key: keyof MemberPermissions;

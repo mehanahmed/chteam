@@ -18,7 +18,7 @@
  * `loadGroupContext` returns all of them or an error response, and fails closed
  * whenever anything is missing.
  */
-import { normalizeJid } from "@wateaminbox/shared";
+import { normalizeJid } from "@omniteam/shared";
 import type { Context } from "hono";
 import type { Kysely } from "kysely";
 import { badRequest, conflict, forbidden, notFound } from "../../lib/errors.js";

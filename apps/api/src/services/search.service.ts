@@ -1,8 +1,8 @@
-import type { TenantDatabase } from "@wateaminbox/database";
+import type { TenantDatabase } from "@omniteam/database";
 import {
   extractPhoneFromJid,
   getContactDisplayName,
-} from "@wateaminbox/shared";
+} from "@omniteam/shared";
 import { type ExpressionBuilder, sql } from "kysely";
 import {
   isMeilisearchAvailable,

@@ -1,4 +1,4 @@
-import type { ToastNotificationPayload } from "@wateaminbox/shared";
+import type { ToastNotificationPayload } from "@omniteam/shared";
 import { toast } from "sonner";
 import { getSafeNotificationPath } from "./notification-navigation";
 

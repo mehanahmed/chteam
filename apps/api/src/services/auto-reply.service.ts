@@ -1,6 +1,6 @@
-import type { TenantDatabase } from "@wateaminbox/database";
-import type { SlaPolicy } from "@wateaminbox/shared";
-import { toDbDate } from "@wateaminbox/shared";
+import type { TenantDatabase } from "@omniteam/database";
+import type { SlaPolicy } from "@omniteam/shared";
+import { toDbDate } from "@omniteam/shared";
 import type { Transaction } from "kysely";
 import { NotFoundError } from "../lib/errors.js";
 import type { UpdateAutoReplySettingsInput } from "../lib/schemas/quick-replies.js";

@@ -38,14 +38,14 @@ describe("renderBrandedEmail", () => {
   test("renders the shared brand, preheader, accessible tables, CTA, fallback URL, and support footer", () => {
     const html = renderBrandedEmail(content);
 
-    expect(html).toContain("WATeamInbox");
+    expect(html).toContain("OmniTeam");
     expect(html).toContain("<!doctype html>");
     expect(html).toContain('name="viewport"');
     expect(html).toContain("A concise inbox preview");
     expect(html).toContain('role="presentation"');
     expect(html).toContain("Confirm email");
     expect(html).toContain("If the button does not work");
-    expect(html).toContain("hello@wateaminbox.com");
+    expect(html).toContain("hello@omniteam.com");
   });
 
   test("escapes dynamic text and attribute values", () => {
@@ -72,7 +72,7 @@ describe("renderPlainTextEmail", () => {
       "Confirm email: https://app.example.test/verify?token=a&next=b",
     );
     expect(text).toContain("This link expires in 24 hours.");
-    expect(text).toContain("WATeamInbox");
-    expect(text).toContain("Support: hello@wateaminbox.com");
+    expect(text).toContain("OmniTeam");
+    expect(text).toContain("Support: hello@omniteam.com");
   });
 });

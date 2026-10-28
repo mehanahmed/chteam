@@ -1,5 +1,5 @@
 {
-  "name": "@wateaminbox/adapter-telegram",
+  "name": "@omniteam/adapter-telegram",
   "version": "0.0.1",
   "private": true,
   "description": "Telegram Bot API channel adapter for the channel-neutral spine",
@@ -21,7 +21,7 @@
     "test": "bun test"
   },
   "dependencies": {
-    "@wateaminbox/shared": "workspace:*"
+    "@omniteam/shared": "workspace:*"
   },
   "devDependencies": {
     "@types/bun": "latest",

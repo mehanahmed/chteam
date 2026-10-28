@@ -10,7 +10,7 @@ import type {
   QRCodePayload,
   WhatsAppConnectedPayload,
   WhatsAppDisconnectedPayload,
-} from "@wateaminbox/shared";
+} from "@omniteam/shared";
 import { redirectToBillingForCurrentWorkspace } from "../lib/api/client";
 import { queryKeys } from "./query-keys";
 

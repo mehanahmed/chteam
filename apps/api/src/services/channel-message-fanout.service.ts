@@ -1,4 +1,4 @@
-import type { TenantDatabase } from "@wateaminbox/database";
+import type { TenantDatabase } from "@omniteam/database";
 import { sql } from "kysely";
 import type { Transaction } from "kysely";
 

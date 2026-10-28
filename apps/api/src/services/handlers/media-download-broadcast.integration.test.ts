@@ -16,7 +16,7 @@
  */
 
 import { describe, expect, mock, test } from "bun:test";
-import { db } from "@wateaminbox/database";
+import { db } from "@omniteam/database";
 import { sql } from "kysely";
 import type { DownloadResponseEvent } from "../../lib/nats/index.js";
 import {

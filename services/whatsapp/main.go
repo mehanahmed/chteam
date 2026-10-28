@@ -20,7 +20,7 @@ import (
 	"github.com/ygncode-lab/whatsapp-web/services/whatsapp/internal/storage"
 )
 
-const linkedDeviceDisplayName = "WATeamInbox"
+const linkedDeviceDisplayName = "OmniTeam"
 
 // configureLinkedDeviceDisplayName changes the name embedded in new pairing
 // registrations. Existing sessions use the login payload, which does not

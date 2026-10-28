@@ -1,4 +1,4 @@
-import { dayjs, getDateRange } from "@wateaminbox/shared";
+import { dayjs, getDateRange } from "@omniteam/shared";
 import { AlertTriangle, CheckCircle, Clock, Target, Users } from "lucide-react";
 import { useMemo } from "react";
 import {

@@ -1,4 +1,4 @@
-import { isChannel } from "@wateaminbox/shared";
+import { isChannel } from "@omniteam/shared";
 import { Check, Plus, Search } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";

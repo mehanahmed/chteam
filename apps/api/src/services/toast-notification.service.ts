@@ -1,4 +1,4 @@
-import type { ToastNotificationPayload } from "@wateaminbox/shared";
+import type { ToastNotificationPayload } from "@omniteam/shared";
 
 /** Convert untrusted worker error shapes into the only toast payload clients accept. */
 export function normalizeWorkerErrorToast(

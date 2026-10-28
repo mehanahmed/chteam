@@ -4,8 +4,8 @@
  * Operations for managing company members: listing, roles, permissions, removal.
  */
 
-import { db } from "@wateaminbox/database";
-import { toDbDate } from "@wateaminbox/shared";
+import { db } from "@omniteam/database";
+import { toDbDate } from "@omniteam/shared";
 import { sql } from "kysely";
 import {
   CompanyNotFoundError,

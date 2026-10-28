@@ -183,11 +183,11 @@ function mutationErrorMessage(error: unknown, fallback: string): string {
 }
 
 function isNotFound(error: unknown): boolean {
+  if (typeof error !== "object" || error === null) return false;
   return (
-    typeof error === "object" &&
-    error !== null &&
-    "status" in error &&
-    (error as { status?: number }).status === 404
+    ("status" in error && (error as { status?: number }).status === 404) ||
+    ("statusCode" in error &&
+      (error as { statusCode?: number }).statusCode === 404)
   );
 }
 

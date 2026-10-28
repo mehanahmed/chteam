@@ -1,4 +1,4 @@
-import { db, type TenantDatabase } from "@wateaminbox/database";
+import { db, type TenantDatabase } from "@omniteam/database";
 import { type Kysely, sql } from "kysely";
 import {
   ensureLinkedDeviceBridge,

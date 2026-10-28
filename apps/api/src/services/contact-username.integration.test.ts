@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { db } from "@wateaminbox/database";
+import { db } from "@omniteam/database";
 import { sql } from "kysely";
 import type { ContactEvent } from "../lib/nats/index.js";
 import { handleContactEvent } from "./handlers/contact-handlers.js";

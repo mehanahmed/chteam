@@ -1,7 +1,7 @@
 import {
   getDateRange as getDateRangeHelper,
   toISOString,
-} from "@wateaminbox/shared";
+} from "@omniteam/shared";
 import {
   Archive,
   Download,

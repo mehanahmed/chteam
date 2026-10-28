@@ -14,7 +14,7 @@ import type {
   SlaScheduleException,
   SlaTimeInterval,
   SlaWeeklyScheduleDay,
-} from "@wateaminbox/shared";
+} from "@omniteam/shared";
 
 export interface EditableInterval {
   key: string;

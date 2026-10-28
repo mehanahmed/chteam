@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import type { TenantDatabase } from "@wateaminbox/database";
+import type { TenantDatabase } from "@omniteam/database";
 import {
   DummyDriver,
   Kysely,
@@ -108,6 +108,16 @@ describe("buildContactWhereClause merge collapse", () => {
     // A merged customer is one inbox row. The merged-away contact keeps its
     // conversation, which stays reachable through the chat switcher.
     expect(compiledWhere({})).toContain("c.merged_into_contact_id IS NULL");
+  });
+
+  test("filters archived contacts: defaults to active (archived_at IS NULL)", () => {
+    expect(compiledWhere({})).toContain("c.archived_at IS NULL");
+    expect(compiledWhere({ archived: false })).toContain("c.archived_at IS NULL");
+  });
+
+  test("filters archived contacts: returns archived only (archived_at IS NOT NULL) when requested", () => {
+    expect(compiledWhere({ archived: true })).toContain("c.archived_at IS NOT NULL");
+    expect(compiledWhere({ archived: true })).not.toContain("c.archived_at IS NULL");
   });
 
   test("keeps an assigned chat in its assignee's filter after a merge", () => {

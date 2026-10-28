@@ -17,28 +17,15 @@ export interface AppLayoutProps extends React.HTMLAttributes<HTMLDivElement> {
  * Mobile (<768px): Single-column with navigation
  */
 export function AppLayout({ className, children, ...props }: AppLayoutProps) {
-  const isMobile = useIsMobile();
-  const isTablet = useIsTablet();
-
   return (
     <div
       className={cn(
-        // Safe-area insets belong to the app shell (top bar above, floating
-        // navigation below); repeating them here double-padded every edge.
-        "flex h-full w-full overflow-hidden bg-gray-200 dark:bg-dark-primary",
+        "flex h-full w-full overflow-hidden bg-white dark:bg-dark-primary",
         className,
       )}
       {...props}
     >
-      <div
-        className={cn(
-          "mx-auto flex h-full w-full shadow-xl scroll-mt-4",
-          // Responsive max-width
-          !isMobile && "max-w-[1600px]",
-          // On tablet, hide right panel by default (handled in children)
-          isTablet && !isMobile && "max-w-[1200px]",
-        )}
-      >
+      <div className="flex h-full w-full scroll-mt-4">
         {children}
       </div>
     </div>

@@ -1,4 +1,4 @@
-import type { Message } from "@wateaminbox/shared";
+import type { Message } from "@omniteam/shared";
 import { Image as ImageIcon, Play, Video } from "lucide-react";
 import { useMemo, useState } from "react";
 import type { GroupParticipant } from "@/hooks/useGroups";

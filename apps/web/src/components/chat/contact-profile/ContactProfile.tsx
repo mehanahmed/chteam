@@ -20,6 +20,7 @@ import {
   AssignmentSection,
   ConversationAssignmentSection,
 } from "./AssignmentSection";
+import { ArchiveStatusSection } from "./ArchiveStatusSection";
 import { BlockStatusSection } from "./BlockStatusSection";
 import { ContactInfoSection } from "./ContactInfoSection";
 import { ContactProfileSkeleton } from "./ContactProfileSkeleton";
@@ -158,6 +159,7 @@ export function ContactProfile({
             <NotificationMuteSection contact={profileContact} />
 
             {contact ? <BlockStatusSection contact={contact} /> : null}
+            <ArchiveStatusSection contact={contact ?? profileContact} />
 
             <RightPanelSection title={t("export.title", "Export")}>
               <div className="flex items-center justify-between">
@@ -218,6 +220,8 @@ function conversationProfileContact(
     createdAt: conversation.firstMessageAt ?? new Date().toISOString(),
     updatedAt: conversation.lastMessageAt ?? new Date().toISOString(),
     conversationId: conversation.id,
+    isArchived: Boolean(conversation.isArchived || conversation.archivedAt),
+    archivedAt: conversation.archivedAt ?? null,
     channel: conversation.channel,
     provider: conversation.provider,
     connection: null,

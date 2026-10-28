@@ -3,7 +3,7 @@
  *
  * Routes for checking connection limits, sync status, and resetting stale syncs.
  */
-import { nowMs, parseDate, toDbDate } from "@wateaminbox/shared";
+import { nowMs, parseDate, toDbDate } from "@omniteam/shared";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { createLogger, formatError } from "../../lib/logger.js";

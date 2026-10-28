@@ -6,7 +6,7 @@ import {
   type ChannelAdapter,
   type ChannelProvider,
   type ResolvedCapabilities,
-} from "@wateaminbox/shared";
+} from "@omniteam/shared";
 
 export class ChannelAdapterRegistry {
   readonly #adapters = new Map<string, ChannelAdapter>();

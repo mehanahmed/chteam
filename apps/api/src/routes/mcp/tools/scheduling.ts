@@ -1,4 +1,4 @@
-import { getContactDisplayName, toDbDate } from "@wateaminbox/shared";
+import { getContactDisplayName, toDbDate } from "@omniteam/shared";
 import { sql } from "kysely";
 import { z } from "zod";
 import {

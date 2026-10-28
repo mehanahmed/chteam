@@ -1,5 +1,5 @@
 import { canonicalResource, issuer } from "../routes/oauth.js";
-import type { ApiTokenScope } from "@wateaminbox/database";
+import type { ApiTokenScope } from "@omniteam/database";
 import { Context, Next } from "hono";
 import {
   API_TOKEN_PREFIX,

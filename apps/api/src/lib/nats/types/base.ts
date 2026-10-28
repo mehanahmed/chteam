@@ -86,7 +86,8 @@ export interface NatsCommand {
     | "block_contact"
     | "unblock_contact"
     | "fetch_profile_picture"
-    | "request_history";
+    | "request_history"
+    | "mark_chat_read";
   company_id: string;
   connection_id: string;
   timestamp?: string;

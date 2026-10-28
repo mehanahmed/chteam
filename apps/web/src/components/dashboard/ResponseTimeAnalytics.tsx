@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { dayjs, getDateRange } from "@wateaminbox/shared";
+import { dayjs, getDateRange } from "@omniteam/shared";
 import {
   AlertTriangle,
   CheckCircle,

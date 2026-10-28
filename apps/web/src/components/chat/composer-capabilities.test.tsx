@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import type { ResolvedCapabilities } from "@wateaminbox/shared";
+import type { ResolvedCapabilities } from "@omniteam/shared";
 import { renderToStaticMarkup } from "react-dom/server";
 import { ChannelComposerGate } from "./ChannelComposerGate";
 import {

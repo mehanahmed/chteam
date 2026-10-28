@@ -13,7 +13,7 @@
  * remaining members, and the conversation stays in the inbox as a record.
  */
 import { zValidator } from "../../lib/validator.js";
-import { GROUP_LEAVE_SEMANTICS } from "@wateaminbox/shared";
+import { GROUP_LEAVE_SEMANTICS } from "@omniteam/shared";
 import { Hono } from "hono";
 import { conflict } from "../../lib/errors.js";
 import { successData, successWithMessage } from "../../lib/response.js";

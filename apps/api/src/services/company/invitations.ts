@@ -4,13 +4,13 @@
  * Operations for managing company invitations: create, list, accept, cancel, resend.
  */
 
-import { type Database, db } from "@wateaminbox/database";
+import { type Database, db } from "@omniteam/database";
 import {
   addDays,
   type CompanyMemberRole,
   type MemberPermissions,
   toDbDate,
-} from "@wateaminbox/shared";
+} from "@omniteam/shared";
 import { randomBytes } from "crypto";
 import { sql, type Transaction } from "kysely";
 import { sendInvitationEmail } from "../../lib/email.js";

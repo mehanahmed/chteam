@@ -1,4 +1,4 @@
-import { db } from "@wateaminbox/database";
+import { db } from "@omniteam/database";
 import type { Context } from "hono";
 import { resolveClientIp } from "../lib/client-ip.js";
 import { createLogger, formatError } from "../lib/logger.js";
@@ -21,6 +21,8 @@ export type AuditAction =
   | "contact.first_chat_acknowledged"
   | "contact.created"
   | "contact.updated"
+  | "contact.archived"
+  | "contact.unarchived"
   | "contact.assigned"
   | "contact.unassigned"
   | "contact.merged"

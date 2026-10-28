@@ -1,4 +1,4 @@
-import { REMOTE_HISTORY_RESPONSE_TIMEOUT_MS } from "@wateaminbox/shared";
+import { REMOTE_HISTORY_RESPONSE_TIMEOUT_MS } from "@omniteam/shared";
 import { Hono } from "hono";
 import { z } from "zod";
 import { badRequest, notFound } from "../../lib/errors.js";
@@ -103,7 +103,7 @@ timelineRoutes.get(
       companyId,
     );
     const quotes = await loadThreadScopedQuotes(tenantDb, authorized);
-    const reactions = await loadMessageReactions(tenantDb, authorized);
+    const reactions = await loadMessageReactions(tenantDb, authorized, companyId);
     const userNames = await getUserNames(
       authorized
         .map((message) => message.sent_by_user_id)

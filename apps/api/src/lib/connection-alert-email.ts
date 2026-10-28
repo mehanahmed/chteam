@@ -31,11 +31,11 @@ export function renderConnectionAlertEmail(alert: ConnectionAlertEmail) {
     paragraphs: loggedOut
       ? [
           "WhatsApp has unlinked this connection. It needs a new QR scan before your team can send and receive messages through it again.",
-          "Open the connection in WATeamInbox to start pairing. On your phone, open WhatsApp → Linked devices → Link a device, then scan the new QR code.",
+          "Open the connection in OmniTeam to start pairing. On your phone, open WhatsApp → Linked devices → Link a device, then scan the new QR code.",
         ]
       : [
           "This WhatsApp connection has been offline for at least five minutes. Your team cannot send or receive messages through it while it is disconnected.",
-          "Open WATeamInbox to check its current status and reconnect if needed.",
+          "Open OmniTeam to check its current status and reconnect if needed.",
         ],
     details: [
       { label: "Workspace", value: alert.workspaceName },

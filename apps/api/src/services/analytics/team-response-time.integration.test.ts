@@ -5,8 +5,8 @@ import { describe, expect, test } from "bun:test";
 // and episode-resolution.ts) - this test opens one case spanning both
 // episodes below.
 
-import { db } from "@wateaminbox/database";
-import { DEFAULT_SLA_WEEKLY_SCHEDULE } from "@wateaminbox/shared";
+import { db } from "@omniteam/database";
+import { DEFAULT_SLA_WEEKLY_SCHEDULE } from "@omniteam/shared";
 import { getCurrentSlaPolicy, resolveCaseTargets } from "../sla-policy/policy.service.js";
 import {
   clearTenantConnection,

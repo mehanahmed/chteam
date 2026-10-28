@@ -1,0 +1,46 @@
+ARG GO_VERSION=1.25.0
+
+FROM golang:${GO_VERSION}-alpine AS build
+WORKDIR /src
+
+# Copy go mod files for caching
+COPY services/shared/go.mod services/shared/go.sum /src/services/shared/
+COPY services/whatsapp/go.mod services/whatsapp/go.sum /src/services/whatsapp/
+COPY services/orchestrator/go.mod services/orchestrator/go.sum /src/services/orchestrator/
+COPY vendor/whatsmeow /src/vendor/whatsmeow
+
+WORKDIR /src/services/whatsapp
+RUN go mod download
+
+WORKDIR /src/services/orchestrator
+RUN go mod download
+
+# Copy source code
+COPY services/shared /src/services/shared
+COPY services/whatsapp /src/services/whatsapp
+COPY services/orchestrator /src/services/orchestrator
+
+# Build whatsapp-worker
+WORKDIR /src/services/whatsapp
+RUN CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /out/whatsapp-worker ./main.go
+
+# Build orchestrator
+WORKDIR /src/services/orchestrator
+RUN CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /out/orchestrator ./main.go
+
+# Runtime container
+FROM alpine:3.22
+RUN apk add --no-cache ca-certificates curl tzdata procps
+
+COPY --from=build /out/whatsapp-worker /usr/local/bin/whatsapp-worker
+COPY --from=build /out/orchestrator /usr/local/bin/orchestrator
+RUN chmod 0755 /usr/local/bin/whatsapp-worker /usr/local/bin/orchestrator
+
+RUN mkdir -p /var/lib/wateaminbox/worker-artifacts/embedded && \
+    cp /usr/local/bin/whatsapp-worker /var/lib/wateaminbox/worker-artifacts/embedded/whatsapp-worker && \
+    chmod 0755 /var/lib/wateaminbox/worker-artifacts/embedded/whatsapp-worker
+
+USER root
+EXPOSE 8080
+
+ENTRYPOINT ["/usr/local/bin/orchestrator"]

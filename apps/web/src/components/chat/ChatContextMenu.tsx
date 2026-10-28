@@ -5,8 +5,10 @@ interface ChatContextMenuProps {
   x: number;
   y: number;
   onClose: () => void;
-  onContactInfo: () => void;
-  onSelectMessages: () => void;
+  onContactInfo?: () => void;
+  onSelectMessages?: () => void;
+  isArchived?: boolean;
+  onToggleArchive?: () => void;
 }
 
 export function ChatContextMenu({
@@ -15,6 +17,8 @@ export function ChatContextMenu({
   onClose,
   onContactInfo,
   onSelectMessages,
+  isArchived = false,
+  onToggleArchive,
 }: ChatContextMenuProps) {
   const { t } = useTranslation();
 
@@ -69,29 +73,67 @@ export function ChatContextMenu({
       className="fixed z-50 bg-white dark:bg-dark-elevated rounded-lg shadow-lg py-1 min-w-[180px] border border-gray-200 dark:border-dark-border"
       style={{ left: x, top: y }}
     >
-      <button
-        type="button"
-        className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-dark-text-primary hover:bg-gray-100 dark:hover:bg-dark-tertiary transition-colors"
-        onClick={() => {
-          onContactInfo();
-          onClose();
-        }}
-      >
-        <ContactInfoIcon className="h-4 w-4" />
-        {t("chat.contactInfo", "Contact info")}
-      </button>
-      <button
-        type="button"
-        className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-dark-text-primary hover:bg-gray-100 dark:hover:bg-dark-tertiary transition-colors"
-        onClick={() => {
-          onSelectMessages();
-          onClose();
-        }}
-      >
-        <SelectIcon className="h-4 w-4" />
-        {t("chat.selectMessages", "Select messages")}
-      </button>
+      {onToggleArchive && (
+        <button
+          type="button"
+          className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-dark-text-primary hover:bg-gray-100 dark:hover:bg-dark-tertiary transition-colors"
+          onClick={() => {
+            onToggleArchive();
+            onClose();
+          }}
+        >
+          <ArchiveIcon className="h-4 w-4" />
+          {isArchived
+            ? t("chat.unarchiveChat", "Unarchive chat")
+            : t("chat.archiveChat", "Archive chat")}
+        </button>
+      )}
+      {onContactInfo && (
+        <button
+          type="button"
+          className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-dark-text-primary hover:bg-gray-100 dark:hover:bg-dark-tertiary transition-colors"
+          onClick={() => {
+            onContactInfo();
+            onClose();
+          }}
+        >
+          <ContactInfoIcon className="h-4 w-4" />
+          {t("chat.contactInfo", "Contact info")}
+        </button>
+      )}
+      {onSelectMessages && (
+        <button
+          type="button"
+          className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-dark-text-primary hover:bg-gray-100 dark:hover:bg-dark-tertiary transition-colors"
+          onClick={() => {
+            onSelectMessages();
+            onClose();
+          }}
+        >
+          <SelectIcon className="h-4 w-4" />
+          {t("chat.selectMessages", "Select messages")}
+        </button>
+      )}
     </div>
+  );
+}
+
+function ArchiveIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+      aria-hidden="true"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"
+      />
+    </svg>
   );
 }
 

@@ -10,13 +10,13 @@
  */
 
 import { zValidator } from "../../lib/validator.js";
-import { db } from "@wateaminbox/database";
+import { db } from "@omniteam/database";
 import {
   getContactDisplayName,
   getContactName,
   getUserDisplayName,
   toDbDate,
-} from "@wateaminbox/shared";
+} from "@omniteam/shared";
 import { Hono } from "hono";
 import {
   getContactPhoneNumber,
@@ -110,6 +110,7 @@ contactRoutes.get(
         userId: user.id,
         restrictToAssigned: !permissions.can_view_all_chats,
         conversationStatus: query.conversationStatus,
+        archived: query.archived,
       },
     );
 
@@ -141,24 +142,42 @@ contactRoutes.get(
 contactRoutes.get("/:id", async (c) => {
   const { tenantDb, companyId } = getRouteContext(c);
   const requestedId = c.req.param("id")!;
-  const workflowContactId =
-    (await resolveWorkflowContactId(tenantDb, requestedId)) ?? requestedId;
-  // Contact-profile reads follow merge aliases to the surviving customer.
-  // Conversation routes deliberately do not, so an old chat URL keeps
-  // resolving to its own conversation after its customer row was merged.
-  const contactId =
-    (await resolveCanonicalContactId(tenantDb, workflowContactId)) ??
-    workflowContactId;
+  const isUuid =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+      requestedId,
+    );
 
-  const contact = await tenantDb
-    .selectFrom("contacts")
-    .selectAll()
-    .where("id", "=", contactId)
-    .executeTakeFirst();
+  let contact = null;
+  if (isUuid) {
+    const workflowContactId =
+      (await resolveWorkflowContactId(tenantDb, requestedId)) ?? requestedId;
+    // Contact-profile reads follow merge aliases to the surviving customer.
+    // Conversation routes deliberately do not, so an old chat URL keeps
+    // resolving to its own conversation after its customer row was merged.
+    const contactId =
+      (await resolveCanonicalContactId(tenantDb, workflowContactId)) ??
+      workflowContactId;
+
+    contact = await tenantDb
+      .selectFrom("contacts")
+      .selectAll()
+      .where("id", "=", contactId)
+      .executeTakeFirst();
+  }
+
+  if (!contact) {
+    contact = await tenantDb
+      .selectFrom("contacts")
+      .selectAll()
+      .where("jid", "=", requestedId)
+      .executeTakeFirst();
+  }
 
   if (!contact) {
     return notFound(c, "Contact");
   }
+
+  const contactId = contact.id;
 
   const conversation = await tenantDb
     .selectFrom("conversations as conversation")
@@ -277,6 +296,8 @@ contactRoutes.get("/:id", async (c) => {
     name: getContactName(contact),
     isGroup: contact.is_group,
     isBlocked: contact.is_blocked,
+    isArchived: contact.archived_at !== null,
+    archivedAt: contact.archived_at,
     isOnline: contact.is_online,
     lastSeen: contact.last_seen,
     profilePictureUrl: await getAuthorizedMediaUrlOrNull(
@@ -390,12 +411,52 @@ contactRoutes.patch(
         "phone_number",
         "is_blocked",
         "is_group",
+        "archived_at",
         "whatsapp_connection_id",
       ])
       .where("id", "=", contactId)
       .executeTakeFirst();
 
     if (!existingContact) {
+      if (body.isArchived !== undefined) {
+        const existingConversation = await tenantDb
+          .selectFrom("conversations")
+          .select(["id", "legacy_contact_id"])
+          .where("id", "=", contactId)
+          .executeTakeFirst();
+
+        if (existingConversation) {
+          await tenantDb.transaction().execute(async (trx) => {
+            await trx
+              .updateTable("conversations")
+              .set({
+                archived_at: body.isArchived ? toDbDate() : null,
+                updated_at: toDbDate(),
+              })
+              .where("id", "=", contactId)
+              .execute();
+
+            if (existingConversation.legacy_contact_id) {
+              await trx
+                .updateTable("contacts")
+                .set({
+                  archived_at: body.isArchived ? toDbDate() : null,
+                  updated_at: toDbDate(),
+                })
+                .where("id", "=", existingConversation.legacy_contact_id)
+                .execute();
+            }
+          });
+
+          return successData(c, {
+            id: contactId,
+            isArchived: body.isArchived,
+            archivedAt: body.isArchived ? toDbDate() : null,
+            updatedAt: toDbDate(),
+          });
+        }
+      }
+
       return notFound(c, "Contact");
     }
 
@@ -409,6 +470,15 @@ contactRoutes.patch(
 
     if (body.notesShared !== undefined) {
       updateData.notes_shared = body.notesShared;
+    }
+
+    // Handle archive status change
+    const archiveStatusChanged =
+      body.isArchived !== undefined &&
+      (existingContact.archived_at !== null) !== body.isArchived;
+
+    if (archiveStatusChanged) {
+      updateData.archived_at = body.isArchived ? toDbDate() : null;
     }
 
     // Handle block status change
@@ -453,9 +523,21 @@ contactRoutes.patch(
           "custom_name",
           "notes_shared",
           "is_blocked",
+          "archived_at",
           "updated_at",
         ])
         .executeTakeFirst();
+
+      if (archiveStatusChanged) {
+        await trx
+          .updateTable("conversations")
+          .set({
+            archived_at: body.isArchived ? toDbDate() : null,
+            updated_at: toDbDate(),
+          })
+          .where("legacy_contact_id", "=", contactId)
+          .execute();
+      }
 
       if (blockStatusChanged && blockConnectionId && existingContact.jid) {
         await enqueueConnectionCommand(
@@ -475,13 +557,36 @@ contactRoutes.patch(
       return notFound(c, "Contact");
     }
 
+    const contactDisplayName = getContactDisplayName(
+      existingContact,
+      "Unknown Contact",
+    );
+
+    // If archive status changed, create audit log and broadcast event
+    if (archiveStatusChanged) {
+      await createAuditLog({
+        companyId,
+        userId: user.id,
+        action: body.isArchived ? "contact.archived" : "contact.unarchived",
+        entityType: "contact",
+        entityId: contactId,
+        details: {
+          contactName: contactDisplayName,
+          contactJid: existingContact.jid,
+        },
+        ipAddress: getClientIp(c),
+      });
+
+      await broadcastToContactViewers(companyId, contactId, "contact:updated", {
+        event: body.isArchived ? "archived" : "unarchived",
+        contactId,
+        contactName: contactDisplayName,
+        isArchived: body.isArchived,
+      });
+    }
+
     // If block status changed, create audit log and broadcast event
     if (blockStatusChanged) {
-      const contactDisplayName = getContactDisplayName(
-        existingContact,
-        "Unknown Contact",
-      );
-
       // Create audit log
       await createAuditLog({
         companyId,
@@ -509,6 +614,8 @@ contactRoutes.patch(
       customName: updated.custom_name,
       notesShared: updated.notes_shared,
       isBlocked: updated.is_blocked,
+      isArchived: updated.archived_at !== null,
+      archivedAt: updated.archived_at,
       updatedAt: updated.updated_at,
     });
   },

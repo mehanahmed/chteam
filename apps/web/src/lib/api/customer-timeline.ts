@@ -1,5 +1,5 @@
 import { fetchWithAuth } from "./client";
-import type { Message, RemoteHistoryStatus } from "@wateaminbox/shared";
+import type { Message, RemoteHistoryStatus } from "@omniteam/shared";
 
 /** One page of a customer's history, oldest first within the page. */
 export interface CustomerTimelinePage {

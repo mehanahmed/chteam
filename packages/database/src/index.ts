@@ -5,7 +5,7 @@ export type {
   MessageStatus,
   MessageType,
   ScheduledMessageStatus,
-} from "@wateaminbox/shared";
+} from "@omniteam/shared";
 export type {
   ApiRateLimitBucketsTable,
   ApiTokenScope,
@@ -61,7 +61,7 @@ export type {
   GroupParticipantsTable,
   GroupsTable,
   InvitationsTable,
-  /** @deprecated Use CompanyMemberRole from @wateaminbox/shared instead */
+  /** @deprecated Use CompanyMemberRole from @omniteam/shared instead */
   MemberRole,
   MessageAttachmentsTable,
   MessageDeliveryEventsTable,

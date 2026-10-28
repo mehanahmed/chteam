@@ -1,4 +1,4 @@
-import type { MemberPermissions } from "@wateaminbox/shared";
+import type { MemberPermissions } from "@omniteam/shared";
 
 /** Account-level page for choosing a workspace; it belongs to no workspace. */
 export const WORKSPACE_CHOOSER_PATH = "/workspaces";

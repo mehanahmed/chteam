@@ -1,4 +1,4 @@
-import { normalizeJid } from "@wateaminbox/shared";
+import { normalizeJid } from "@omniteam/shared";
 import type { Kysely } from "kysely";
 import type { TenantDatabase } from "./tenant.service.js";
 

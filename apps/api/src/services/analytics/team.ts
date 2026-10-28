@@ -2,7 +2,7 @@
  * Team analytics
  */
 
-import { db } from "@wateaminbox/database";
+import { db } from "@omniteam/database";
 import { getTenantConnection } from "../tenant.service.js";
 import type { TeamActivityStats } from "./types.js";
 

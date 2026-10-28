@@ -10,12 +10,13 @@ import { queryKeys } from "./query-keys";
 export function useChannelConversations(
   limit = 50,
   tagIds: readonly string[] = [],
+  archived?: boolean,
 ) {
   return useQuery({
-    queryKey: queryKeys.channelConversations.list({ limit, tagIds }),
+    queryKey: [...queryKeys.channelConversations.lists(), { limit, tagIds, archived }],
     queryFn: async () => {
       try {
-        return await getChannelConversations({ limit, tagIds });
+        return await getChannelConversations({ limit, tagIds, archived });
       } catch (error) {
         if (error instanceof ApiRequestError && error.statusCode === 404) {
           return [];

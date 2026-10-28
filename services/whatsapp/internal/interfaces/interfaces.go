@@ -104,6 +104,8 @@ type MessageEvent struct {
 	MediaFileSHA256    []byte
 	MediaFileEncSHA256 []byte
 	IsHistorySync      bool
+	IsForwarded        bool
+	ForwardingScore    uint32
 }
 
 // ReceiptEvent represents a message receipt (delivered, read, etc.).
@@ -172,6 +174,8 @@ type WhatsAppClient interface {
 	BlockContact(ctx context.Context, jid string) error
 	// UnblockContact unblocks a contact on WhatsApp.
 	UnblockContact(ctx context.Context, jid string) error
+	// MarkChatRead marks a chat as read via AppState (Syncd).
+	MarkChatRead(ctx context.Context, jid string) error
 }
 
 // Clock provides an interface for time operations.

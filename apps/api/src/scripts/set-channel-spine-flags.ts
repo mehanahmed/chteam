@@ -18,7 +18,7 @@
  * workspace to legacy. The row's revision advances by exactly one per write,
  * which the table's own trigger enforces and audits.
  */
-import { db } from "@wateaminbox/database";
+import { db } from "@omniteam/database";
 import { sql } from "kysely";
 
 interface Options {

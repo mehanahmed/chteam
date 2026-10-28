@@ -20,10 +20,10 @@ COPY apps/api apps/api
 COPY packages/adapter-telegram packages/adapter-telegram
 COPY packages/database packages/database
 COPY packages/shared packages/shared
-RUN bun run --filter @wateaminbox/shared build \
- && bun run --filter @wateaminbox/database build \
- && bun run --filter @wateaminbox/adapter-telegram build \
- && bun run --filter @wateaminbox/api build
+RUN bun run --filter @omniteam/shared build \
+ && bun run --filter @omniteam/database build \
+ && bun run --filter @omniteam/adapter-telegram build \
+ && bun run --filter @omniteam/api build
 
 FROM workspace AS production-dependencies
 RUN --mount=type=cache,target=/root/.bun/install/cache \

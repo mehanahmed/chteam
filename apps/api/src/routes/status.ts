@@ -1,5 +1,5 @@
 import { zValidator } from "../lib/validator.js";
-import { now, toDbDate, toISOString } from "@wateaminbox/shared";
+import { now, toDbDate, toISOString } from "@omniteam/shared";
 import { Hono } from "hono";
 import { forbidden, notFound } from "../lib/errors.js";
 import {

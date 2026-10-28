@@ -14,7 +14,7 @@
  * of the direct-contact `assigned` / `unassigned` split.
  */
 import { describe, expect, test } from "bun:test";
-import { db } from "@wateaminbox/database";
+import { db } from "@omniteam/database";
 import { sql } from "kysely";
 import type { GroupEvent } from "../../lib/nats/index.js";
 import { assignContactToUser } from "../contact.service.js";

@@ -7,7 +7,7 @@ import type {
   ProviderIngress,
   ProviderSendResult,
   ResolvedCapabilities,
-} from "@wateaminbox/shared";
+} from "@omniteam/shared";
 
 export interface LinkedDeviceAdapterPort {
   send(intent: OutboundMessageIntent): Promise<ProviderSendResult>;

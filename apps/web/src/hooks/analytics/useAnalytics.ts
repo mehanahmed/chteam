@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { dayjs } from "@wateaminbox/shared";
+import { dayjs } from "@omniteam/shared";
 import { api } from "@/lib/api/client";
 import {
   getCaseResolutionStats,

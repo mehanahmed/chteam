@@ -1,0 +1,648 @@
+{
+  "timestamp": "2026-10-26T07:53:35.223Z",
+  "totalTests": 73,
+  "passed": 73,
+  "failed": 0,
+  "passRate": "100.0%",
+  "durationMs": 14,
+  "tierBreakdown": {
+    "Tier 1": {
+      "total": 25,
+      "passed": 25,
+      "failed": 0
+    },
+    "Tier 2": {
+      "total": 34,
+      "passed": 34,
+      "failed": 0
+    },
+    "Tier 3": {
+      "total": 8,
+      "passed": 8,
+      "failed": 0
+    },
+    "Tier 4": {
+      "total": 6,
+      "passed": 6,
+      "failed": 0
+    }
+  },
+  "featureBreakdown": {
+    "R1": {
+      "total": 12,
+      "passed": 12,
+      "failed": 0
+    },
+    "R2": {
+      "total": 11,
+      "passed": 11,
+      "failed": 0
+    },
+    "R3": {
+      "total": 12,
+      "passed": 12,
+      "failed": 0
+    },
+    "R4": {
+      "total": 12,
+      "passed": 12,
+      "failed": 0
+    },
+    "R5": {
+      "total": 12,
+      "passed": 12,
+      "failed": 0
+    },
+    "CROSS": {
+      "total": 14,
+      "passed": 14,
+      "failed": 0
+    }
+  },
+  "results": [
+    {
+      "id": "T1-R1-01",
+      "name": "Banglish In-Stock Product & Price Inquiry",
+      "tier": 1,
+      "feature": "R1",
+      "status": "PASS",
+      "durationMs": 1.25
+    },
+    {
+      "id": "T1-R1-02",
+      "name": "Bengali Script Store Greeting & Business Hours",
+      "tier": 1,
+      "feature": "R1",
+      "status": "PASS",
+      "durationMs": 0.21
+    },
+    {
+      "id": "T1-R1-03",
+      "name": "English Delivery Fee & SLA Inquiry",
+      "tier": 1,
+      "feature": "R1",
+      "status": "PASS",
+      "durationMs": 0.12
+    },
+    {
+      "id": "T1-R1-04",
+      "name": "Code-Mixed Banglish/English Return Policy & Fabric FAQ",
+      "tier": 1,
+      "feature": "R1",
+      "status": "PASS",
+      "durationMs": 0.13
+    },
+    {
+      "id": "T1-R1-05",
+      "name": "Dynamic Language Mirroring Transition",
+      "tier": 1,
+      "feature": "R1",
+      "status": "PASS",
+      "durationMs": 0.11
+    },
+    {
+      "id": "T1-R2-01",
+      "name": "Merchant Post Screenshot with Text Overlay & Price",
+      "tier": 1,
+      "feature": "R2",
+      "status": "PASS",
+      "durationMs": 0.1
+    },
+    {
+      "id": "T1-R2-02",
+      "name": "Garment Photo without Text (Visual Catalog Match)",
+      "tier": 1,
+      "feature": "R2",
+      "status": "PASS",
+      "durationMs": 0.12
+    },
+    {
+      "id": "T1-R2-03",
+      "name": "bKash Mobile Transfer Receipt OCR Extraction",
+      "tier": 1,
+      "feature": "R2",
+      "status": "PASS",
+      "durationMs": 0.18
+    },
+    {
+      "id": "T1-R2-04",
+      "name": "Non-Catalog Product Image Rejection",
+      "tier": 1,
+      "feature": "R2",
+      "status": "PASS",
+      "durationMs": 0.13
+    },
+    {
+      "id": "T1-R2-05",
+      "name": "Low-Resolution / Blurry Image Disambiguation",
+      "tier": 1,
+      "feature": "R2",
+      "status": "PASS",
+      "durationMs": 0.12
+    },
+    {
+      "id": "T1-R3-01",
+      "name": "Live In-Stock Verification Before Ordering",
+      "tier": 1,
+      "feature": "R3",
+      "status": "PASS",
+      "durationMs": 0.12
+    },
+    {
+      "id": "T1-R3-02",
+      "name": "Out-of-Stock Prevention & Alternative Suggestion",
+      "tier": 1,
+      "feature": "R3",
+      "status": "PASS",
+      "durationMs": 0.1
+    },
+    {
+      "id": "T1-R3-03",
+      "name": "Incremental Catalog Sync & Stale Cache Invalidation",
+      "tier": 1,
+      "feature": "R3",
+      "status": "PASS",
+      "durationMs": 0.16
+    },
+    {
+      "id": "T1-R3-04",
+      "name": "Variable Product Multi-Attribute Resolution",
+      "tier": 1,
+      "feature": "R3",
+      "status": "PASS",
+      "durationMs": 0.18
+    },
+    {
+      "id": "T1-R3-05",
+      "name": "Unified Platform Adapter Conformance (Shopify Roadmap)",
+      "tier": 1,
+      "feature": "R3",
+      "status": "PASS",
+      "durationMs": 0.1
+    },
+    {
+      "id": "T1-R4-01",
+      "name": "Inside Dhaka COD Order Booking Complete Path",
+      "tier": 1,
+      "feature": "R4",
+      "status": "PASS",
+      "durationMs": 0.78
+    },
+    {
+      "id": "T1-R4-02",
+      "name": "Conversational Slot Filling for Missing Phone and Address",
+      "tier": 1,
+      "feature": "R4",
+      "status": "PASS",
+      "durationMs": 0.45
+    },
+    {
+      "id": "T1-R4-03",
+      "name": "Sub-Dhaka Zone Detection (Savar/Gazipur/Narayanganj)",
+      "tier": 1,
+      "feature": "R4",
+      "status": "PASS",
+      "durationMs": 0.17
+    },
+    {
+      "id": "T1-R4-04",
+      "name": "Outside Dhaka Advance Payment Guard (RTO Loss Prevention)",
+      "tier": 1,
+      "feature": "R4",
+      "status": "PASS",
+      "durationMs": 0.14
+    },
+    {
+      "id": "T1-R4-05",
+      "name": "Coupon Code Calculation Engine",
+      "tier": 1,
+      "feature": "R4",
+      "status": "PASS",
+      "durationMs": 0.17
+    },
+    {
+      "id": "T1-R5-01",
+      "name": "Dissatisfaction & Damage Complaint Detection",
+      "tier": 1,
+      "feature": "R5",
+      "status": "PASS",
+      "durationMs": 0.15
+    },
+    {
+      "id": "T1-R5-02",
+      "name": "Explicit Human Agent Request Detection",
+      "tier": 1,
+      "feature": "R5",
+      "status": "PASS",
+      "durationMs": 0.11
+    },
+    {
+      "id": "T1-R5-03",
+      "name": "Agent Assignment Circuit Breaker (Pre-Reply Interception)",
+      "tier": 1,
+      "feature": "R5",
+      "status": "PASS",
+      "durationMs": 0.13
+    },
+    {
+      "id": "T1-R5-04",
+      "name": "Manual Agent Send Interception",
+      "tier": 1,
+      "feature": "R5",
+      "status": "PASS",
+      "durationMs": 0.15
+    },
+    {
+      "id": "T1-R5-05",
+      "name": "Chat Header UI Pause & Resume Lifecycle",
+      "tier": 1,
+      "feature": "R5",
+      "status": "PASS",
+      "durationMs": 0.18
+    },
+    {
+      "id": "TC-T2-R1-01",
+      "name": "Empty & Whitespace-Only Inbound Messages",
+      "tier": 2,
+      "feature": "R1",
+      "status": "PASS",
+      "durationMs": 0.11
+    },
+    {
+      "id": "TC-T2-R1-02",
+      "name": "Pure Emoji & Non-Verbal Reactions",
+      "tier": 2,
+      "feature": "R1",
+      "status": "PASS",
+      "durationMs": 0.13
+    },
+    {
+      "id": "TC-T2-R1-03",
+      "name": "Extreme Trilingual Code-Switching & Phonetic Heterography",
+      "tier": 2,
+      "feature": "R1",
+      "status": "PASS",
+      "durationMs": 0.11
+    },
+    {
+      "id": "TC-T2-R1-04",
+      "name": "Non-Latin / Foreign Unicode & RTL Text Handling",
+      "tier": 2,
+      "feature": "R1",
+      "status": "PASS",
+      "durationMs": 0.11
+    },
+    {
+      "id": "TC-T2-R1-05",
+      "name": "Adversarial Prompt Injection & Persona Subversion",
+      "tier": 2,
+      "feature": "R1",
+      "status": "PASS",
+      "durationMs": 0.1
+    },
+    {
+      "id": "TC-T2-R1-06",
+      "name": "Ultra-Short / Monosyllabic Ambiguous Queries",
+      "tier": 2,
+      "feature": "R1",
+      "status": "PASS",
+      "durationMs": 0.11
+    },
+    {
+      "id": "TC-T2-R1-07",
+      "name": "Business Hours Boundary & Off-Hours Auto-Acknowledgement",
+      "tier": 2,
+      "feature": "R1",
+      "status": "PASS",
+      "durationMs": 0.11
+    },
+    {
+      "id": "TC-T2-R2-01",
+      "name": "Low-Resolution / Completely Blurry Image",
+      "tier": 2,
+      "feature": "R2",
+      "status": "PASS",
+      "durationMs": 0.11
+    },
+    {
+      "id": "TC-T2-R2-02",
+      "name": "Irrelevant Non-Product Image (Selfie, Meme, Landscape)",
+      "tier": 2,
+      "feature": "R2",
+      "status": "PASS",
+      "durationMs": 0.34
+    },
+    {
+      "id": "TC-T2-R2-03",
+      "name": "Multi-Product Catalog Grid Screenshot (4 Products in 1 Image)",
+      "tier": 2,
+      "feature": "R2",
+      "status": "PASS",
+      "durationMs": 0.13
+    },
+    {
+      "id": "TC-T2-R2-04",
+      "name": "Competitor Ad Screenshot with Foreign Watermark & Unavailable Item",
+      "tier": 2,
+      "feature": "R2",
+      "status": "PASS",
+      "durationMs": 0.15
+    },
+    {
+      "id": "TC-T2-R2-05",
+      "name": "Corrupted Media Buffer / Zero-Byte Payload / Unsupported MIME Type",
+      "tier": 2,
+      "feature": "R2",
+      "status": "PASS",
+      "durationMs": 0.15
+    },
+    {
+      "id": "TC-T2-R2-06",
+      "name": "Obscured / Partial bKash Payment Receipt",
+      "tier": 2,
+      "feature": "R2",
+      "status": "PASS",
+      "durationMs": 0.11
+    },
+    {
+      "id": "TC-T2-R3-01",
+      "name": "Zero Stock / Completely Out of Stock Simple Product",
+      "tier": 2,
+      "feature": "R3",
+      "status": "PASS",
+      "durationMs": 0.13
+    },
+    {
+      "id": "TC-T2-R3-02",
+      "name": "Requested Quantity Exceeds Available Stock",
+      "tier": 2,
+      "feature": "R3",
+      "status": "PASS",
+      "durationMs": 0.14
+    },
+    {
+      "id": "TC-T2-R3-03",
+      "name": "Negative or Zero Order Quantity in Natural Language",
+      "tier": 2,
+      "feature": "R3",
+      "status": "PASS",
+      "durationMs": 0.14
+    },
+    {
+      "id": "TC-T2-R3-04",
+      "name": "Mid-Checkout Concurrency Race Condition Stockout",
+      "tier": 2,
+      "feature": "R3",
+      "status": "PASS",
+      "durationMs": 0.27
+    },
+    {
+      "id": "TC-T2-R3-05",
+      "name": "Non-Existent Variation Option Selection",
+      "tier": 2,
+      "feature": "R3",
+      "status": "PASS",
+      "durationMs": 0.18
+    },
+    {
+      "id": "TC-T2-R3-06",
+      "name": "Backorders Permitted vs Backorders Disabled",
+      "tier": 2,
+      "feature": "R3",
+      "status": "PASS",
+      "durationMs": 0.13
+    },
+    {
+      "id": "TC-T2-R3-07",
+      "name": "Extreme Product Pricing & Zero Price / Promotional Items",
+      "tier": 2,
+      "feature": "R3",
+      "status": "PASS",
+      "durationMs": 0.13
+    },
+    {
+      "id": "TC-T2-R4-01",
+      "name": "Invalid Bangladeshi Phone Numbers (Length, Prefix, Alpha)",
+      "tier": 2,
+      "feature": "R4",
+      "status": "PASS",
+      "durationMs": 0.15
+    },
+    {
+      "id": "TC-T2-R4-02",
+      "name": "Phone Number Normalization with Various Formats",
+      "tier": 2,
+      "feature": "R4",
+      "status": "PASS",
+      "durationMs": 0.18
+    },
+    {
+      "id": "TC-T2-R4-03",
+      "name": "Ambiguous Delivery Address Lacking District/City",
+      "tier": 2,
+      "feature": "R4",
+      "status": "PASS",
+      "durationMs": 0.27
+    },
+    {
+      "id": "TC-T2-R4-04",
+      "name": "Sub-Dhaka Boundary Location Detection (Savar, Gazipur, Tongi, Keraniganj)",
+      "tier": 2,
+      "feature": "R4",
+      "status": "PASS",
+      "durationMs": 0.14
+    },
+    {
+      "id": "TC-T2-R4-05",
+      "name": "Bulk / Extreme Quantity Order Sanity Boundary (>50 units)",
+      "tier": 2,
+      "feature": "R4",
+      "status": "PASS",
+      "durationMs": 0.17
+    },
+    {
+      "id": "TC-T2-R4-06",
+      "name": "Coupon Discount Edge Cases & Clamping",
+      "tier": 2,
+      "feature": "R4",
+      "status": "PASS",
+      "durationMs": 0.09
+    },
+    {
+      "id": "TC-T2-R4-07",
+      "name": "Free Shipping Threshold Exact Value Boundaries",
+      "tier": 2,
+      "feature": "R4",
+      "status": "PASS",
+      "durationMs": 0.09
+    },
+    {
+      "id": "TC-T2-R5-01",
+      "name": "Severe Banglish/Bengali Profanity & Legal/Police Threats",
+      "tier": 2,
+      "feature": "R5",
+      "status": "PASS",
+      "durationMs": 0.1
+    },
+    {
+      "id": "TC-T2-R5-02",
+      "name": "Passive-Aggressive Dissatisfaction & Delivery Delay Complaint",
+      "tier": 2,
+      "feature": "R5",
+      "status": "PASS",
+      "durationMs": 0.1
+    },
+    {
+      "id": "TC-T2-R5-03",
+      "name": "Explicit Human Agent Requests Across Dialects",
+      "tier": 2,
+      "feature": "R5",
+      "status": "PASS",
+      "durationMs": 0.1
+    },
+    {
+      "id": "TC-T2-R5-04",
+      "name": "Pre-Reply Interception on Concurrent Human Agent Manual Message",
+      "tier": 2,
+      "feature": "R5",
+      "status": "PASS",
+      "durationMs": 0.1
+    },
+    {
+      "id": "TC-T2-R5-05",
+      "name": "UI Chat Header 'Pause AI' Toggle",
+      "tier": 2,
+      "feature": "R5",
+      "status": "PASS",
+      "durationMs": 0.14
+    },
+    {
+      "id": "TC-T2-R5-06",
+      "name": "UI Chat Header 'Resume AI' Toggle",
+      "tier": 2,
+      "feature": "R5",
+      "status": "PASS",
+      "durationMs": 0.14
+    },
+    {
+      "id": "TC-T2-R5-07",
+      "name": "Repeated Domain Confusion Circuit Breaker",
+      "tier": 2,
+      "feature": "R5",
+      "status": "PASS",
+      "durationMs": 0.14
+    },
+    {
+      "id": "TC-T3-01",
+      "name": "Vision R2 + Banglish R1 + Variable Stockout Fallback R3",
+      "tier": 3,
+      "feature": "CROSS",
+      "status": "PASS",
+      "durationMs": 0.16
+    },
+    {
+      "id": "TC-T3-02",
+      "name": "Vision R2 + Banglish R1 + Outside Dhaka Delivery R4 + Advance Payment Guard R4",
+      "tier": 3,
+      "feature": "CROSS",
+      "status": "PASS",
+      "durationMs": 0.17
+    },
+    {
+      "id": "TC-T3-03",
+      "name": "Banglish R1 + Partial Phone Slot Filling R4 + Ambiguous Address R4 + Coupon R4",
+      "tier": 3,
+      "feature": "CROSS",
+      "status": "PASS",
+      "durationMs": 0.17
+    },
+    {
+      "id": "TC-T3-04",
+      "name": "Mid-Checkout Stockout R3 + Customer Complaint R5 + Agent Interception R5",
+      "tier": 3,
+      "feature": "CROSS",
+      "status": "PASS",
+      "durationMs": 0.24
+    },
+    {
+      "id": "TC-T3-05",
+      "name": "Multimodal Receipt OCR R2 + Outside Dhaka Order Confirmation R4 + bKash TrxID Verification",
+      "tier": 3,
+      "feature": "CROSS",
+      "status": "PASS",
+      "durationMs": 0.26
+    },
+    {
+      "id": "TC-T3-06",
+      "name": "Bengali Script R1 + Multi-Item Cart R3 + Sub-Dhaka Zone R4 + Free Shipping Threshold R4",
+      "tier": 3,
+      "feature": "CROSS",
+      "status": "PASS",
+      "durationMs": 0.19
+    },
+    {
+      "id": "TC-T3-07",
+      "name": "English Corporate Inquiry R1 + Bulk Quantity Sanity R4 + Out-of-Scope Agent Handoff R5",
+      "tier": 3,
+      "feature": "CROSS",
+      "status": "PASS",
+      "durationMs": 0.15
+    },
+    {
+      "id": "TC-T3-08",
+      "name": "Vision R2 + Competitor Catalog Screenshot R2 + Trilingual Fallback R1 + In-Stock Catalog Recommendation R3",
+      "tier": 3,
+      "feature": "CROSS",
+      "status": "PASS",
+      "durationMs": 0.14
+    },
+    {
+      "id": "TC-T4-01",
+      "name": "Scenario 1: Happy Path Social-Commerce Order with Screenshot & Banglish (Inside Dhaka COD)",
+      "tier": 4,
+      "feature": "CROSS",
+      "status": "PASS",
+      "durationMs": 0.17
+    },
+    {
+      "id": "TC-T4-02",
+      "name": "Scenario 2: Out-of-Stock Variant Negotiation & Upsell with Language Mirroring (Bengali Script)",
+      "tier": 4,
+      "feature": "CROSS",
+      "status": "PASS",
+      "durationMs": 0.19
+    },
+    {
+      "id": "TC-T4-03",
+      "name": "Scenario 3: Outside Dhaka Order with Advance Payment Guard & Receipt OCR (Chattogram COD + bKash Advance)",
+      "tier": 4,
+      "feature": "CROSS",
+      "status": "PASS",
+      "durationMs": 0.21
+    },
+    {
+      "id": "TC-T4-04",
+      "name": "Scenario 4: Multi-Item Cart with Sub-Dhaka Zone, Coupon Code, and Slot Clarification",
+      "tier": 4,
+      "feature": "CROSS",
+      "status": "PASS",
+      "durationMs": 0.28
+    },
+    {
+      "id": "TC-T4-05",
+      "name": "Scenario 5: Delivery Delay Complaint Escalation & Human Agent Live Takeover",
+      "tier": 4,
+      "feature": "CROSS",
+      "status": "PASS",
+      "durationMs": 0.16
+    },
+    {
+      "id": "TC-T4-06",
+      "name": "Scenario 6: Ambiguous Address & Invalid Phone Recovery with Bengali/Banglish Code Switching",
+      "tier": 4,
+      "feature": "CROSS",
+      "status": "PASS",
+      "durationMs": 0.2
+    }
+  ]
+}

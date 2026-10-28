@@ -33,5 +33,18 @@ export function buildIncomingMessageMetadata(
     }
   }
 
+  if (payload.isForwarded) {
+    metadata.isForwarded = true;
+  }
+  if (
+    typeof payload.forwardingScore === "number" &&
+    payload.forwardingScore > 0
+  ) {
+    metadata.forwardingScore = payload.forwardingScore;
+    if (payload.forwardingScore >= 5) {
+      metadata.isFrequentlyForwarded = true;
+    }
+  }
+
   return Object.keys(metadata).length > 0 ? metadata : null;
 }

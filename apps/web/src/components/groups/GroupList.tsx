@@ -1,4 +1,4 @@
-import { formatChatListTime } from "@wateaminbox/shared";
+import { formatChatListTime } from "@omniteam/shared";
 import {
   MessageSquare,
   Plus,

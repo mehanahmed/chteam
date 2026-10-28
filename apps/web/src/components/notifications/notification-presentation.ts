@@ -7,7 +7,7 @@
  * behaviour stays directly assertable.
  */
 
-import { dayjs } from "@wateaminbox/shared";
+import { dayjs } from "@omniteam/shared";
 import type { InAppNotification, NotificationType } from "@/lib/api/types";
 
 /** Server-backed views of the list. */

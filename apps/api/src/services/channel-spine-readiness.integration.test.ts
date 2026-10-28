@@ -2,8 +2,8 @@ import { describe, expect, test } from "bun:test";
 import {
   db,
   reconcileChannelSpineConcurrentIndexes,
-} from "@wateaminbox/database";
-import { DEFAULT_SLA_WEEKLY_SCHEDULE } from "@wateaminbox/shared";
+} from "@omniteam/database";
+import { DEFAULT_SLA_WEEKLY_SCHEDULE } from "@omniteam/shared";
 import { sql } from "kysely";
 import { isChannelSpineTenantReady } from "./channel-spine-readiness.service.js";
 import {

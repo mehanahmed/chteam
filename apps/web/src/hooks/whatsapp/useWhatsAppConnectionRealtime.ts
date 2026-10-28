@@ -1,12 +1,12 @@
 import { useEffect, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { nowMs, toDate } from "@wateaminbox/shared";
+import { nowMs, toDate } from "@omniteam/shared";
 import type {
   QRCodePayload,
   WhatsAppConnectedPayload,
   WhatsAppDisconnectedPayload,
   WorkerConnectionStatusPayload,
-} from "@wateaminbox/shared";
+} from "@omniteam/shared";
 import { useRealtimeContext } from "@/contexts";
 import { productAnalytics } from "@/lib/product-analytics";
 import { redirectToBillingForCurrentWorkspace } from "@/lib/api/client";

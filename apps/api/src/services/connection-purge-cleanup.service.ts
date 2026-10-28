@@ -1,5 +1,5 @@
-import { db, type PurgeCleanupKind } from "@wateaminbox/database";
-import { toDbDate } from "@wateaminbox/shared";
+import { db, type PurgeCleanupKind } from "@omniteam/database";
+import { toDbDate } from "@omniteam/shared";
 import { type Kysely, sql, type Transaction } from "kysely";
 import { createLogger, formatError } from "../lib/logger.js";
 import { deleteMedia, resolveMediaKeyForCompany } from "../lib/storage.js";

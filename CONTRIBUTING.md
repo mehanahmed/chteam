@@ -1,6 +1,6 @@
-# Contributing to WATeamInbox
+# Contributing to OmniTeam
 
-Thanks for helping improve WATeamInbox. This project is an open-source beta, so focused bug fixes, documentation improvements, tests, and small, reviewable features are especially welcome.
+Thanks for helping improve OmniTeam. This project is an open-source beta, so focused bug fixes, documentation improvements, tests, and small, reviewable features are especially welcome.
 
 By participating, follow the [Code of Conduct](CODE_OF_CONDUCT.md). Report security issues privately as described in [SECURITY.md](SECURITY.md), not in a public issue.
 

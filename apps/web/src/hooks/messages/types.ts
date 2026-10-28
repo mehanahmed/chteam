@@ -1,4 +1,4 @@
-import type { Message, RemoteHistoryStatus } from "@wateaminbox/shared";
+import type { Message, RemoteHistoryStatus } from "@omniteam/shared";
 
 export interface SendMessageInput {
   contactId: string;

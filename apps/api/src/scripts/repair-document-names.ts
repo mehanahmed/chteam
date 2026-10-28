@@ -16,7 +16,7 @@
  *
  * Usage in production (the image ships only `dist`, so run the bundle):
  *
- *   docker exec wateaminbox-production-api-1 \
+ *   docker exec omniteam-production-api-1 \
  *     bun run apps/api/dist/scripts/repair-document-names.js verify --all
  *
  * Usage in development:
@@ -41,7 +41,7 @@
  *   --limit <n>        Stop after n candidate messages per workspace.
  */
 
-import { db } from "@wateaminbox/database";
+import { db } from "@omniteam/database";
 import { sql } from "kysely";
 import { createLogger, formatError } from "../lib/logger.js";
 import { fileNameFromMediaKey } from "../lib/media-download-name.js";

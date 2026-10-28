@@ -2,7 +2,7 @@
  * Contact analytics
  */
 
-import { dayjs } from "@wateaminbox/shared";
+import { dayjs } from "@omniteam/shared";
 import { sql } from "kysely";
 import { getTenantConnection } from "../tenant.service.js";
 import type { ContactStats, NewContactsTrend } from "./types.js";

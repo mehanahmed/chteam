@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import type { MessageReaction } from "@wateaminbox/shared";
+import type { MessageReaction } from "@omniteam/shared";
 import {
   getReactionMutationEmoji,
   reconcileOwnReaction,

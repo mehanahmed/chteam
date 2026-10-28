@@ -1,8 +1,8 @@
-import { db } from "@wateaminbox/database";
+import { db } from "@omniteam/database";
 import {
   assertNormalizedChannelEvent,
   type NormalizedChannelEvent,
-} from "@wateaminbox/shared";
+} from "@omniteam/shared";
 import { applyNormalizedChannelEvent } from "../channel-spine/application/event-processor.js";
 import { createLogger, formatError } from "../lib/logger.js";
 import {

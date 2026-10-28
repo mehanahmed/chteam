@@ -1,4 +1,4 @@
-import type { WhatsAppConnectionIdentity } from "@wateaminbox/shared";
+import type { WhatsAppConnectionIdentity } from "@omniteam/shared";
 import { Radio, Smartphone } from "lucide-react";
 import { cn, formatPhoneLikeText } from "@/lib/utils";
 

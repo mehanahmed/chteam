@@ -192,3 +192,8 @@ export interface RequestHistoryCommand extends NatsCommand {
   oldest_timestamp: string;
   count: number;
 }
+
+export interface MarkChatReadCommand extends NatsCommand {
+  type: "mark_chat_read";
+  jid: string;
+}

@@ -1,4 +1,4 @@
-import type { TenantDatabase } from "@wateaminbox/database";
+import type { TenantDatabase } from "@omniteam/database";
 import { createCipheriv, createDecipheriv, randomBytes } from "node:crypto";
 import type { Kysely } from "kysely";
 import { env } from "../lib/env.js";

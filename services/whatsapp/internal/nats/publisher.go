@@ -422,6 +422,8 @@ func (p *Publisher) PublishMessage(msg MessageEvent) error {
 			MediaFileSHA256:    msg.MediaFileSHA256,
 			MediaFileEncSHA256: msg.MediaFileEncSHA256,
 			IsHistorySync:      msg.IsHistorySync,
+			IsForwarded:        msg.IsForwarded,
+			ForwardingScore:    msg.ForwardingScore,
 		},
 		Timestamp: time.Now().Format(time.RFC3339),
 	}

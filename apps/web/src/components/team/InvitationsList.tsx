@@ -6,7 +6,7 @@ import {
   SelectItem,
 } from "@/components/ui/select";
 import type { ColumnDef, PaginationState } from "@tanstack/react-table";
-import { dayjs, nowMs, type CompanyInvitation } from "@wateaminbox/shared";
+import { dayjs, nowMs, type CompanyInvitation } from "@omniteam/shared";
 import { Clock, Mail, RefreshCw, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import {

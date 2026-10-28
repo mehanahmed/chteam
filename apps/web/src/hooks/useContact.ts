@@ -21,6 +21,7 @@ export {
   useUpdateContact,
   useCreateContact,
   useBlockContact,
+  useArchiveContact,
   type ContactDetail,
   type CreateContactInput,
   type CreateContactResponse,

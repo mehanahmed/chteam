@@ -2,7 +2,7 @@
  * Reaction and message revoke event handlers
  */
 
-import { toDbDate } from "@wateaminbox/shared";
+import { toDbDate } from "@omniteam/shared";
 import { formatError } from "../../lib/logger.js";
 import { loadMessageReactions } from "../../lib/message-reactions.js";
 import type {
@@ -79,7 +79,7 @@ export async function handleReactionEvent(event: ReactionEvent): Promise<void> {
     }
 
     const reactionDetails = payload.emoji
-      ? (await loadMessageReactions(tenantDb, [message]))
+      ? (await loadMessageReactions(tenantDb, [message], companyId))
           .get(message.id)
           ?.find((reaction) => reaction.reactorJid === payload.from)
       : undefined;

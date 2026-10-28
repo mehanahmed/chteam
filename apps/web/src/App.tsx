@@ -10,19 +10,12 @@ import {
   ProtectedRoute,
   WorkspaceRouteGuard,
 } from "./components/auth";
-import { FeedbackWidget } from "./components/feedback";
+import { GlassAuthShell } from "./components/auth/GlassAuthShell";
 import { ProtectedAppLayout } from "./components/layout/ProtectedAppLayout";
 import { KeyboardShortcutsModal } from "./components/settings";
 import { PageSkeleton, type PageSkeletonVariant } from "./components/ui";
-import { OnboardingLoadingScreen } from "./components/ui/onboarding-state";
+import { LoginPage } from "./pages/LoginPage";
 import { WorkspaceChooserPage } from "./pages/WorkspaceChooserPage";
-
-const LoginPage = lazy(() =>
-  import("./pages/LoginPage").then((m) => ({ default: m.LoginPage })),
-);
-const RegisterPage = lazy(() =>
-  import("./pages/RegisterPage").then((m) => ({ default: m.RegisterPage })),
-);
 const ForgotPasswordPage = lazy(() =>
   import("./pages/ForgotPasswordPage").then((m) => ({
     default: m.ForgotPasswordPage,
@@ -77,6 +70,16 @@ const AcceptInvitationPage = lazy(() =>
   })),
 );
 
+function AuthFallback() {
+  return (
+    <GlassAuthShell>
+      <div className="w-full max-w-[460px] rounded-3xl border border-white/60 dark:border-white/10 bg-white/70 dark:bg-[#111b21]/75 backdrop-blur-xl shadow-2xl p-16 flex flex-col items-center justify-center">
+        <div className="h-10 w-10 animate-spin rounded-full border-4 border-[#075e54]/20 border-t-[#25d366]" />
+      </div>
+    </GlassAuthShell>
+  );
+}
+
 function LazyPage({
   children,
   variant = "default",
@@ -88,7 +91,7 @@ function LazyPage({
     <Suspense
       fallback={
         variant === "auth" ? (
-          <OnboardingLoadingScreen />
+          <AuthFallback />
         ) : (
           <PageSkeleton variant={variant} />
         )
@@ -105,19 +108,11 @@ function App() {
       <Routes>
         <Route
           path="/login"
-          element={
-            <LazyPage variant="auth">
-              <LoginPage />
-            </LazyPage>
-          }
+          element={<LoginPage />}
         />
         <Route
           path="/register"
-          element={
-            <LazyPage variant="auth">
-              <RegisterPage />
-            </LazyPage>
-          }
+          element={<Navigate to="/login" replace />}
         />
         <Route
           path="/forgot-password"
@@ -265,6 +260,10 @@ function App() {
                 </LazyPage>
               }
             />
+            <Route
+              path="inbox-appearance"
+              element={<Navigate to="settings/inbox-appearance" replace />}
+            />
             <Route index element={<Navigate to="chat" replace />} />
             <Route path="*" element={<Navigate to="chat" replace />} />
           </Route>
@@ -280,6 +279,7 @@ function App() {
           "/team",
           "/audit",
           "/notifications",
+          "/inbox-appearance",
         ].map((path) => (
           <Route
             key={path}
@@ -306,7 +306,6 @@ function App() {
       <AnalyticsRouteTracker />
       <AnalyticsConsent />
       <KeyboardShortcutsModal />
-      <FeedbackWidget />
       <Toaster position="top-right" richColors />
     </>
   );

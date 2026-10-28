@@ -7,7 +7,7 @@ import {
   EMPTY_SELECT_VALUE,
 } from "@/components/ui/select";
 import type { ColumnDef, PaginationState } from "@tanstack/react-table";
-import { dayjs } from "@wateaminbox/shared";
+import { dayjs } from "@omniteam/shared";
 import {
   Activity,
   ChevronRight,

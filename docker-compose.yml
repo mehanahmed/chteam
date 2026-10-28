@@ -147,6 +147,33 @@ services:
     profiles:
       - debug
 
+  orchestrator:
+    image: wateaminbox-dev-orchestrator:latest
+    container_name: wateaminbox-orchestrator
+    environment:
+      NATS_URL: nats://service:development_service_nats_0123456789abcdef@nats:4222
+      WORKER_NATS_URL: nats://worker:development_worker_nats_0123456789abcdef@nats:4222
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/wateaminbox?sslmode=disable
+      WORKER_DATABASE_URL: postgresql://wateaminbox_worker:development_worker_password_0123456789abcdef@postgres:5432/wateaminbox?sslmode=disable
+      ORCHESTRATOR_NODE_ID: dev-node-1
+      WHATSAPP_BINARY_PATH: /usr/local/bin/whatsapp-worker
+      ORCHESTRATOR_ROOT_MANAGER_APPROVED: "true"
+      AUTO_RESTART_ENABLED: "true"
+      LOG_LEVEL: debug
+      S3_ENDPOINT: http://minio:9000
+      S3_BUCKET: whatsapp-media
+      S3_ACCESS_KEY: minioadmin
+      S3_SECRET_KEY: minioadmin
+      S3_FORCE_PATH_STYLE: "true"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      nats:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    restart: unless-stopped
+
 volumes:
   wateaminbox_postgres_data:
     name: wateaminbox_postgres_data

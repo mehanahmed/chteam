@@ -1,6 +1,6 @@
 # Realtime Architecture
 
-WATeamInbox uses self-hosted Centrifugo for server-to-browser realtime events. Centrifugo uses the existing NATS server as its horizontal PUB/SUB broker.
+OmniTeam uses self-hosted Centrifugo for server-to-browser realtime events. Centrifugo uses the existing NATS server as its horizontal PUB/SUB broker.
 
 ## Authentication and channel isolation
 

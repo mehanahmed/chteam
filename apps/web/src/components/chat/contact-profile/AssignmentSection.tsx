@@ -1,4 +1,4 @@
-import { formatShortDate } from "@wateaminbox/shared";
+import { formatShortDate } from "@omniteam/shared";
 import { Loader2, UserPlus, Users } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";

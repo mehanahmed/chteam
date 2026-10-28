@@ -12,7 +12,8 @@ import { useTranslation } from "react-i18next";
 export const SIDEBAR_MIN_WIDTH = 280;
 export const SIDEBAR_DEFAULT_WIDTH = 400;
 export const SIDEBAR_MAX_WIDTH = 640;
-const SIDEBAR_STORAGE_KEY = "wateaminbox:chat-sidebar-width";
+const SIDEBAR_STORAGE_KEY = "omniteam:chat-sidebar-width";
+const LEGACY_SIDEBAR_STORAGE_KEY = "wateaminbox:chat-sidebar-width";
 
 export function getSidebarMaxWidth(viewportWidth: number): number {
   return Math.max(
@@ -41,7 +42,9 @@ function getInitialWidth(): number {
   if (typeof window === "undefined") return SIDEBAR_DEFAULT_WIDTH;
 
   const storedWidth = Number.parseInt(
-    window.localStorage.getItem(SIDEBAR_STORAGE_KEY) ?? "",
+    window.localStorage.getItem(SIDEBAR_STORAGE_KEY) ??
+      window.localStorage.getItem(LEGACY_SIDEBAR_STORAGE_KEY) ??
+      "",
     10,
   );
   return clampSidebarWidth(

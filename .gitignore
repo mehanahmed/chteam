@@ -90,3 +90,4 @@ bun.lockb
 .loop/
 .worktrees/
 tasks.md
+.agents/

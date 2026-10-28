@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { formatChatListTime } from "@wateaminbox/shared";
+import { formatChatListTime } from "@omniteam/shared";
 
 describe("chat list timestamps", () => {
   test("includes the year for conversations from a previous year", () => {

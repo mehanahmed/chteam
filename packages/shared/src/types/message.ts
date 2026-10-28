@@ -174,6 +174,10 @@ export interface MessageMetadata {
       label?: string;
     }>;
   }>;
+  // Forwarded metadata
+  isForwarded?: boolean;
+  forwardingScore?: number;
+  isFrequentlyForwarded?: boolean;
   // Deferred media download fields
   mediaPending?: boolean; // True if media needs to be downloaded on-demand
   mediaDownloadStatus?: MediaDownloadStatus;

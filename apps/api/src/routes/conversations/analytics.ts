@@ -1,6 +1,6 @@
 import { zValidator } from "../../lib/validator.js";
-import { db } from "@wateaminbox/database";
-import { now, parseDate, subtractDays, toISOString } from "@wateaminbox/shared";
+import { db } from "@omniteam/database";
+import { now, parseDate, subtractDays, toISOString } from "@omniteam/shared";
 import { Hono } from "hono";
 import { successData } from "../../lib/response.js";
 import { resolutionTrendQuerySchema } from "../../lib/schemas/index.js";

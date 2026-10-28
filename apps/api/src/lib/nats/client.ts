@@ -3,7 +3,7 @@
  * Connection management and operations for NATS/JetStream
  */
 
-import { nowMs } from "@wateaminbox/shared";
+import { nowMs } from "@omniteam/shared";
 import {
   type ConsumerOptsBuilder,
   consumerOpts,
@@ -881,6 +881,36 @@ export async function publishTypingCommand(
     );
   } catch (error) {
     logger.error(formatError(error), "Failed to publish typing command");
+    // Fire-and-forget: don't throw, just log the error
+  }
+}
+
+/**
+ * Publishes a mark-as-read command to WhatsApp service to sync app state (Syncd)
+ * and clear the unread badge on the WhatsApp phone app.
+ * Fire-and-forget: errors are logged but don't fail the request.
+ */
+export async function publishMarkChatReadCommand(
+  companyId: string,
+  connectionId: string,
+  jid: string,
+): Promise<void> {
+  try {
+    const command = {
+      type: "mark_chat_read",
+      jid,
+    };
+
+    const js = await getJetStreamClient();
+    const subject = buildCommandSubject(companyId, connectionId);
+    const data = jc.encode(command);
+    await js.publish(subject, data);
+    logger.debug(
+      { companyId, connectionId, jid },
+      "Published mark_chat_read command",
+    );
+  } catch (error) {
+    logger.error(formatError(error), "Failed to publish mark_chat_read command");
     // Fire-and-forget: don't throw, just log the error
   }
 }

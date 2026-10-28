@@ -1,5 +1,5 @@
-import type { TenantDatabase } from "@wateaminbox/database";
-import type { NormalizedChannelEvent } from "@wateaminbox/shared";
+import type { TenantDatabase } from "@omniteam/database";
+import type { NormalizedChannelEvent } from "@omniteam/shared";
 import type { Kysely } from "kysely";
 
 export type LinkedDeviceShadowMismatch =

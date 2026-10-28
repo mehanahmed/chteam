@@ -2,7 +2,7 @@ import { expect, test } from "bun:test";
 import {
   db,
   reconcileChannelSpineConcurrentIndexes,
-} from "@wateaminbox/database";
+} from "@omniteam/database";
 import { sql } from "kysely";
 import {
   dispatchNextChannelOutbound,

@@ -1,4 +1,4 @@
-import type { Message } from "@wateaminbox/shared";
+import type { Message } from "@omniteam/shared";
 import type { TFunction } from "i18next";
 import { useTranslation } from "react-i18next";
 

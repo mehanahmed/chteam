@@ -1,5 +1,5 @@
-import type { Message } from "@wateaminbox/shared";
-import { nowMs, toDbDate } from "@wateaminbox/shared";
+import type { Message } from "@omniteam/shared";
+import { nowMs, toDbDate } from "@omniteam/shared";
 import type { InfiniteMessagesData, SendMessageInput } from "./types";
 
 /**

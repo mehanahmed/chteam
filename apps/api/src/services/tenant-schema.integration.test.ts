@@ -3,7 +3,7 @@ import {
   db,
   reconcileTenantSchema,
   TENANT_SCHEMA_CONTRACT,
-} from "@wateaminbox/database";
+} from "@omniteam/database";
 import { sql } from "kysely";
 import {
   createTenantSchema,

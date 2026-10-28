@@ -1,9 +1,32 @@
 #!/bin/sh
 set -eu
 
-artifact_source=${WORKER_ARTIFACT_SOURCE:-/opt/wateaminbox/worker/whatsapp-worker}
-checksum_source=${WORKER_ARTIFACT_SHA256_FILE:-/opt/wateaminbox/worker/whatsapp-worker.sha256}
-artifact_root=${WORKER_ARTIFACT_ROOT:-/var/lib/wateaminbox/worker-artifacts}
+artifact_source=${WORKER_ARTIFACT_SOURCE:-}
+if [ -z "$artifact_source" ]; then
+  if [ -f "/opt/omniteam/worker/whatsapp-worker" ]; then
+    artifact_source="/opt/omniteam/worker/whatsapp-worker"
+  else
+    artifact_source="/opt/wateaminbox/worker/whatsapp-worker"
+  fi
+fi
+
+checksum_source=${WORKER_ARTIFACT_SHA256_FILE:-}
+if [ -z "$checksum_source" ]; then
+  if [ -f "/opt/omniteam/worker/whatsapp-worker.sha256" ]; then
+    checksum_source="/opt/omniteam/worker/whatsapp-worker.sha256"
+  else
+    checksum_source="/opt/wateaminbox/worker/whatsapp-worker.sha256"
+  fi
+fi
+
+artifact_root=${WORKER_ARTIFACT_ROOT:-}
+if [ -z "$artifact_root" ]; then
+  if [ -d "/var/lib/wateaminbox/worker-artifacts" ] && [ ! -d "/var/lib/omniteam/worker-artifacts" ]; then
+    artifact_root="/var/lib/wateaminbox/worker-artifacts"
+  else
+    artifact_root="/var/lib/omniteam/worker-artifacts"
+  fi
+fi
 version=${WORKER_ARTIFACT_VERSION:-}
 
 fail() {

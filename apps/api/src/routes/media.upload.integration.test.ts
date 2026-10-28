@@ -16,7 +16,7 @@
  * rejection path returns before `uploadMedia` runs, so no S3 writes occur.
  */
 import { describe, expect, test } from "bun:test";
-import { db } from "@wateaminbox/database";
+import { db } from "@omniteam/database";
 import { app } from "../app.js";
 import { MAX_FILE_SIZE, MAX_UPLOAD_BODY_SIZE } from "../config/media.config.js";
 import { hashPassword } from "../lib/password.js";

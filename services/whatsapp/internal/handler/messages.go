@@ -99,6 +99,24 @@ func getQuotedMessageID(message *waE2E.Message) string {
 	return ""
 }
 
+// isMessageForwarded determines if a message was forwarded on WhatsApp, and its forwarding score.
+func isMessageForwarded(message *waE2E.Message) (bool, uint32) {
+	if message == nil {
+		return false, 0
+	}
+	carriers := messageContextCarriers(message)
+	for _, carrier := range carriers {
+		if carrier != nil {
+			if contextInfo := carrier.GetContextInfo(); contextInfo != nil {
+				if contextInfo.GetIsForwarded() || contextInfo.GetForwardingScore() > 0 {
+					return true, contextInfo.GetForwardingScore()
+				}
+			}
+		}
+	}
+	return false, 0
+}
+
 func contactCardPayloads(contacts []*waE2E.ContactMessage) []natsClient.ContactCardPayload {
 	const maxContactCards = 20
 	cards := make([]natsClient.ContactCardPayload, 0, min(len(contacts), maxContactCards))
@@ -173,6 +191,10 @@ func (h *Handler) handleMessage(msg *events.Message) error {
 
 	msgEvent.QuotedMessageID = getQuotedMessageID(msg.Message)
 	msgEvent.GroupMentions = getGroupMentions(msg.Message)
+	if isFwd, score := isMessageForwarded(msg.Message); isFwd {
+		msgEvent.IsForwarded = true
+		msgEvent.ForwardingScore = score
+	}
 	h.applyMediaAlbumMetadata(chatJID.String(), msg.Message, &msgEvent)
 
 	// Text message

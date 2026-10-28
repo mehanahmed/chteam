@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { db } from "@wateaminbox/database";
+import { db } from "@omniteam/database";
 import type {
   Channel,
   ChannelProvider,
@@ -7,8 +7,8 @@ import type {
   OutboundMessageIntent,
   ProviderActionResult,
   ProviderSendResult,
-} from "@wateaminbox/shared";
-import { isChannel, isChannelProvider } from "@wateaminbox/shared";
+} from "@omniteam/shared";
+import { isChannel, isChannelProvider } from "@omniteam/shared";
 import type { Transaction } from "kysely";
 import { sql } from "kysely";
 import { resolveAdapterCapabilities } from "../channel-spine/application/adapter-registry.js";

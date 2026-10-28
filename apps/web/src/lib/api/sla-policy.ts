@@ -3,7 +3,7 @@
  * Versioned company SLA response-target policy management.
  */
 
-import type { CreateSlaPolicyInput, SlaPolicy } from "@wateaminbox/shared";
+import type { CreateSlaPolicyInput, SlaPolicy } from "@omniteam/shared";
 import { api } from "./client";
 
 export async function getCurrentSlaPolicy(

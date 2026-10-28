@@ -5,8 +5,8 @@
  * Supports multiple connections per company with configurable limits.
  */
 
-import { db, type WhatsAppConnectionStatus } from "@wateaminbox/database";
-import { toDbDate } from "@wateaminbox/shared";
+import { db, type WhatsAppConnectionStatus } from "@omniteam/database";
+import { toDbDate } from "@omniteam/shared";
 import { type Kysely, sql, type Transaction } from "kysely";
 import {
   ConnectionNotArchivedError,

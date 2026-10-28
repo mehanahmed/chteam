@@ -1,4 +1,4 @@
-import { db } from "@wateaminbox/database";
+import { db } from "@omniteam/database";
 import { type Kysely, sql } from "kysely";
 import { renderConnectionAlertEmail } from "../lib/connection-alert-email.js";
 import {

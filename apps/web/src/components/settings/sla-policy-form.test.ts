@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 import type {
   SlaScheduleException,
   SlaWeeklyScheduleDay,
-} from "@wateaminbox/shared";
+} from "@omniteam/shared";
 import {
   daysToScheduleInput,
   exceptionsToInput,

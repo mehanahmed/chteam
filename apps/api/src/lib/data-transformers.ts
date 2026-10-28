@@ -9,7 +9,7 @@ import {
   extractPhoneFromJid,
   getContactDisplayName,
   getContactName,
-} from "@wateaminbox/shared";
+} from "@omniteam/shared";
 
 // ============================================================================
 // Contact Types
@@ -28,6 +28,8 @@ export interface RawContactFromDb {
   custom_name: string | null;
   is_group: boolean;
   is_blocked?: boolean;
+  is_archived?: boolean | null;
+  archived_at?: Date | string | null;
   profile_picture_url: string | null;
   notes_shared: string | null;
   last_message_at: Date | string | null;
@@ -81,6 +83,8 @@ export interface TransformedContact {
   name: string;
   isGroup: boolean;
   isBlocked: boolean;
+  isArchived: boolean;
+  archivedAt: Date | string | null;
   profilePictureUrl: string | null;
   notesShared: string | null;
   lastMessageAt: Date | string | null;
@@ -178,6 +182,8 @@ export function transformContact(
     name: getContactName(contact) ?? getContactDisplayName(contact),
     isGroup: contact.is_group,
     isBlocked: contact.is_blocked ?? false,
+    isArchived: Boolean(contact.is_archived || contact.archived_at),
+    archivedAt: contact.archived_at ?? null,
     profilePictureUrl: contact.profile_picture_url,
     notesShared: contact.notes_shared,
     lastMessageAt: contact.last_message_at,

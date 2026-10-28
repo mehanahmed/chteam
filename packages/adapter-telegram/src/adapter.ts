@@ -8,7 +8,7 @@ import type {
   ProviderIngress,
   ProviderSendResult,
   ResolvedCapabilities,
-} from "@wateaminbox/shared";
+} from "@omniteam/shared";
 import { normalizeTelegramUpdate } from "./normalize.js";
 
 const SECRET_HEADER = "x-telegram-bot-api-secret-token";

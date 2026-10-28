@@ -10,11 +10,11 @@
  */
 
 import { createHash, randomBytes, timingSafeEqual } from "node:crypto";
-import { db } from "@wateaminbox/database";
-import type { Database } from "@wateaminbox/database";
+import { db } from "@omniteam/database";
+import type { Database } from "@omniteam/database";
 import type { Transaction } from "kysely";
-import type { ApiTokenScope } from "@wateaminbox/database";
-import { toDbDate } from "@wateaminbox/shared";
+import type { ApiTokenScope } from "@omniteam/database";
+import { toDbDate } from "@omniteam/shared";
 import { API_TOKEN_PREFIX } from "./api-token.service.js";
 
 /** Long enough to survive a slow consent screen, short enough to be useless if leaked. */

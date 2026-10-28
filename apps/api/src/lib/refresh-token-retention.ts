@@ -1,4 +1,4 @@
-import type { RetiredRefreshToken } from "@wateaminbox/database";
+import type { RetiredRefreshToken } from "@omniteam/database";
 
 /**
  * Per-session retention of just-superseded refresh-token hashes.

@@ -73,14 +73,14 @@ describe("the Grok client id", () => {
     // A hardcoded production URL would hand a self-hosted or local deployment
     // an id pointing at someone else's server.
     expect(source).toMatch(/mcpUrl\.replace\(/);
-    expect(source).not.toContain("https://app.wateaminbox.com/api/oauth");
+    expect(source).not.toContain("https://app.omniteam.com/api/oauth");
   });
 
   test("the derivation produces the document URL", () => {
     const derive = (mcpUrl: string) =>
       mcpUrl.replace(/\/mcp$/, "/oauth/clients/grok.json");
-    expect(derive("https://app.wateaminbox.com/api/mcp")).toBe(
-      "https://app.wateaminbox.com/api/oauth/clients/grok.json",
+    expect(derive("https://app.omniteam.com/api/mcp")).toBe(
+      "https://app.omniteam.com/api/oauth/clients/grok.json",
     );
     expect(derive("http://localhost:4445/api/mcp")).toBe(
       "http://localhost:4445/api/oauth/clients/grok.json",

@@ -22,8 +22,8 @@ import type { LookupAddress } from "node:dns";
 import { lookup } from "node:dns/promises";
 import { request as httpsRequest } from "node:https";
 import { isIP } from "node:net";
-import { db } from "@wateaminbox/database";
-import { toDbDate } from "@wateaminbox/shared";
+import { db } from "@omniteam/database";
+import { toDbDate } from "@omniteam/shared";
 
 /** Vendors time discovery out at 10s; stay well inside that. */
 const FETCH_TIMEOUT_MS = 5_000;

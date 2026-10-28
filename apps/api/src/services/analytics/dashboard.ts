@@ -2,8 +2,8 @@
  * Dashboard analytics
  */
 
-import { db } from "@wateaminbox/database";
-import { startOfDay } from "@wateaminbox/shared";
+import { db } from "@omniteam/database";
+import { startOfDay } from "@omniteam/shared";
 import { getTenantConnection } from "../tenant.service.js";
 import type { DashboardStats } from "./types.js";
 

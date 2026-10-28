@@ -1,4 +1,4 @@
-import { toISOString } from "@wateaminbox/shared";
+import { toISOString } from "@omniteam/shared";
 import { Hono } from "hono";
 import { rateLimitConfig, rateLimitStore } from "../lib/rate-limit-store.js";
 import { successData } from "../lib/response.js";

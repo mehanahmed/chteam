@@ -3,7 +3,7 @@ import type {
   OutboundMessageIntent,
   ProviderActionResult,
   ProviderSendResult,
-} from "@wateaminbox/shared";
+} from "@omniteam/shared";
 import { buildOutboundMediaColumns } from "../../../lib/message-formatters.js";
 import {
   buildCommandSubject,

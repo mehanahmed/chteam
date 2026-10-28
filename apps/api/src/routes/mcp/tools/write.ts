@@ -4,7 +4,7 @@ import {
   isChannel,
   isChannelProvider,
   toDbDate,
-} from "@wateaminbox/shared";
+} from "@omniteam/shared";
 import { createHash } from "node:crypto";
 import type { Context } from "hono";
 import { z } from "zod";

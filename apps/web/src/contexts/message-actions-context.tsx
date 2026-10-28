@@ -1,4 +1,4 @@
-import type { Message, ResolvedCapabilities } from "@wateaminbox/shared";
+import type { Message, ResolvedCapabilities } from "@omniteam/shared";
 import { createContext, type ReactNode, useContext, useMemo } from "react";
 
 export type SharedContactCard = NonNullable<

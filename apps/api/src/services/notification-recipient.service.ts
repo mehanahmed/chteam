@@ -1,5 +1,5 @@
-import { db } from "@wateaminbox/database";
-import { normalizeJid } from "@wateaminbox/shared";
+import { db } from "@omniteam/database";
+import { normalizeJid } from "@omniteam/shared";
 import { isMuteUuid } from "./notification-preferences.service.js";
 import {
   getEffectivePermissions,

@@ -26,6 +26,8 @@ export interface ContactFilterOptions {
   conversationStatus?: "open" | "pending" | "resolved" | "all";
   /** Filter to conversations with unread messages. */
   unreadOnly?: boolean;
+  /** Filter by archive status. If true, only archived contacts are returned; otherwise only unarchived. */
+  archived?: boolean;
   /** Schema-qualified contacts table used by raw tenant SQL. */
   contactsTable?: RawBuilder<unknown>;
   /** Schema-qualified contact_assignments table used by raw tenant SQL. */
@@ -227,6 +229,11 @@ export function buildContactWhereClause(options: ContactFilterOptions): {
   // switcher rather than as separate entries. Their threads are untouched -
   // a merge never moves a conversation.
   conditions.push(sql`c.merged_into_contact_id IS NULL`);
+  if (options.archived === true) {
+    conditions.push(sql`c.archived_at IS NOT NULL`);
+  } else {
+    conditions.push(sql`c.archived_at IS NULL`);
+  }
   if (search) conditions.push(buildSearchClause(search));
   if (!includeGroups) conditions.push(buildGroupClause(includeGroups));
   if (connectionId) {

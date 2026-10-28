@@ -7,6 +7,7 @@ import (
 	"hash/fnv"
 	"log"
 	"net/url"
+	"os"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -151,7 +152,15 @@ func New(cfg Config) *Manager {
 		cfg.AllowanceCheckInterval = 60 * time.Second
 	}
 	if cfg.ArtifactRoot == "" {
-		cfg.ArtifactRoot = defaultArtifactRoot
+		if _, err := os.Stat(legacyArtifactRoot); err == nil {
+			if _, omniErr := os.Stat(defaultArtifactRoot); omniErr != nil {
+				cfg.ArtifactRoot = legacyArtifactRoot
+			} else {
+				cfg.ArtifactRoot = defaultArtifactRoot
+			}
+		} else {
+			cfg.ArtifactRoot = defaultArtifactRoot
+		}
 	}
 	if cfg.DefaultArtifactVersion == "" {
 		cfg.DefaultArtifactVersion = defaultArtifactVersion

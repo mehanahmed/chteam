@@ -7,8 +7,8 @@
  *
  * Do NOT refactor these to use response helpers like `successData()`.
  */
-import { db } from "@wateaminbox/database";
-import { toISOString } from "@wateaminbox/shared";
+import { db } from "@omniteam/database";
+import { toISOString } from "@omniteam/shared";
 import { Hono } from "hono";
 import { sql } from "kysely";
 import { env } from "../lib/env.js";

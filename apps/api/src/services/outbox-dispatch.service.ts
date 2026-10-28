@@ -1,4 +1,4 @@
-import { db } from "@wateaminbox/database";
+import { db } from "@omniteam/database";
 import { sql } from "kysely";
 import { getSchemaName, getTenantConnection } from "./tenant.service.js";
 

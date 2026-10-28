@@ -1,8 +1,8 @@
 {
-  "name": "@wateaminbox/database",
+  "name": "@omniteam/database",
   "version": "0.0.1",
   "private": true,
-  "description": "Database client and migrations for wateaminbox",
+  "description": "Database client and migrations for omniteam",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
@@ -20,7 +20,7 @@
     "db:generate": "bunx kysely-codegen --out-file ./src/types/database.ts"
   },
   "dependencies": {
-    "@wateaminbox/shared": "workspace:*",
+    "@omniteam/shared": "workspace:*",
     "kysely": "^0.28.17",
     "pg": "^8.23.0"
   },

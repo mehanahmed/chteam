@@ -3,7 +3,7 @@ import {
   REMOTE_HISTORY_RESPONSE_TIMEOUT_MS,
   type Message,
   type PaginatedMessages,
-} from "@wateaminbox/shared";
+} from "@omniteam/shared";
 import { describe, expect, test } from "bun:test";
 import {
   appendRemoteHistoryPage,

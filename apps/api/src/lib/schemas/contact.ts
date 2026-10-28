@@ -28,6 +28,7 @@ export const updateContactSchema = z.object({
   customName: z.string().max(255).nullish(),
   notesShared: z.string().nullish(),
   isBlocked: z.boolean().optional(),
+  isArchived: z.boolean().optional(),
 });
 
 export type UpdateContactInput = z.infer<typeof updateContactSchema>;
@@ -63,6 +64,10 @@ export const listContactsQuerySchema = paginationSchema.extend({
     .optional()
     .transform((val) => val === "true"),
   unassigned: z
+    .string()
+    .optional()
+    .transform((val) => val === "true"),
+  archived: z
     .string()
     .optional()
     .transform((val) => val === "true"),

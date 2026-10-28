@@ -7,7 +7,7 @@
  */
 
 import { channelDisplayName } from "@/components/connections/channel-catalog";
-import { toDate } from "@wateaminbox/shared";
+import { toDate } from "@omniteam/shared";
 import type {
   Chat,
   ConversationLifecycleStatus,
@@ -27,6 +27,8 @@ export interface ContactApiResponse {
   customName: string | null;
   displayName: string;
   isGroup: boolean;
+  isArchived?: boolean;
+  archivedAt?: string | null;
   profilePictureUrl: string | null;
   notesShared: string | null;
   lastMessageAt: string | null;
@@ -135,7 +137,7 @@ export function transformContactToChat(contact: ContactApiResponse): Chat {
     assignedTo: contact.assignedTo || undefined,
     isPinned: false,
     isMuted: false,
-    isArchived: false,
+    isArchived: Boolean(contact.isArchived || contact.archivedAt),
     // The chat list is sorted by updatedAt. Use the latest message time as the
     // sort key so a sync that refreshes contact rows does not reorder chats
     // away from their actual most-recent activity.
@@ -174,6 +176,8 @@ export function transformChannelConversationToChat(conversation: {
     addressDisplay: string | null;
     avatarUrl: string | null;
   } | null;
+  isArchived?: boolean;
+  archivedAt?: string | null;
 }): Chat {
   // The server resolves a direct conversation's name from its counterpart's
   // endpoint when the provider gave no subject. The channel's brand name is a
@@ -210,7 +214,7 @@ export function transformChannelConversationToChat(conversation: {
     unreadCount: conversation.unreadCount,
     isPinned: false,
     isMuted: false,
-    isArchived: false,
+    isArchived: Boolean(conversation.isArchived || conversation.archivedAt),
     updatedAt: toDate(conversation.lastMessageAt) ?? new Date(),
     conversationStatus: conversation.conversationStatus,
     activeCaseId: null,

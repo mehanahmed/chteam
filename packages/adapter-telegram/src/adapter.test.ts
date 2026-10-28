@@ -1,5 +1,5 @@
 import { describe, expect, mock, test } from "bun:test";
-import type { ProviderIngress } from "@wateaminbox/shared";
+import type { ProviderIngress } from "@omniteam/shared";
 import {
   TelegramBotAdapter,
   TelegramIngressVerificationError,

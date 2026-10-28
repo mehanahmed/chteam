@@ -28,6 +28,7 @@ import { oauthRoutes } from "./oauth.js";
 import { mcpRoutes } from "./mcp/index.js";
 import { channelAccountRoutes } from "./channel-accounts.js";
 import { channelIngressRoutes } from "./channel-ingress.js";
+import { aiAgentRoutes } from "./ai-agent.routes.js";
 
 export const routes = new Hono();
 
@@ -116,10 +117,13 @@ routes.route("/realtime", realtimeRoutes);
 // Client action routes (REST endpoints for real-time actions)
 routes.route("/actions", actionsRoutes);
 
+// AI Agent routes (pause, resume, status)
+routes.route("/ai-agent", aiAgentRoutes);
+
 // API v1 routes
 routes.get("/", (c) => {
   return c.json({
-    name: "@wateaminbox/api",
+    name: "@omniteam/api",
     version: "0.1.0",
   });
 });
@@ -135,7 +139,7 @@ routes.get("/", (c) => {
  * ```typescript
  * // In frontend client
  * import { hc } from 'hono/client'
- * import type { AppType } from '@wateaminbox/api'
+ * import type { AppType } from '@omniteam/api'
  *
  * const client = hc<AppType>('http://localhost:4445/api')
  * ```

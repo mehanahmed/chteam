@@ -1977,5 +1977,119 @@ func (c *Client) sendCommandMessageWithID(ctx context.Context, to waTypes.JID, m
 	if err != nil && operation.ID != "" {
 		return response, &types.UnknownSendOutcome{Err: err}
 	}
+	if err == nil {
+		c.markChatReadOnSend(to, response.Timestamp, msg)
+	}
 	return response, err
+}
+
+// markChatReadOnSend syncs the read status to WhatsApp when an outbound message is sent.
+// This clears the unread badge on the WhatsApp phone app via AppState (Syncd)
+// and sends a MarkRead receipt if replying to a specific message.
+func (c *Client) markChatReadOnSend(to waTypes.JID, ts time.Time, msg *waE2E.Message) {
+	if c.client == nil || !c.client.IsConnected() {
+		return
+	}
+
+	target := to.ToNonAD()
+	if target.Server == waTypes.BroadcastServer || target.Server == waTypes.NewsletterServer {
+		return
+	}
+
+	var replyStanzaID string
+	var replyParticipant string
+	if msg != nil {
+		if rm := msg.GetReactionMessage(); rm != nil && rm.GetKey() != nil {
+			replyStanzaID = rm.GetKey().GetID()
+			replyParticipant = rm.GetKey().GetParticipant()
+		} else {
+			for _, carrier := range []interface{ GetContextInfo() *waE2E.ContextInfo }{
+				msg.GetExtendedTextMessage(),
+				msg.GetImageMessage(),
+				msg.GetDocumentMessage(),
+				msg.GetVideoMessage(),
+				msg.GetAudioMessage(),
+				msg.GetStickerMessage(),
+			} {
+				if carrier != nil {
+					if ci := carrier.GetContextInfo(); ci != nil {
+						if ci.GetStanzaID() != "" {
+							replyStanzaID = ci.GetStanzaID()
+							replyParticipant = ci.GetParticipant()
+							break
+						}
+					}
+				}
+			}
+		}
+	}
+
+	go func() {
+		bgCtx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+		defer cancel()
+
+		if ts.IsZero() {
+			ts = time.Now()
+		}
+
+		// 1. If replying to a specific message, send a read receipt (blue checkmarks)
+		if replyStanzaID != "" {
+			senderJID := target
+			if replyParticipant != "" {
+				if parsed, err := waTypes.ParseJID(replyParticipant); err == nil {
+					senderJID = parsed.ToNonAD()
+				}
+			}
+			if err := c.client.MarkRead(bgCtx, []waTypes.MessageID{waTypes.MessageID(replyStanzaID)}, ts, target, senderJID); err != nil {
+				log.Printf("[WhatsApp] Failed to send MarkRead for message %s in chat %s: %v", replyStanzaID, target, err)
+			} else {
+				log.Printf("[WhatsApp] Sent MarkRead for message %s in chat %s", replyStanzaID, target)
+			}
+		}
+
+		// 2. Build and send app state patch to mark chat as read.
+		// WhatsApp multi-device relies on this Syncd action to clear the unread counter badge on the phone.
+		var msgKey *waCommon.MessageKey
+		if replyStanzaID != "" {
+			senderJID := target
+			if replyParticipant != "" {
+				if parsed, err := waTypes.ParseJID(replyParticipant); err == nil {
+					senderJID = parsed.ToNonAD()
+				}
+			}
+			msgKey = c.client.BuildMessageKey(target, senderJID, waTypes.MessageID(replyStanzaID))
+		}
+
+		patch := appstate.BuildMarkChatAsRead(target, true, ts, msgKey)
+		if err := c.client.SendAppState(bgCtx, patch); err != nil {
+			log.Printf("[WhatsApp] Failed to sync mark-as-read app state for %s: %v", target, err)
+		} else {
+			log.Printf("[WhatsApp] Successfully synced mark-as-read app state for %s (phone unread badge cleared)", target)
+		}
+	}()
+}
+
+// MarkChatRead marks a chat as read via AppState (Syncd), which clears the unread badge on the WhatsApp phone app.
+func (c *Client) MarkChatRead(ctx context.Context, jid string) error {
+	if c.client == nil || !c.client.IsConnected() {
+		return fmt.Errorf("client not connected")
+	}
+
+	recipient, err := waTypes.ParseJID(jid)
+	if err != nil {
+		return fmt.Errorf("invalid JID %s: %w", jid, err)
+	}
+
+	target := recipient.ToNonAD()
+	if target.Server == waTypes.BroadcastServer || target.Server == waTypes.NewsletterServer {
+		return nil
+	}
+
+	patch := appstate.BuildMarkChatAsRead(target, true, time.Now(), nil)
+	if err := c.client.SendAppState(ctx, patch); err != nil {
+		return fmt.Errorf("failed to send mark-as-read app state for %s: %w", target, err)
+	}
+
+	log.Printf("[WhatsApp] Successfully marked chat as read in app state for %s (phone unread badge cleared)", target)
+	return nil
 }

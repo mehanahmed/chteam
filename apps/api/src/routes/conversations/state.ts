@@ -1,5 +1,5 @@
 import { zValidator } from "../../lib/validator.js";
-import { getContactDisplayName, toDbDate } from "@wateaminbox/shared";
+import { getContactDisplayName, toDbDate } from "@omniteam/shared";
 import type { Context } from "hono";
 import { Hono } from "hono";
 import { notFound } from "../../lib/errors.js";
@@ -32,6 +32,7 @@ import {
   type WorkflowIdentity,
 } from "../../services/channel-workflow.service.js";
 import { getConversationState } from "../../services/conversation-state.service.js";
+import { publishMarkChatReadCommand } from "../../lib/nats/index.js";
 
 export const stateRoutes = new Hono();
 
@@ -446,6 +447,20 @@ stateRoutes.post("/:id/read", async (c) => {
         read_by_user_id: user.id,
       })
       .execute();
+  }
+  if (identity.contactId) {
+    const contact = await tenantDb
+      .selectFrom("contacts")
+      .select(["jid", "whatsapp_connection_id"])
+      .where("id", "=", identity.contactId)
+      .executeTakeFirst();
+    if (contact?.jid && contact.whatsapp_connection_id) {
+      publishMarkChatReadCommand(
+        companyId,
+        contact.whatsapp_connection_id,
+        contact.jid,
+      ).catch(() => {});
+    }
   }
   const payload = {
     contactId: identity.contactId,

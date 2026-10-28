@@ -1,4 +1,4 @@
-import { dayjs, toISOString } from "@wateaminbox/shared";
+import { dayjs, toISOString } from "@omniteam/shared";
 import { sql } from "kysely";
 import { NotFoundError } from "../lib/errors.js";
 import {

@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import type { BulkJobProgress, BulkJobStatus } from "@wateaminbox/shared";
+import type { BulkJobProgress, BulkJobStatus } from "@omniteam/shared";
 import {
   canRescheduleBulkJob,
   validateRescheduleTime,

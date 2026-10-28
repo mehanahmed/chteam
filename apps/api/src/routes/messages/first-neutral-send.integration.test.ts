@@ -2,8 +2,8 @@ import { expect, test } from "bun:test";
 import {
   db,
   reconcileChannelSpineConcurrentIndexes,
-} from "@wateaminbox/database";
-import { DEFAULT_SLA_WEEKLY_SCHEDULE } from "@wateaminbox/shared";
+} from "@omniteam/database";
+import { DEFAULT_SLA_WEEKLY_SCHEDULE } from "@omniteam/shared";
 import { sql } from "kysely";
 import { app } from "../../app.js";
 import { hashPassword } from "../../lib/password.js";

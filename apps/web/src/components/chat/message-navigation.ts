@@ -1,4 +1,4 @@
-import type { Message } from "@wateaminbox/shared";
+import type { Message } from "@omniteam/shared";
 
 export type MessageNavigationTarget =
   | { kind: "database"; messageId: string }

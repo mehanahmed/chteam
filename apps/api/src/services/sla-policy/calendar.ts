@@ -23,8 +23,8 @@ import type {
   SlaScheduleException,
   SlaTimeInterval,
   SlaWeeklySchedule,
-} from "@wateaminbox/shared";
-import { dayjs } from "@wateaminbox/shared";
+} from "@omniteam/shared";
+import { dayjs } from "@omniteam/shared";
 import timezoneOf from "dayjs/plugin/timezone.js";
 import { MalformedSlaCalendarError } from "../../lib/errors.js";
 

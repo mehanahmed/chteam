@@ -3,11 +3,15 @@ import { deleteCookie, getCookie, setCookie } from "hono/cookie";
 import { env } from "../../lib/env.js";
 import { getRefreshTokenExpiry } from "../../lib/jwt.js";
 
-const REFRESH_COOKIE_NAME = "wateaminbox_refresh";
+const REFRESH_COOKIE_NAME = "omniteam_refresh";
+const LEGACY_REFRESH_COOKIE_NAME = "wateaminbox_refresh";
 const REFRESH_COOKIE_PATH = "/api/auth";
 
 export function getRefreshTokenCookie(c: Context): string | undefined {
-  return getCookie(c, REFRESH_COOKIE_NAME);
+  return (
+    getCookie(c, REFRESH_COOKIE_NAME) ??
+    getCookie(c, LEGACY_REFRESH_COOKIE_NAME)
+  );
 }
 
 export function setRefreshTokenCookie(c: Context, token: string): void {
@@ -27,6 +31,10 @@ export function setRefreshTokenCookie(c: Context, token: string): void {
 
 export function clearRefreshTokenCookie(c: Context): void {
   deleteCookie(c, REFRESH_COOKIE_NAME, {
+    secure: env.NODE_ENV === "production",
+    path: REFRESH_COOKIE_PATH,
+  });
+  deleteCookie(c, LEGACY_REFRESH_COOKIE_NAME, {
     secure: env.NODE_ENV === "production",
     path: REFRESH_COOKIE_PATH,
   });

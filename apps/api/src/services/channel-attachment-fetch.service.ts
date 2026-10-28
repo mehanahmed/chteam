@@ -1,6 +1,6 @@
-import { db } from "@wateaminbox/database";
+import { db } from "@omniteam/database";
 import { sql } from "kysely";
-import { downloadTelegramFile } from "@wateaminbox/adapter-telegram";
+import { downloadTelegramFile } from "@omniteam/adapter-telegram";
 import { createLogger, formatError } from "../lib/logger.js";
 import { deleteMedia, uploadMedia } from "../lib/storage.js";
 import {

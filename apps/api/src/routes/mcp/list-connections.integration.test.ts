@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { db } from "@wateaminbox/database";
+import { db } from "@omniteam/database";
 import type { Context } from "hono";
 import { sql } from "kysely";
 import {

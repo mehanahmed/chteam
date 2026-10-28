@@ -1,5 +1,5 @@
 import { createHash, randomBytes } from "node:crypto";
-import { db, type ApiTokenScope } from "@wateaminbox/database";
+import { db, type ApiTokenScope } from "@omniteam/database";
 import { ForbiddenError } from "../lib/errors.js";
 
 export const API_TOKEN_PREFIX = "wti_";

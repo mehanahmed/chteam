@@ -2,7 +2,7 @@
  * Status event handlers - status updates, sync status, media downloads
  */
 
-import { toDbDate } from "@wateaminbox/shared";
+import { toDbDate } from "@omniteam/shared";
 import { sql } from "kysely";
 import { formatError } from "../../lib/logger.js";
 import type {

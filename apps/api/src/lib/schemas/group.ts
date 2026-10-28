@@ -16,7 +16,7 @@ import {
   GROUP_NAME_MAX_LENGTH,
   GROUP_PARTICIPANT_BATCH_LIMIT,
   normalizeJid,
-} from "@wateaminbox/shared";
+} from "@omniteam/shared";
 import { z } from "zod";
 
 /**

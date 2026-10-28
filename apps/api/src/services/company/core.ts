@@ -4,9 +4,9 @@
  * Core operations for creating, reading, updating, and deleting companies.
  */
 
-import type { Database } from "@wateaminbox/database";
-import { db } from "@wateaminbox/database";
-import { toDbDate } from "@wateaminbox/shared";
+import type { Database } from "@omniteam/database";
+import { db } from "@omniteam/database";
+import { toDbDate } from "@omniteam/shared";
 import type { Transaction } from "kysely";
 import { CompanyNotFoundError, ValidationError } from "../../lib/errors.js";
 import { createLogger, formatError } from "../../lib/logger.js";

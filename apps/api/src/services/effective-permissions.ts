@@ -1,7 +1,7 @@
 import {
   type MemberPermissions,
   ROLE_PERMISSION_PRESETS,
-} from "@wateaminbox/shared";
+} from "@omniteam/shared";
 
 /**
  * Resolve role defaults plus member-specific overrides.
@@ -25,4 +25,4 @@ export function getEffectivePermissions(
   };
 }
 
-export type { MemberPermissions } from "@wateaminbox/shared";
+export type { MemberPermissions } from "@omniteam/shared";

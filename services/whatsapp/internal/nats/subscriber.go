@@ -163,6 +163,11 @@ type TypingSender interface {
 	SendChatPresence(ctx context.Context, jid string, isTyping bool) error
 }
 
+// ChatReadMarker is the interface for marking a chat as read via AppState.
+type ChatReadMarker interface {
+	MarkChatRead(ctx context.Context, jid string) error
+}
+
 type CommandExecutor interface {
 	PostStatus(ctx context.Context, statusType, content, mediaURL string) (types.SendResponse, error)
 	SyncLabels(ctx context.Context) ([]types.WhatsAppLabel, error)
@@ -446,6 +451,8 @@ func (s *Subscriber) handleCommand(msg *nats.Msg) {
 		s.handleBlockCommand(msg, ct.Type)
 	case "typing_start", "typing_stop":
 		s.handleTypingCommand(msg, ct.Type)
+	case "mark_chat_read":
+		s.handleMarkChatReadCommand(msg)
 	case "fetch_profile_picture":
 		s.handleFetchProfilePictureCommand(msg)
 	case "post_status":
@@ -870,6 +877,52 @@ func (s *Subscriber) handleTypingCommand(msg *nats.Msg, cmdType string) {
 		// Still ack - typing is best-effort, don't retry
 	} else {
 		log.Printf("Typing indicator sent: jid=%s, isTyping=%v", cmd.JID, isTyping)
+	}
+
+	msg.Ack()
+}
+
+// MarkChatReadCommand represents a command to mark a chat as read.
+type MarkChatReadCommand struct {
+	Type string `json:"type"`
+	JID  string `json:"jid"`
+}
+
+func (s *Subscriber) handleMarkChatReadCommand(msg *nats.Msg) {
+	var cmd MarkChatReadCommand
+	if err := json.Unmarshal(msg.Data, &cmd); err != nil {
+		log.Printf("Failed to unmarshal mark_chat_read command: %v", err)
+		msg.Nak()
+		return
+	}
+
+	if cmd.JID == "" {
+		log.Printf("mark_chat_read command missing JID")
+		msg.Ack()
+		return
+	}
+
+	var marker ChatReadMarker
+	if m, ok := s.sender.(ChatReadMarker); ok {
+		marker = m
+	} else if m, ok := s.executor.(ChatReadMarker); ok {
+		marker = m
+	}
+
+	if marker == nil {
+		log.Printf("ChatReadMarker not supported")
+		msg.Ack()
+		return
+	}
+
+	log.Printf("Processing mark_chat_read command: jid=%s", cmd.JID)
+	ctx, cancel := context.WithTimeout(s.ctx, 15*time.Second)
+	defer cancel()
+
+	if err := marker.MarkChatRead(ctx, cmd.JID); err != nil {
+		log.Printf("Failed to mark chat as read for %s: %v", cmd.JID, err)
+	} else {
+		log.Printf("Successfully marked chat as read for %s", cmd.JID)
 	}
 
 	msg.Ack()

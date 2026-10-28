@@ -14,6 +14,7 @@ import (
 	"go.mau.fi/whatsmeow"
 	"go.mau.fi/whatsmeow/appstate"
 	waBinary "go.mau.fi/whatsmeow/binary"
+	"go.mau.fi/whatsmeow/proto/waE2E"
 	"go.mau.fi/whatsmeow/proto/waSyncAction"
 	waTypes "go.mau.fi/whatsmeow/types"
 	"go.mau.fi/whatsmeow/types/events"
@@ -1058,4 +1059,21 @@ func TestDurableEventHandlerWithholdsAcknowledgementUntilSuccess(t *testing.T) {
 	require.False(t, c.internalEventHandlerWithSuccessStatus("message"))
 	persisted = true
 	require.True(t, c.internalEventHandlerWithSuccessStatus("message"))
+}
+
+func TestMarkChatReadOnSend_SafeWhenNilOrDisconnected(t *testing.T) {
+	c := &Client{}
+	target, _ := waTypes.ParseJID("1234567890@s.whatsapp.net")
+	// Should not panic when client is nil or not connected
+	require.NotPanics(t, func() {
+		c.markChatReadOnSend(target, time.Now(), &waE2E.Message{
+			Conversation: proto.String("hello"),
+		})
+	})
+
+	// Also should safely ignore broadcast and newsletter servers
+	broadcastTarget, _ := waTypes.ParseJID("status@broadcast")
+	require.NotPanics(t, func() {
+		c.markChatReadOnSend(broadcastTarget, time.Now(), nil)
+	})
 }

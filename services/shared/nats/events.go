@@ -207,6 +207,8 @@ type MessagePayload struct {
 	MediaFileSHA256    []byte `json:"mediaFileSha256,omitempty"`
 	MediaFileEncSHA256 []byte `json:"mediaFileEncSha256,omitempty"`
 	IsHistorySync      bool   `json:"isHistorySync,omitempty"`
+	IsForwarded        bool   `json:"isForwarded,omitempty"`
+	ForwardingScore    uint32 `json:"forwardingScore,omitempty"`
 }
 
 // ContactCardPayload carries the vCard WhatsApp attached to a shared contact.
@@ -539,6 +541,8 @@ type MessageEvent struct {
 	MediaFileSHA256    []byte `json:"media_file_sha256,omitempty"`
 	MediaFileEncSHA256 []byte `json:"media_file_enc_sha256,omitempty"`
 	IsHistorySync      bool   `json:"is_history_sync,omitempty"`
+	IsForwarded        bool   `json:"is_forwarded,omitempty"`
+	ForwardingScore    uint32 `json:"forwarding_score,omitempty"`
 }
 
 // ReceiptEvent represents a message receipt (delivered, read, etc.) (internal use).

@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { ROLE_PERMISSION_PRESETS } from "@wateaminbox/shared";
+import { ROLE_PERMISSION_PRESETS } from "@omniteam/shared";
 import { permissionGroups, permissionOptions } from "./permission-options";
 
 /**

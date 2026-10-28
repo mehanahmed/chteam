@@ -1,7 +1,7 @@
 import {
   db,
   reconcileChannelSpineConcurrentIndexes,
-} from "@wateaminbox/database";
+} from "@omniteam/database";
 import { sql } from "kysely";
 
 async function main(): Promise<void> {

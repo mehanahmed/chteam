@@ -1,4 +1,4 @@
-import { formatChatListTime, isChannel } from "@wateaminbox/shared";
+import { formatChatListTime, isChannel } from "@omniteam/shared";
 import { MessagesSquare } from "lucide-react";
 import { memo, useCallback, useMemo } from "react";
 import { useTranslation } from "react-i18next";
@@ -35,6 +35,7 @@ export const ChatListItem = memo(function ChatListItem({
   isSelected,
   onClick,
   onPrefetch,
+  onContextMenu,
 }: ChatListItemProps) {
   const { t } = useTranslation();
 
@@ -157,6 +158,7 @@ export const ChatListItem = memo(function ChatListItem({
       type="button"
       onClick={onClick}
       onMouseEnter={handlePrefetch}
+      onContextMenu={onContextMenu}
       className={`w-full flex items-center gap-3 px-3 text-left
                   transition-colors duration-150 border-b border-gray-100 dark:border-dark-border
                   touch-manipulation active:bg-gray-200 dark:active:bg-dark-border

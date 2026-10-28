@@ -516,6 +516,10 @@ func (h *Handler) processHistorySyncMessage(historyMsg *waHistorySync.HistorySyn
 	}
 	msgEvent.QuotedMessageID = getQuotedMessageID(waMsg)
 	msgEvent.GroupMentions = getGroupMentions(waMsg)
+	if isFwd, score := isMessageForwarded(waMsg); isFwd {
+		msgEvent.IsForwarded = true
+		msgEvent.ForwardingScore = score
+	}
 	h.applyMediaAlbumMetadata(jid, waMsg, &msgEvent)
 
 	hasMedia := false

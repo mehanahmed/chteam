@@ -2,7 +2,7 @@ import {
   GROUP_DESCRIPTION_MAX_LENGTH,
   GROUP_NAME_MAX_LENGTH,
   type GroupMemberAddMode,
-} from "@wateaminbox/shared";
+} from "@omniteam/shared";
 import { Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { RightPanelSection } from "@/components/layout/right-panel";

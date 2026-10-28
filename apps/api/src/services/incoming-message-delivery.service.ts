@@ -2,7 +2,7 @@ import {
   extractPhoneFromJid,
   formatPhoneLikeText,
   getContactDisplayName,
-} from "@wateaminbox/shared";
+} from "@omniteam/shared";
 import {
   buildQuotedMessageData,
   type MessageDbRow,
@@ -60,6 +60,7 @@ export async function deliverIncomingMessage(
     content: message.content,
     messageId: message.message_id,
     timestamp: new Date(message.timestamp).toISOString(),
+    isForwarded: message.is_forwarded,
   };
   // Resolve the quoted WhatsApp stanza for the realtime payload. Without the
   // embedded message, an incoming reply only looks like a regular message
@@ -94,6 +95,13 @@ export async function deliverIncomingMessage(
             mediaAlbumCount: incomingMetadata.mediaAlbumCount,
           }
         : {}),
+      ...(incomingMetadata?.isForwarded ? { isForwarded: true } : {}),
+      ...(typeof incomingMetadata?.forwardingScore === "number"
+        ? {
+            forwardingScore: incomingMetadata.forwardingScore,
+            isFrequentlyForwarded: incomingMetadata.isFrequentlyForwarded,
+          }
+        : {}),
     };
     await broadcastToContactViewers(
       companyId,
@@ -121,7 +129,12 @@ export async function deliverIncomingMessage(
               : undefined,
           replyToMessageId: payload.quotedMessageId,
           replyToMessage,
-          isForwarded: false,
+          isForwarded: Boolean(
+            payload.isForwarded ||
+              incomingMetadata?.isForwarded ||
+              (typeof incomingMetadata?.forwardingScore === "number" &&
+                incomingMetadata.forwardingScore > 0),
+          ),
           isDeleted: false,
           isStarred: false,
           createdAt: payload.timestamp,

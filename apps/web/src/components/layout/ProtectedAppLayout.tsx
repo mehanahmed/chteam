@@ -193,7 +193,8 @@ function ButtonSignOut({ onClick }: { onClick: () => void }) {
   );
 }
 
-const SIDEBAR_COLLAPSED_KEY = "wateaminbox:sidebar-collapsed";
+const SIDEBAR_COLLAPSED_KEY = "omniteam:sidebar-collapsed";
+const LEGACY_SIDEBAR_COLLAPSED_KEY = "wateaminbox:sidebar-collapsed";
 
 /** Workspace-aware shell shared by every protected destination. */
 export function ProtectedAppLayout() {
@@ -204,7 +205,8 @@ export function ProtectedAppLayout() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(
     () =>
       typeof window !== "undefined" &&
-      window.localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === "true",
+      (window.localStorage.getItem(SIDEBAR_COLLAPSED_KEY) ??
+        window.localStorage.getItem(LEGACY_SIDEBAR_COLLAPSED_KEY)) === "true",
   );
   const { user, logout } = useAuth();
   const { activeWorkspace, can, canAny, isSwitching, switchingTo } =

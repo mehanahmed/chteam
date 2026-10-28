@@ -1,4 +1,4 @@
-import type { Message, MessageType } from "@wateaminbox/shared";
+import type { Message, MessageType } from "@omniteam/shared";
 import { Maximize2, MessageCircle, Play, UserRound } from "lucide-react";
 import { lazy, type ReactNode, Suspense, useState } from "react";
 import { useTranslation } from "react-i18next";

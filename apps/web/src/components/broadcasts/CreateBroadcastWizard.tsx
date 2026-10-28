@@ -1,5 +1,5 @@
-import type { BulkJob, BulkJobPreview } from "@wateaminbox/shared";
-import { dayjs } from "@wateaminbox/shared";
+import type { BulkJob, BulkJobPreview } from "@omniteam/shared";
+import { dayjs } from "@omniteam/shared";
 import {
   AlertTriangle,
   Check,

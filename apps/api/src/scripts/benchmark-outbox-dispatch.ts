@@ -1,5 +1,5 @@
 /** Synthetic idle-tenant benchmark. Never accepts a production database. */
-import { db } from "@wateaminbox/database";
+import { db } from "@omniteam/database";
 import { sql } from "kysely";
 import {
   dispatchCompany,

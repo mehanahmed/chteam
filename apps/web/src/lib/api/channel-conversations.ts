@@ -1,4 +1,4 @@
-import type { Channel, ChannelProvider } from "@wateaminbox/shared";
+import type { Channel, ChannelProvider } from "@omniteam/shared";
 import { api, buildQueryString, fetchApi } from "./client";
 
 export interface ChannelConversation {
@@ -15,6 +15,8 @@ export interface ChannelConversation {
   unreadCount: number;
   conversationStatus: "open" | "pending" | "resolved";
   legacyContactId: string | null;
+  isArchived?: boolean;
+  archivedAt?: string | null;
   account: {
     displayName: string | null;
     /** The handle the provider knows this account by, e.g. a bot username. */
@@ -71,17 +73,34 @@ export interface ChannelMessagesPage {
 }
 
 export function getChannelConversations(
-  params: { limit?: number; tagIds?: readonly string[] } = {},
+  params: { limit?: number; tagIds?: readonly string[]; archived?: boolean } = {},
 ): Promise<ChannelConversation[]> {
   // Tags are sent as one comma-separated value so the channel list narrows the
   // same way the contact list does. Without it a selected tag filtered only
   // the WhatsApp side and left every channel chat showing.
-  const { tagIds, ...rest } = params;
+  const { tagIds, archived, ...rest } = params;
   return api.get<ChannelConversation[]>(
     `/conversations${buildQueryString({
       ...rest,
+      ...(archived !== undefined ? { archived: archived ? "true" : "false" } : {}),
       ...(tagIds?.length ? { tagIds: tagIds.join(",") } : {}),
     })}`,
+  );
+}
+
+export function archiveChannelConversation(
+  conversationId: string,
+): Promise<{ id: string; isArchived: boolean }> {
+  return api.post<{ id: string; isArchived: boolean }>(
+    `/conversations/${encodeURIComponent(conversationId)}/archive`,
+  );
+}
+
+export function unarchiveChannelConversation(
+  conversationId: string,
+): Promise<{ id: string; isArchived: boolean }> {
+  return api.post<{ id: string; isArchived: boolean }>(
+    `/conversations/${encodeURIComponent(conversationId)}/unarchive`,
   );
 }
 

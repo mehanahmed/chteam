@@ -1,4 +1,4 @@
-import { getContactDisplayName } from "@wateaminbox/shared";
+import { getContactDisplayName } from "@omniteam/shared";
 import type { Context } from "hono";
 import { z } from "zod";
 import { getRouteContext } from "../../../middleware/context.js";

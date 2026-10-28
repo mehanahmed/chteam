@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
-import { db } from "@wateaminbox/database";
-import { DEFAULT_SLA_WEEKLY_SCHEDULE } from "@wateaminbox/shared";
+import { db } from "@omniteam/database";
+import { DEFAULT_SLA_WEEKLY_SCHEDULE } from "@omniteam/shared";
 import { mergeContacts } from "./contact-merge.service.js";
 import { listCustomerChats } from "./customer-chats.service.js";
 import {

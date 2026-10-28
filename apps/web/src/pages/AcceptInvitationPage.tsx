@@ -1,4 +1,4 @@
-import { dayjs, now } from "@wateaminbox/shared";
+import { dayjs, now } from "@omniteam/shared";
 import {
   Building2,
   CheckCircle,
@@ -300,17 +300,6 @@ export function AcceptInvitationPage() {
             >
               <Button className="w-full bg-whatsapp-teal-green hover:bg-whatsapp-dark-green">
                 {t("invitation.logIn", "Log In")}
-              </Button>
-            </Link>
-            <Link
-              to={buildAuthUrl(
-                "/register",
-                `/invite/${token}`,
-                invitation.email,
-              )}
-            >
-              <Button variant="outline" className="w-full">
-                {t("invitation.createAccount", "Create Account")}
               </Button>
             </Link>
           </div>

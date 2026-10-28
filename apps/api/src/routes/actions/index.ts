@@ -11,7 +11,7 @@ import { HTTPException } from "hono/http-exception";
 import { z } from "zod";
 import { NoActiveCaseError } from "../../lib/errors.js";
 import { createLogger, formatError } from "../../lib/logger.js";
-import { publishTypingCommand } from "../../lib/nats/index.js";
+import { publishMarkChatReadCommand, publishTypingCommand } from "../../lib/nats/index.js";
 import { authMiddleware } from "../../middleware/auth.js";
 import { requireMessageSendPermission } from "../../middleware/message-send-policy.js";
 import { hasContactVisibility } from "../../middleware/resource-visibility.js";
@@ -210,11 +210,19 @@ actionsRoutes.post(
     // requireContactVisibility: never disclose which of the two it was.
     const contact = await tenantDb
       .selectFrom("contacts")
-      .select("id")
+      .select(["id", "jid", "whatsapp_connection_id"])
       .where("id", "=", conversationId)
       .executeTakeFirst();
     if (!contact || !(await hasContactVisibility(c, conversationId))) {
       throw new HTTPException(404, { message: "Conversation not found" });
+    }
+
+    if (contact.jid && contact.whatsapp_connection_id) {
+      publishMarkChatReadCommand(
+        companyId,
+        contact.whatsapp_connection_id,
+        contact.jid,
+      ).catch(() => {});
     }
 
     try {

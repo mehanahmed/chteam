@@ -1,5 +1,5 @@
-import type { BulkJob } from "@wateaminbox/shared";
-import { dayjs } from "@wateaminbox/shared";
+import type { BulkJob } from "@omniteam/shared";
+import { dayjs } from "@omniteam/shared";
 
 /** Client-side slack above the API's 30-second minimum. */
 export const RESCHEDULE_MIN_LEAD_MS = 60_000;

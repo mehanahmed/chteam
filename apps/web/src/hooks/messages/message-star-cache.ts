@@ -1,5 +1,5 @@
 import type { QueryClient } from "@tanstack/react-query";
-import type { Message } from "@wateaminbox/shared";
+import type { Message } from "@omniteam/shared";
 import { updateMessageInCache } from "../../contexts/realtime/cache-utils";
 import { queryKeys } from "../query-keys";
 

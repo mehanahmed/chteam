@@ -3,7 +3,7 @@
  *
  * Routes for individual message actions: star, delete.
  */
-import { toDbDate } from "@wateaminbox/shared";
+import { toDbDate } from "@omniteam/shared";
 import { Hono } from "hono";
 import { notFound } from "../../lib/errors.js";
 import { successData } from "../../lib/response.js";

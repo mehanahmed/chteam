@@ -1,4 +1,4 @@
-import { dayjs } from "@wateaminbox/shared";
+import { dayjs } from "@omniteam/shared";
 import {
   type PointerEvent as ReactPointerEvent,
   useLayoutEffect,

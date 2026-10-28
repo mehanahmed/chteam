@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { nowMs } from "@wateaminbox/shared";
+import { nowMs } from "@omniteam/shared";
 import { useCallback, useEffect, useRef } from "react";
 import { reconcileRealtimeState } from "@/contexts/realtime/event-handlers";
 import { ApiRequestError } from "@/lib/api/client";

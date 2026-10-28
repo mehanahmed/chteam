@@ -4,7 +4,7 @@
  * CRUD operations for managing multiple WhatsApp connections per company.
  */
 import { zValidator } from "../../lib/validator.js";
-import { toDbDate, toISOString } from "@wateaminbox/shared";
+import { toDbDate, toISOString } from "@omniteam/shared";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { z } from "zod";

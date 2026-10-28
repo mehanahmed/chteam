@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, test } from "bun:test";
-import { db } from "@wateaminbox/database";
+import { db } from "@omniteam/database";
 import { sql } from "kysely";
 import { app } from "../../app.js";
 import { generateAccessToken } from "../../lib/jwt.js";

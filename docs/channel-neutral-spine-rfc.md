@@ -6,7 +6,7 @@
 
 ## Summary
 
-WATeamInbox should add a channel-neutral messaging spine rather than generalize the existing WhatsApp tables in place.
+OmniTeam should add a channel-neutral messaging spine rather than generalize the existing WhatsApp tables in place.
 
 The current model makes one tenant `contacts.id` serve as all of the following:
 

@@ -1,5 +1,5 @@
-import type { BulkJob } from "@wateaminbox/shared";
-import { dayjs } from "@wateaminbox/shared";
+import type { BulkJob } from "@omniteam/shared";
+import { dayjs } from "@omniteam/shared";
 
 /** Render an ISO timestamp the way ScheduledMessagesBar does. */
 export function formatScheduledTime(iso: string): string {

@@ -1,4 +1,4 @@
-import { getDateRange, toISOString } from "@wateaminbox/shared";
+import { getDateRange, toISOString } from "@omniteam/shared";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router";
 import { ExportDialog } from "@/components/export";

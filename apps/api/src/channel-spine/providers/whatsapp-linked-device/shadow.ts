@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import type { TenantDatabase } from "@wateaminbox/database";
+import type { TenantDatabase } from "@omniteam/database";
 import { sql, type Transaction } from "kysely";
 import { isChannelSpineTenantReady } from "../../../services/channel-spine-readiness.service.js";
 

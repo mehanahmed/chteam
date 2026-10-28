@@ -4,7 +4,7 @@ import {
   type MessageUpsertEventPayload,
   type NormalizedChannelEvent,
   normalizeJid,
-} from "@wateaminbox/shared";
+} from "@omniteam/shared";
 import type { MessageEvent } from "../../../lib/nats/index.js";
 
 export function normalizeLinkedDeviceMessageEvent(

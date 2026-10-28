@@ -1,4 +1,4 @@
-import type { Database } from "@wateaminbox/database";
+import type { Database } from "@omniteam/database";
 import type { Transaction } from "kysely";
 import { sql } from "kysely";
 import { env } from "../lib/env.js";

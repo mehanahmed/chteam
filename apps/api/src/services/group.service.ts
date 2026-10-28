@@ -3,7 +3,7 @@ import {
   getGroupDisplayName,
   getLidDisplayName,
   normalizeJid,
-} from "@wateaminbox/shared";
+} from "@omniteam/shared";
 import { type Kysely, sql } from "kysely";
 import type { TenantDatabase } from "./tenant.service.js";
 import { fetchStoredWhatsAppNames } from "./whatsapp-stored-names.js";
@@ -125,7 +125,8 @@ export async function getGroupsList(
         .coalesce("conversation_states.unread_count", eb.val(0))
         .as("unread_count"),
     )
-    .where("contacts.is_group", "=", true);
+    .where("contacts.is_group", "=", true)
+    .where("contacts.archived_at", "is", null);
 
   if (connectionId) {
     query = query.where("contacts.whatsapp_connection_id", "=", connectionId);
@@ -164,7 +165,8 @@ export async function getGroupsList(
     .selectFrom("contacts")
     .leftJoin("groups", "groups.contact_id", "contacts.id")
     .select((eb) => eb.fn.count("contacts.id").as("total"))
-    .where("contacts.is_group", "=", true);
+    .where("contacts.is_group", "=", true)
+    .where("contacts.archived_at", "is", null);
 
   if (connectionId) {
     countQuery = countQuery.where(
@@ -254,20 +256,18 @@ export async function getEnrichedGroupParticipants(
 
   const [contacts, messageSenders, storedNames, lidMappings] =
     await Promise.all([
-      options.connectionId
-        ? tenantDb
-            .selectFrom("contacts")
-            .select([
-              "id",
-              "jid",
-              "custom_name",
-              "push_name",
-              "profile_picture_url",
-            ])
-            .where("whatsapp_connection_id", "=", options.connectionId)
-            .where("jid", "in", participantJids)
-            .execute()
-        : Promise.resolve([]),
+      tenantDb
+        .selectFrom("contacts")
+        .select([
+          "id",
+          "jid",
+          "custom_name",
+          "push_name",
+          "profile_picture_url",
+          "whatsapp_connection_id",
+        ])
+        .where("jid", "in", participantJids)
+        .execute(),
       tenantDb
         .selectFrom("messages")
         .select(["sender_jid", "sender_name", "sender_avatar_url", "timestamp"])
@@ -351,9 +351,6 @@ export async function getEnrichedGroupParticipants(
         : Promise.resolve({ rows: [] }),
     ]);
 
-  const contactByJid = new Map(
-    contacts.map((contact) => [contact.jid, contact]),
-  );
   const senderByJid = new Map<
     string,
     { sender_name: string | null; sender_avatar_url: string | null }
@@ -373,6 +370,81 @@ export async function getEnrichedGroupParticipants(
     mentionIdsByJid.set(jid, ids);
   }
   const ownJid = normalizeJid(options.connectionJid);
+
+  const contactByJid = new Map<string, (typeof contacts)[number]>();
+  for (const contact of contacts) {
+    if (!contact.jid) continue;
+    const existing = contactByJid.get(contact.jid);
+    if (
+      !existing ||
+      (options.connectionId &&
+        contact.whatsapp_connection_id === options.connectionId)
+    ) {
+      contactByJid.set(contact.jid, contact);
+    }
+  }
+
+  if (options.connectionId) {
+    const missingJids = participantJids.filter(
+      (jid) =>
+        !contactByJid.has(jid) &&
+        jid.endsWith("@s.whatsapp.net") &&
+        (!ownJid || jid !== ownJid),
+    );
+    if (missingJids.length > 0) {
+      for (const jid of missingJids) {
+        const sender = senderByJid.get(jid);
+        const storedName = storedNameByJid.get(jid);
+        const phoneNumber = jid.endsWith("@s.whatsapp.net")
+          ? extractPhoneFromJid(jid)
+          : null;
+        const pushName =
+          storedName ||
+          sender?.sender_name ||
+          (phoneNumber ? `+${phoneNumber}` : null) ||
+          getLidDisplayName(jid) ||
+          null;
+
+        const newId = crypto.randomUUID();
+        try {
+          await tenantDb
+            .insertInto("contacts")
+            .values({
+              id: newId,
+              whatsapp_connection_id: options.connectionId,
+              jid,
+              phone_number: phoneNumber,
+              push_name: pushName,
+              profile_picture_url: sender?.sender_avatar_url || null,
+              is_group: false,
+              created_at: new Date(),
+              updated_at: new Date(),
+            })
+            .onConflict((oc) => oc.doNothing())
+            .execute();
+
+          const created = await tenantDb
+            .selectFrom("contacts")
+            .select([
+              "id",
+              "jid",
+              "custom_name",
+              "push_name",
+              "profile_picture_url",
+              "whatsapp_connection_id",
+            ])
+            .where("jid", "=", jid)
+            .executeTakeFirst();
+
+          if (created && created.jid) {
+            contactByJid.set(created.jid, created);
+          }
+        } catch {
+          // ignore conflict or insert error so group participants always load
+        }
+      }
+    }
+  }
 
   return participantRows
     .map((participant) => {

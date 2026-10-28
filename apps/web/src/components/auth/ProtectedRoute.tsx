@@ -1,4 +1,4 @@
-import type { MemberPermissions } from "@wateaminbox/shared";
+import type { MemberPermissions } from "@omniteam/shared";
 import { useTranslation } from "react-i18next";
 import { Navigate, useLocation } from "react-router";
 import { useAuth } from "../../contexts/auth-context";
@@ -85,7 +85,7 @@ export function ProtectedRoute({
         )}
         message={t(
           "auth.sessionUnverifiedMessage",
-          "WATeamInbox is unreachable. Try again in a moment.",
+          "OmniTeam is unreachable. Try again in a moment.",
         )}
         onRetry={() => void refreshSession().catch(() => undefined)}
         onSignOut={() => void logout()}

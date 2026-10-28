@@ -40,7 +40,10 @@ describe("channel spine provider import boundary", () => {
   test("keeps normalized domain and inbox packages independent of providers", () => {
     const found = protectedRoots.flatMap((directory) =>
       files(join(root, directory))
-        .filter((path) => !exemptPaths.has(relative(root, path)))
+        .filter(
+          (path) =>
+            !exemptPaths.has(relative(root, path).replace(/\\/g, "/")),
+        )
         .flatMap((path) =>
           violations(readFileSync(path, "utf8")).map(
             (statement) => `${relative(root, path)}: ${statement}`,

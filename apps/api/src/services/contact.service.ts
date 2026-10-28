@@ -1,4 +1,4 @@
-import { toDbDate } from "@wateaminbox/shared";
+import { toDbDate } from "@omniteam/shared";
 import type { Kysely, RawBuilder, SqlBool } from "kysely";
 import { sql } from "kysely";
 import { normalizePhoneNumber } from "../lib/schemas.js";
@@ -38,6 +38,8 @@ export interface GetContactsWithLastMessageOptions {
   conversationStatus?: "open" | "pending" | "resolved" | "all";
   /** Filter to conversations with unread messages. */
   unreadOnly?: boolean;
+  /** Filter by archive status. If true, only archived contacts are returned. */
+  archived?: boolean;
 }
 
 /**
@@ -52,6 +54,8 @@ export interface ContactWithLastMessage {
   username: string | null;
   custom_name: string | null;
   is_group: boolean;
+  is_archived: boolean;
+  archived_at: Date | null;
   profile_picture_url: string | null;
   notes_shared: string | null;
   created_at: Date;
@@ -87,6 +91,54 @@ export interface ContactWithLastMessage {
   } | null;
 }
 
+export async function reconcileWhatsAppArchivedChats(
+  tenantDb: Kysely<TenantDatabase>,
+): Promise<void> {
+  try {
+    await sql`
+      UPDATE contacts c
+      SET archived_at = NOW(), updated_at = NOW()
+      WHERE c.archived_at IS NULL
+      AND c.jid IN (
+        SELECT
+          regexp_replace(
+            coalesce(mapping.jid, cs.chat_jid),
+            ':[0-9]+@',
+            '@'
+          ) AS normalized_jid
+        FROM whatsapp_sessions.whatsmeow_chat_settings AS cs
+        LEFT JOIN whatsapp_sessions.whatsmeow_lid_mappings AS mapping
+          ON mapping.connection_id::text = cs.connection_id::text
+          AND regexp_replace(mapping.lid, ':[0-9]+@', '@') =
+              regexp_replace(cs.chat_jid, ':[0-9]+@', '@')
+        WHERE cs.archived = true
+      )
+    `.execute(tenantDb);
+
+    await sql`
+      UPDATE contacts c
+      SET archived_at = NULL, updated_at = NOW()
+      WHERE c.archived_at IS NOT NULL
+      AND c.jid IN (
+        SELECT
+          regexp_replace(
+            coalesce(mapping.jid, cs.chat_jid),
+            ':[0-9]+@',
+            '@'
+          ) AS normalized_jid
+        FROM whatsapp_sessions.whatsmeow_chat_settings AS cs
+        LEFT JOIN whatsapp_sessions.whatsmeow_lid_mappings AS mapping
+          ON mapping.connection_id::text = cs.connection_id::text
+          AND regexp_replace(mapping.lid, ':[0-9]+@', '@') =
+              regexp_replace(cs.chat_jid, ':[0-9]+@', '@')
+        WHERE cs.archived = false
+      )
+    `.execute(tenantDb);
+  } catch {
+    // If whatsapp_sessions is inaccessible or tables don't exist yet, proceed safely.
+  }
+}
+
 /**
  * Gets contacts with their last message in a single optimized query using window functions.
  * This replaces the N+1 pattern where we fetched contacts first, then queried for each contact's last message.
@@ -116,7 +168,12 @@ export async function getContactsWithLastMessage(
     restrictToAssigned = false,
     conversationStatus,
     unreadOnly = false,
+    archived,
   } = options;
+
+  if (offset === 0 && !search) {
+    await reconcileWhatsAppArchivedChats(tenantDb);
+  }
 
   // Use raw SQL for the complex CTE query with window function
   // Kysely's type-safe builder has limitations with CTEs and complex joins
@@ -148,6 +205,7 @@ export async function getContactsWithLastMessage(
       restrictToAssigned,
       conversationStatus,
       unreadOnly,
+      archived,
     });
 
   const result = await sql<{
@@ -186,6 +244,8 @@ export async function getContactsWithLastMessage(
     last_message_sent_by_user_id: string | null;
     conversation_status: "open" | "pending" | "resolved";
     active_case_id: string | null;
+    is_archived: boolean;
+    archived_at: Date | null;
   }>`
     SELECT
       c.id,
@@ -201,6 +261,8 @@ export async function getContactsWithLastMessage(
       c.updated_at,
       c.is_online,
       c.last_seen,
+      c.archived_at as archived_at,
+      CASE WHEN c.archived_at IS NOT NULL THEN true ELSE false END as is_archived,
       c.whatsapp_connection_id as connection_id,
       conv.id as conversation_id,
       COALESCE(acc.channel, CASE WHEN c.whatsapp_connection_id IS NOT NULL THEN 'whatsapp' END) as channel,
@@ -238,7 +300,6 @@ export async function getContactsWithLastMessage(
       ON wc.id = c.whatsapp_connection_id
     LEFT JOIN ${schema}.${sql.ref("conversations")} conv
       ON conv.legacy_contact_id = c.id
-      AND conv.archived_at IS NULL
     LEFT JOIN ${schema}.${sql.ref("channel_accounts")} acc
       ON acc.id = conv.channel_account_id
     LEFT JOIN ${schema}.${sql.ref("contact_assignments")} ca
@@ -351,6 +412,8 @@ export async function getContactsWithLastMessage(
       username: contact.username,
       custom_name: contact.custom_name,
       is_group: contact.is_group,
+      is_archived: Boolean(contact.is_archived || contact.archived_at),
+      archived_at: contact.archived_at ?? null,
       profile_picture_url: contact.profile_picture_url,
       notes_shared: contact.notes_shared,
       created_at: contact.created_at,
@@ -419,6 +482,11 @@ export async function getContactsWithLastMessage(
     "is",
     null,
   );
+  if (archived === true) {
+    countQuery = countQuery.where("contacts.archived_at", "is not", null);
+  } else {
+    countQuery = countQuery.where("contacts.archived_at", "is", null);
+  }
   if (!includeGroups) {
     countQuery = countQuery.where("contacts.is_group", "=", false);
   }

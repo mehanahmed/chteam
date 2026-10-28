@@ -25,7 +25,7 @@
  * caching entirely and read membership live on every event.
  */
 
-import { db } from "@wateaminbox/database";
+import { db } from "@omniteam/database";
 import { env } from "../lib/env.js";
 import {
   getEffectivePermissions,

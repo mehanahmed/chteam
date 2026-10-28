@@ -1,4 +1,4 @@
-import type { ResolvedCapabilities } from "@wateaminbox/shared";
+import type { ResolvedCapabilities } from "@omniteam/shared";
 import { createContext, useContext } from "react";
 
 export interface ComposerFeatures {

@@ -34,7 +34,7 @@ process.env.CENTRIFUGO_TOKEN_HMAC_SECRET ??=
  * returns a stub executor whose `executeQuery` resolves with empty rows and
  * increments a counter, so each tick is fast, deterministic, and observable.
  * `mockRestore()` in afterEach returns the real executor to the rest of the
- * suite; no `mock.module` is used, so the rest of `@wateaminbox/database`'s
+ * suite; no `mock.module` is used, so the rest of `@omniteam/database`'s
  * exports (e.g. reconcileTenantSchema) stay intact. The real NATS lifecycle
  * and the real drain re-arming logic (`.catch` + `.finally`) run unmodified.
  */
@@ -69,7 +69,7 @@ function makeExecutor(): QueryExecutor {
 
 const [{ db }, { startHistoryBarrierDrain, stopHistoryBarrierDrain }] =
   await Promise.all([
-    import("@wateaminbox/database"),
+    import("@omniteam/database"),
     import("./history-apply-barrier.service.js"),
   ]);
 const { shutdownMessageHandler } = await import("./message-handler.js");

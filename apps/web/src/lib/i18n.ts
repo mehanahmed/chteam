@@ -1,4 +1,4 @@
-import { dayjs } from "@wateaminbox/shared";
+import { dayjs } from "@omniteam/shared";
 import i18n from "i18next";
 import { initReactI18next } from "react-i18next";
 

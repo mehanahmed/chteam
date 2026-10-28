@@ -1,13 +1,13 @@
-# WATeamInbox
+# OmniTeam
 
 An open-source, multi-user omnichannel team inbox for managing customer conversations, assignments, contacts, and team workflows from one web application.
 
-WATeamInbox supports **WhatsApp linked devices** and **Telegram Bot accounts** today. Its channel-neutral messaging spine is designed for additional providers without forcing every channel into WhatsApp-specific identities, capabilities, or delivery semantics.
+OmniTeam supports **WhatsApp linked devices** and **Telegram Bot accounts** today. Its channel-neutral messaging spine is designed for additional providers without forcing every channel into WhatsApp-specific identities, capabilities, or delivery semantics.
 
 > [!WARNING]
 > **Open-source beta:** interfaces, migrations, and behavior may change without backward compatibility. The development defaults are not production-hardened. Evaluate each enabled channel integration, credential model, data handling, backups, monitoring, provider policy, and account-risk implications before any production use.
 
-WATeamInbox is an independent project and is not affiliated with, endorsed by, or sponsored by WhatsApp, Telegram, or Meta. The linked-device WhatsApp provider uses an unofficial client library; WhatsApp policy or protocol changes can interrupt service and may result in account restrictions or bans. No account-safety guarantee is provided. Third-party names are used only to describe interoperability; all trademarks belong to their respective owners.
+OmniTeam is an independent project and is not affiliated with, endorsed by, or sponsored by WhatsApp, Telegram, or Meta. The linked-device WhatsApp provider uses an unofficial client library; WhatsApp policy or protocol changes can interrupt service and may result in account restrictions or bans. No account-safety guarantee is provided. Third-party names are used only to describe interoperability; all trademarks belong to their respective owners.
 
 **Service status:** self-hosting this beta is currently the only product path in this repository. A separate public marketing site and Cloud interest waitlist may exist outside this monorepo; they are not part of the self-hostable application and do not promise pricing, launch date, feature set, SLA, account, or support entitlements for a managed Cloud product.
 
@@ -350,6 +350,6 @@ Run integration tests when changing database migrations, channel adapters, provi
 
 ## License
 
-WATeamInbox's original content is available under the [MIT License](LICENSE), copyright © 2026 WATeamInbox contributors.
+OmniTeam's original content is available under the [MIT License](LICENSE), copyright © 2026 OmniTeam contributors.
 
 The whatsmeow Go dependency and `vendor/whatsmeow` submodule are licensed separately under MPL-2.0. See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) for details; the MIT License does not relicense third-party components.

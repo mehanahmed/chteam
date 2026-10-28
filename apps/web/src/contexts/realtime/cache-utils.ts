@@ -7,7 +7,7 @@
  */
 
 import type { QueryClient } from "@tanstack/react-query";
-import type { Message, PaginatedMessages } from "@wateaminbox/shared";
+import type { Message, PaginatedMessages } from "@omniteam/shared";
 import { isOptimisticTwin } from "../../hooks/messages/optimistic-message";
 import { queryKeys } from "../../hooks/query-keys";
 import { customerTimelineKeys } from "../../hooks/chat/useCustomerTimeline";

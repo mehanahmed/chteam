@@ -21,19 +21,19 @@
     <!-- iOS specific -->
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="apple-mobile-web-app-title" content="WATeamInbox" />
+    <meta name="apple-mobile-web-app-title" content="OmniTeam" />
     <!-- Android specific -->
     <meta name="mobile-web-app-capable" content="yes" />
-    <title>WATeamInbox</title>
+    <title>OmniTeam</title>
     <!-- FOUC Prevention: Apply dark mode before React renders -->
     <script>
       (function() {
-        var STORAGE_KEY = 'wateaminbox-theme';
+        var STORAGE_KEY = 'omniteam-theme';
         var VALID_THEMES = ['light', 'dark', 'system'];
         var theme = 'system';
 
         try {
-          var stored = localStorage.getItem(STORAGE_KEY);
+          var stored = localStorage.getItem(STORAGE_KEY) || localStorage.getItem('wateaminbox-theme');
           if (stored && VALID_THEMES.indexOf(stored) !== -1) {
             theme = stored;
           }

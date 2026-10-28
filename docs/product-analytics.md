@@ -1,6 +1,6 @@
 # Optional GA4 product analytics
 
-WATeamInbox can optionally report anonymous product usage to a Google
+OmniTeam can optionally report anonymous product usage to a Google
 Analytics 4 property **that you own**. The integration is fully inert unless
 you, the deployer, explicitly enable it, and each visitor's browser must also
 grant consent by default.
@@ -60,7 +60,7 @@ There are two separate choices:
 2. **Visitor consent** — with `VITE_GA_REQUIRE_CONSENT=true` (default), each
    browser sees a first-party prompt with equally clear Accept and Decline
    actions. `gtag.js` is not injected before acceptance; a decline persists
-   (key `wateaminbox:analytics-consent:v1`) and nothing is ever sent.
+   (key `omniteam:analytics-consent:v1`) and nothing is ever sent.
 
 Additional behavior:
 

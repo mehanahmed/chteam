@@ -2,7 +2,7 @@ import {
   db,
   type ChannelSpineWriteAuthority,
   type Database,
-} from "@wateaminbox/database";
+} from "@omniteam/database";
 import type { Kysely } from "kysely";
 
 export type ChannelSpineFlagSource =

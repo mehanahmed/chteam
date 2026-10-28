@@ -1,7 +1,7 @@
 import { randomBytes } from "node:crypto";
 import { zValidator } from "../lib/validator.js";
-import { db, type TenantDatabase } from "@wateaminbox/database";
-import { isChannel, isChannelProvider } from "@wateaminbox/shared";
+import { db, type TenantDatabase } from "@omniteam/database";
+import { isChannel, isChannelProvider } from "@omniteam/shared";
 import { Hono } from "hono";
 import type { Transaction } from "kysely";
 import { z } from "zod";
@@ -10,7 +10,7 @@ import {
   configureTelegramWebhook,
   getTelegramBotIdentity,
   removeTelegramWebhook,
-} from "@wateaminbox/adapter-telegram";
+} from "@omniteam/adapter-telegram";
 import { channelAdapterRegistry } from "../channel-spine/registry.js";
 import { env } from "../lib/env.js";
 import { conflict, forbidden, notFound } from "../lib/errors.js";

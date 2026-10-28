@@ -1,11 +1,13 @@
 import { randomUUID } from "node:crypto";
 import * as jose from "jose";
-import { nowMs, toDbDate } from "@wateaminbox/shared";
+import { nowMs, toDbDate } from "@omniteam/shared";
 import { env } from "./env.js";
 
 const SECRET = new TextEncoder().encode(env.JWT_SECRET);
-const ISSUER = "wateaminbox-api";
-const AUDIENCE = "wateaminbox";
+const ISSUER = "omniteam-api";
+const AUDIENCE = "omniteam";
+const ACCEPTED_ISSUERS = ["omniteam-api", "wateaminbox-api"];
+const ACCEPTED_AUDIENCES = ["omniteam", "wateaminbox"];
 
 export interface AccessTokenPayload {
   userId: string;
@@ -94,8 +96,8 @@ export async function verifyAccessToken(
 ): Promise<AccessTokenPayload | null> {
   try {
     const { payload } = await jose.jwtVerify(token, SECRET, {
-      issuer: ISSUER,
-      audience: AUDIENCE,
+      issuer: ACCEPTED_ISSUERS,
+      audience: ACCEPTED_AUDIENCES,
     });
 
     if (
@@ -124,8 +126,8 @@ export async function verifyRefreshToken(
 ): Promise<RefreshTokenPayload | null> {
   try {
     const { payload } = await jose.jwtVerify(token, SECRET, {
-      issuer: ISSUER,
-      audience: AUDIENCE,
+      issuer: ACCEPTED_ISSUERS,
+      audience: ACCEPTED_AUDIENCES,
     });
 
     if (

@@ -7,7 +7,7 @@ import {
   type NormalizedAttachment,
   type NormalizedChannelEvent,
   type ReactionEventPayload,
-} from "@wateaminbox/shared";
+} from "@omniteam/shared";
 
 interface TelegramUpdate {
   update_id: number;

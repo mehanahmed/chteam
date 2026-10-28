@@ -4,7 +4,7 @@ import {
   formatDateSeparator,
   formatLastSeen,
   formatStatusTime,
-} from "@wateaminbox/shared";
+} from "@omniteam/shared";
 import { describe, expect, it } from "bun:test";
 import en from "../locales/en.json";
 import zhCN from "../locales/zh-CN.json";

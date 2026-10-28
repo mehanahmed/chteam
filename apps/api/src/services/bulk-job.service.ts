@@ -15,7 +15,7 @@
  */
 
 import { createHash } from "node:crypto";
-import type { BulkJobsTable } from "@wateaminbox/database";
+import type { BulkJobsTable } from "@omniteam/database";
 import type {
   BulkJob,
   BulkJobAudience,
@@ -23,8 +23,8 @@ import type {
   BulkJobProgress,
   BulkJobStatus,
   BulkRecipientSkipReason,
-} from "@wateaminbox/shared";
-import { toDbDate } from "@wateaminbox/shared";
+} from "@omniteam/shared";
+import { toDbDate } from "@omniteam/shared";
 import type { Kysely, Selectable } from "kysely";
 import { bulkConfig } from "../config/bulk.config.js";
 import {

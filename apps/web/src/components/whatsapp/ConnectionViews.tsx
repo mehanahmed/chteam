@@ -1,4 +1,4 @@
-import { formatAuditTime } from "@wateaminbox/shared";
+import { formatAuditTime } from "@omniteam/shared";
 import {
   CheckCircle2,
   Loader2,

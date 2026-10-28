@@ -13,7 +13,10 @@ import type { GroupParticipant } from "@/hooks/useGroups";
 export type ParticipantIdentity = Pick<
   GroupParticipant,
   "jid" | "phoneNumber" | "mentionIds" | "contactId"
->;
+> & {
+  profilePictureUrl?: string | null;
+  displayName?: string | null;
+};
 
 function digitsOnly(value: string): string {
   return value.replace(/\D/g, "");
@@ -52,6 +55,28 @@ export function resolveParticipantContactId(
     if (!participant.contactId) continue;
     if (identityTokens(participant).includes(senderToken)) {
       return participant.contactId;
+    }
+  }
+  return null;
+}
+
+/**
+ * Resolves the profile avatar URL for a group sender from the participant list.
+ */
+export function resolveParticipantAvatarUrl(
+  senderIdentity: string | null | undefined,
+  participants: readonly ParticipantIdentity[],
+): string | null {
+  if (!senderIdentity || senderIdentity.endsWith("@g.us")) return null;
+
+  const senderToken = digitsOnly(
+    senderIdentity.split("@")[0]?.split(":")[0] || "",
+  );
+  if (!senderToken) return null;
+
+  for (const participant of participants) {
+    if (identityTokens(participant).includes(senderToken)) {
+      return participant.profilePictureUrl || null;
     }
   }
   return null;

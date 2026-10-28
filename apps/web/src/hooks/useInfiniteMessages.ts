@@ -1,5 +1,5 @@
 import { type InfiniteData, useInfiniteQuery } from "@tanstack/react-query";
-import type { PaginatedMessages } from "@wateaminbox/shared";
+import type { PaginatedMessages } from "@omniteam/shared";
 import { api } from "../lib/api";
 import { getCompanyId } from "../lib/api/client";
 
@@ -81,7 +81,7 @@ export function useInfiniteMessagesUtils() {
         typeof import("@tanstack/react-query").useQueryClient
       >,
     ) => {
-      return (newMessage: import("@wateaminbox/shared").Message) => {
+      return (newMessage: import("@omniteam/shared").Message) => {
         queryClient.setQueryData(
           infiniteMessageKeys.list(conversationId),
           (oldData: ReturnType<typeof useInfiniteMessages>["data"]) => {

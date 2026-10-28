@@ -1,5 +1,5 @@
 import { useMutation } from "@tanstack/react-query";
-import { dayjs } from "@wateaminbox/shared";
+import { dayjs } from "@omniteam/shared";
 import {
   API_BASE_URL,
   buildQueryString,

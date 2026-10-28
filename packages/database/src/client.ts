@@ -7,7 +7,7 @@ import type {
   MessageType,
   RemoteHistoryStatus,
   ScheduledMessageStatus,
-} from "@wateaminbox/shared";
+} from "@omniteam/shared";
 import { Generated, Kysely, PostgresDialect } from "kysely";
 import { Pool } from "pg";
 
@@ -36,10 +36,30 @@ export interface Database {
   channel_spine_workspace_flag_audit: ChannelSpineWorkspaceFlagAuditTable;
   channel_ingress_routes: ChannelIngressRoutesTable;
   channel_message_delivery_outbox: ChannelMessageDeliveryOutboxTable;
+  connection_ai_settings: ConnectionAiSettingsTable;
 }
 
-// Type alias for backward compatibility (deprecated - import from @wateaminbox/shared instead)
-/** @deprecated Use CompanyMemberRole from @wateaminbox/shared instead */
+export interface ConnectionAiSettingsTable {
+  id: Generated<string>;
+  company_id: string;
+  connection_id: string;
+  enabled: Generated<boolean>;
+  persona_name: Generated<string>;
+  persona_tone: Generated<"friendly" | "formal" | "enthusiastic">;
+  store_name: string | null;
+  custom_instructions: string | null;
+  inside_dhaka_fee: Generated<number>;
+  sub_dhaka_fee: Generated<number>;
+  outside_dhaka_fee: Generated<number>;
+  outside_dhaka_advance_required: Generated<boolean>;
+  outside_dhaka_advance_amount: Generated<number>;
+  faqs: Generated<Array<{ question: string; answer: string }>>;
+  created_at: Generated<Date>;
+  updated_at: Generated<Date>;
+}
+
+// Type alias for backward compatibility (deprecated - import from @omniteam/shared instead)
+/** @deprecated Use CompanyMemberRole from @omniteam/shared instead */
 export type MemberRole = CompanyMemberRole;
 
 export interface ApiRateLimitBucketsTable {
@@ -123,7 +143,7 @@ export interface CompaniesTable {
  * Versioned, immutable SLA response-target policies for a company.
  * `weekly_schedule`/`exceptions` are stored as jsonb; application code casts
  * them to their typed shapes (see `SlaWeeklySchedule`/`SlaScheduleException`
- * in @wateaminbox/shared) on read, matching the existing `permissions`
+ * in @omniteam/shared) on read, matching the existing `permissions`
  * jsonb-column pattern below.
  */
 export interface SlaPoliciesTable {

@@ -5,7 +5,7 @@
  * Supports in-memory LRU cache, PostgreSQL, and optional Redis backends.
  */
 
-import { type Database, db } from "@wateaminbox/database";
+import { type Database, db } from "@omniteam/database";
 import { type Kysely, sql } from "kysely";
 import type { RateLimitConfig } from "../config/rate-limit.config";
 import {

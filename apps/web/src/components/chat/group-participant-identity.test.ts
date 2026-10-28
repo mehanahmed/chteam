@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 import {
   type ParticipantIdentity,
   resolveParticipantContactId,
+  resolveParticipantAvatarUrl,
 } from "./group-participant-identity";
 
 const participant = (
@@ -84,6 +85,32 @@ describe("resolveParticipantContactId", () => {
   test("resolves nothing against an empty participant list", () => {
     expect(
       resolveParticipantContactId("6591234567@s.whatsapp.net", []),
+    ).toBeNull();
+  });
+});
+
+describe("resolveParticipantAvatarUrl", () => {
+  test("matches a sender avatar by their phone JID", () => {
+    expect(
+      resolveParticipantAvatarUrl("6591234567@s.whatsapp.net", [
+        participant({ profilePictureUrl: "https://example.com/avatar.jpg" }),
+      ]),
+    ).toBe("https://example.com/avatar.jpg");
+  });
+
+  test("matches a sender avatar by their device-suffixed JID", () => {
+    expect(
+      resolveParticipantAvatarUrl("6591234567:15@s.whatsapp.net", [
+        participant({ profilePictureUrl: "https://example.com/avatar.jpg" }),
+      ]),
+    ).toBe("https://example.com/avatar.jpg");
+  });
+
+  test("returns null when participant has no avatar", () => {
+    expect(
+      resolveParticipantAvatarUrl("6591234567@s.whatsapp.net", [
+        participant({ profilePictureUrl: null }),
+      ]),
     ).toBeNull();
   });
 });

@@ -54,7 +54,7 @@
 import type {
   SlaScheduleException,
   SlaWeeklySchedule,
-} from "@wateaminbox/shared";
+} from "@omniteam/shared";
 import { sql } from "kysely";
 import { AnalyticsRangeTooWideError } from "../../lib/errors.js";
 import type { SlaCalendar } from "../sla-policy/calendar.js";

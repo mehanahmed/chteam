@@ -1,6 +1,7 @@
 import { type Kysely, sql } from "kysely";
 import type { TenantDatabase } from "../services/tenant.service.js";
 import type { MessageDbRow, ReactionData } from "./message-formatters.js";
+import { getAuthorizedMediaUrlOrNull } from "./storage.js";
 
 type ReactionMessage = Pick<MessageDbRow, "id" | "whatsapp_connection_id"> & {
   contact_id: string | null;
@@ -40,6 +41,7 @@ function formatCanonicalJid(jid: string): string | null {
 export async function loadMessageReactions(
   tenantDb: Kysely<TenantDatabase>,
   messages: ReactionMessage[],
+  companyId?: string,
 ): Promise<Map<string, ReactionData[]>> {
   const reactionsMap = new Map<string, ReactionData[]>();
   if (messages.length === 0) return reactionsMap;
@@ -281,6 +283,38 @@ export async function loadMessageReactions(
   const messagesById = new Map(
     messages.map((message) => [message.id, message]),
   );
+
+  if (companyId) {
+    const rawAvatarUrls = [
+      ...new Set(
+        [...identities.values()]
+          .map((id) => id.avatarUrl)
+          .filter(
+            (url): url is string =>
+              Boolean(
+                url &&
+                  !url.startsWith("http://") &&
+                  !url.startsWith("https://") &&
+                  !url.startsWith("blob:"),
+              ),
+          ),
+      ),
+    ];
+    if (rawAvatarUrls.length > 0) {
+      const authorizedMap = new Map<string, string | null>();
+      await Promise.all(
+        rawAvatarUrls.map(async (url) => {
+          const authUrl = await getAuthorizedMediaUrlOrNull(url, companyId);
+          authorizedMap.set(url, authUrl);
+        }),
+      );
+      for (const identity of identities.values()) {
+        if (identity.avatarUrl && authorizedMap.has(identity.avatarUrl)) {
+          identity.avatarUrl = authorizedMap.get(identity.avatarUrl) ?? null;
+        }
+      }
+    }
+  }
 
   for (const reaction of reactions) {
     const message = messagesById.get(reaction.message_id);

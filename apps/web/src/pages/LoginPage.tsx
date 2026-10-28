@@ -2,7 +2,11 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import {
   ArrowRight,
   CircleAlert,
+  Eye,
+  EyeOff,
   LoaderCircle,
+  LockKeyhole,
+  Mail,
   MailCheck,
   ShieldCheck,
 } from "lucide-react";
@@ -10,9 +14,9 @@ import * as React from "react";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { Link, useLocation, useNavigate, useSearchParams } from "react-router";
-import { AuthPageShell } from "../components/auth/AuthPageShell";
+import { GlassAuthShell } from "../components/auth/GlassAuthShell";
+import { BrandLogo } from "../components/brand/BrandLogo";
 import { Button } from "../components/ui/button";
-import { FormField } from "../components/ui/form-field";
 import { useAuth } from "../contexts/auth-context";
 import { useWorkspace } from "../contexts/workspace-context";
 import { resendVerification } from "../lib/api";
@@ -50,6 +54,7 @@ export function LoginPage() {
   const [isResending, setIsResending] = React.useState(false);
   const [resendMessage, setResendMessage] = React.useState<string | null>(null);
   const [resendError, setResendError] = React.useState<string | null>(null);
+  const [showPassword, setShowPassword] = React.useState(false);
 
   const {
     register,
@@ -97,7 +102,6 @@ export function LoginPage() {
     try {
       await login(data.email, data.password);
       productAnalytics.track("login", { method: "email" });
-      // Navigation is handled by useEffect based on auth state
     } catch (loginError) {
       if (isEmailVerificationRequiredError(loginError)) {
         setVerificationRequired(true);
@@ -139,147 +143,163 @@ export function LoginPage() {
   };
 
   return (
-    <AuthPageShell variant="login">
-      <div className="mx-auto w-full max-w-[30rem]">
-        <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#0a7c43] dark:text-[#52df83]">
-          {t("auth.welcomeBack", "Welcome back")}
-        </p>
-        <h1 className="mt-3 text-3xl font-semibold tracking-[-0.04em] text-slate-950 text-balance sm:text-4xl dark:text-dark-text-primary">
-          {t("auth.loginTitle", "Sign in to your team inbox")}
-        </h1>
-        <p className="mt-3 text-sm leading-6 text-slate-600 dark:text-dark-text-secondary">
-          {t(
-            "auth.loginSubtitle",
-            "Continue managing conversations, assignments, and customer context with your team.",
-          )}
-        </p>
+    <GlassAuthShell>
+      {/* Centered Frosted Glass Card with WhatsApp Aesthetics */}
+      <div className="w-full max-w-[420px] rounded-[2rem] bg-white/85 dark:bg-[#111b21]/90 backdrop-blur-2xl border border-white/90 dark:border-white/10 shadow-[0_24px_64px_-16px_rgba(7,94,84,0.18)] dark:shadow-[0_24px_64px_-16px_rgba(0,0,0,0.7)] p-7 sm:p-9 text-slate-800 dark:text-slate-100 relative transition-all duration-300">
+        
+        {/* OmniTeam Brand Logo */}
+        <div className="mx-auto mb-6 flex justify-center">
+          <BrandLogo className="h-14 sm:h-16 w-auto object-contain drop-shadow-sm transition-transform duration-200 hover:scale-[1.02]" />
+        </div>
 
+        {/* Title & Omnichannel Business Subtitle */}
+        <div className="text-center">
+          <h1 className="text-2xl font-bold tracking-tight text-[#075e54] dark:text-white">
+            {t("auth.loginTitle", "Sign in with email")}
+          </h1>
+          <p className="mt-2 text-xs leading-relaxed text-slate-500 dark:text-slate-400 max-w-[310px] mx-auto">
+            {t(
+              "auth.loginSubtitleRefined",
+              "Connect to your omnichannel team inbox. Manage WhatsApp & Telegram customer conversations together.",
+            )}
+          </p>
+        </div>
+
+        {/* Feedback / Error Alerts */}
+        {error && (
+          <div
+            role="alert"
+            className="mt-5 flex items-start gap-2.5 rounded-xl border border-red-200 bg-red-50/90 p-3.5 text-xs leading-5 text-red-700 dark:border-red-900/60 dark:bg-red-950/40 dark:text-red-300 backdrop-blur-sm"
+          >
+            <CircleAlert className="mt-0.5 h-4 w-4 shrink-0" />
+            <div className="min-w-0 flex-1">
+              <p>{error}</p>
+              {verificationRequired && (
+                <button
+                  type="button"
+                  onClick={resendVerificationEmail}
+                  disabled={isResending || Boolean(resendMessage)}
+                  className="mt-1.5 inline-flex items-center gap-1.5 font-semibold underline-offset-4 hover:underline disabled:opacity-60 text-[#075e54] dark:text-[#25d366]"
+                >
+                  {isResending ? (
+                    <LoaderCircle className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <MailCheck className="h-3.5 w-3.5" />
+                  )}
+                  {isResending
+                    ? t("auth.sending", "Sending…")
+                    : t("auth.resendVerification", "Resend verification email")}
+                </button>
+              )}
+              {resendMessage && (
+                <p className="mt-1.5 font-medium text-emerald-700 dark:text-emerald-300">
+                  {resendMessage}
+                </p>
+              )}
+              {resendError && <p className="mt-1.5">{resendError}</p>}
+            </div>
+          </div>
+        )}
+
+        {/* Authentication Form */}
         <form
           onSubmit={handleSubmit(onSubmit)}
           onChange={clearLoginFeedback}
-          className="mt-8 space-y-5 [&_input]:h-11 [&_input]:rounded-xl [&_input]:border-slate-300 [&_input]:bg-white [&_input]:px-3.5 dark:[&_input]:border-dark-border dark:[&_input]:bg-dark-tertiary"
+          className="mt-6 space-y-4"
           aria-busy={isLoading}
           noValidate
         >
-          {error && (
-            <div
-              role="alert"
-              className="flex items-start gap-2.5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm leading-5 text-red-700 dark:border-red-800 dark:bg-red-900/30 dark:text-red-300"
-            >
-              <CircleAlert
-                aria-hidden="true"
-                className="mt-0.5 h-4 w-4 shrink-0"
-              />
-              <div className="min-w-0 flex-1">
-                <p>{error}</p>
-                {verificationRequired && (
-                  <button
-                    type="button"
-                    onClick={resendVerificationEmail}
-                    disabled={isResending || Boolean(resendMessage)}
-                    className="mt-2 inline-flex items-center gap-1.5 rounded-sm font-semibold underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600 disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    {isResending ? (
-                      <LoaderCircle
-                        aria-hidden="true"
-                        className="h-4 w-4 animate-spin"
-                      />
-                    ) : (
-                      <MailCheck aria-hidden="true" className="h-4 w-4" />
-                    )}
-                    {isResending
-                      ? t("auth.sending", "Sending…")
-                      : t(
-                          "auth.resendVerification",
-                          "Resend verification email",
-                        )}
-                  </button>
-                )}
-                {resendMessage && (
-                  <p className="mt-2 font-medium text-emerald-700 dark:text-emerald-300">
-                    {resendMessage}
-                  </p>
-                )}
-                {resendError && <p className="mt-2">{resendError}</p>}
-              </div>
-            </div>
-          )}
-
-          <FormField
-            label={t("auth.workEmail", "Work email")}
-            id="email"
-            type="email"
-            placeholder="you@company.com"
-            registration={register("email")}
-            error={errors.email}
-            autoComplete="email"
-            autoFocus
-          />
-
+          {/* Email Input with WhatsApp Accent */}
           <div>
-            <FormField
-              label={t("auth.password", "Password")}
-              id="password"
-              type="password"
-              placeholder={t("auth.passwordPlaceholder", "Enter your password")}
-              registration={register("password")}
-              error={errors.password}
-              autoComplete="current-password"
-              showPasswordToggle
-            />
+            <div className="relative rounded-xl bg-[#f0f7f3]/80 dark:bg-[#1f2c33]/70 border border-slate-200/80 dark:border-[#2f3b43] focus-within:border-[#128c7e] dark:focus-within:border-[#25d366] focus-within:ring-4 focus-within:ring-[#25d366]/20 focus-within:bg-white dark:focus-within:bg-[#1f2c33] transition-all">
+              <Mail className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[#128c7e]/70 dark:text-[#25d366]/80" />
+              <input
+                id="email"
+                type="email"
+                placeholder={t("auth.emailPlaceholder", "Email")}
+                {...register("email")}
+                autoComplete="email"
+                autoFocus
+                className="w-full h-11 pl-10 pr-3.5 bg-transparent text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none"
+              />
+            </div>
+            {errors.email && (
+              <p className="mt-1 text-xs text-red-600 dark:text-red-400">
+                {errors.email.message}
+              </p>
+            )}
+          </div>
+
+          {/* Password Input with Lock Icon & Reveal Toggle */}
+          <div>
+            <div className="relative rounded-xl bg-[#f0f7f3]/80 dark:bg-[#1f2c33]/70 border border-slate-200/80 dark:border-[#2f3b43] focus-within:border-[#128c7e] dark:focus-within:border-[#25d366] focus-within:ring-4 focus-within:ring-[#25d366]/20 focus-within:bg-white dark:focus-within:bg-[#1f2c33] transition-all">
+              <LockKeyhole className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[#128c7e]/70 dark:text-[#25d366]/80" />
+              <input
+                id="password"
+                type={showPassword ? "text" : "password"}
+                placeholder={t("auth.password", "Password")}
+                {...register("password")}
+                autoComplete="current-password"
+                className="w-full h-11 pl-10 pr-10 bg-transparent text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                aria-label={showPassword ? "Hide password" : "Show password"}
+                className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-[#075e54] dark:hover:text-[#25d366] transition-colors"
+              >
+                {showPassword ? (
+                  <EyeOff className="h-4 w-4" />
+                ) : (
+                  <Eye className="h-4 w-4" />
+                )}
+              </button>
+            </div>
+            {errors.password && (
+              <p className="mt-1 text-xs text-red-600 dark:text-red-400">
+                {errors.password.message}
+              </p>
+            )}
+
+            {/* Forgot Password Link */}
             <div className="mt-2 flex justify-end">
               <Link
                 to={buildAuthUrl("/forgot-password", redirectTo, currentEmail)}
-                className="rounded-sm text-sm font-semibold text-[#0a7c43] underline-offset-4 transition-colors hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#075e54] focus-visible:ring-offset-2 dark:text-[#52df83] dark:focus-visible:ring-offset-dark-elevated"
+                className="text-xs font-medium text-[#0a7c43] hover:text-[#075e54] dark:text-[#25d366] dark:hover:text-[#52df83] transition-colors"
               >
                 {t("auth.forgotPasswordLink", "Forgot password?")}
               </Link>
             </div>
           </div>
 
+          {/* Primary Action Button in WhatsApp Teal / Green Gradient */}
           <Button
             type="submit"
             size="lg"
-            className="h-12 w-full rounded-xl bg-[#075e54] text-white shadow-lg shadow-[#075e54]/15 hover:bg-[#064b43] dark:bg-whatsapp-green-a11y-button dark:hover:bg-whatsapp-green-a11y-button/90"
             disabled={isLoading}
+            className="w-full h-11 rounded-xl bg-gradient-to-r from-[#075e54] to-[#128c7e] hover:from-[#064e46] hover:to-[#0f776a] text-white dark:from-[#25d366] dark:to-[#00a884] dark:text-[#111b21] font-semibold text-sm shadow-md shadow-[#075e54]/25 hover:shadow-lg hover:shadow-[#075e54]/35 active:scale-[0.99] transition-all flex items-center justify-center gap-2"
           >
             {isLoading ? (
               <>
-                <LoaderCircle aria-hidden="true" className="animate-spin" />
+                <LoaderCircle className="h-4 w-4 animate-spin" />
                 {t("auth.signingIn", "Signing in…")}
               </>
             ) : (
               <>
-                {t("auth.signInAction", "Sign in")}
-                <ArrowRight aria-hidden="true" />
+                {t("auth.getStarted", "Get Started")}
+                <ArrowRight className="h-4 w-4" />
               </>
             )}
           </Button>
         </form>
 
-        <div className="mt-6 flex items-start gap-3 rounded-2xl border border-slate-200 bg-slate-50/80 p-4 dark:border-dark-border dark:bg-dark-tertiary/50">
-          <ShieldCheck
-            aria-hidden="true"
-            className="mt-0.5 h-5 w-5 shrink-0 text-[#0a7c43] dark:text-[#52df83]"
-          />
-          <p className="text-xs leading-5 text-slate-500 dark:text-dark-text-secondary">
-            {t(
-              "auth.loginPrivacyNote",
-              "Your sign-in is protected, and workspace access stays private to approved team members.",
-            )}
-          </p>
-        </div>
-
-        <p className="mt-6 text-center text-sm text-slate-600 dark:text-dark-text-secondary">
-          {t("auth.newToApp", "New to WATeamInbox?")}{" "}
-          <Link
-            to={buildAuthUrl("/register", redirectTo, currentEmail)}
-            className="rounded-sm font-semibold text-[#0a7c43] underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#075e54] focus-visible:ring-offset-2 dark:text-[#52df83] dark:focus-visible:ring-offset-dark-elevated"
-          >
-            {t("auth.createAccountLink", "Create an account")}
-          </Link>
+        {/* Security / Encryption Notice */}
+        <p className="mt-6 flex items-center justify-center gap-1.5 text-center text-xs text-slate-500 dark:text-slate-400">
+          <ShieldCheck className="h-3.5 w-3.5 text-[#0a7c43] dark:text-[#25d366]" />
+          <span>{t("auth.secureEncrypted", "All connections are secure and encrypted.")}</span>
         </p>
+
       </div>
-    </AuthPageShell>
+    </GlassAuthShell>
   );
 }

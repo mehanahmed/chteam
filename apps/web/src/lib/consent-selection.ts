@@ -1,4 +1,4 @@
-import type { CompanyWithRole } from "@wateaminbox/shared";
+import type { CompanyWithRole } from "@omniteam/shared";
 
 /**
  * Reconcile the OAuth consent screen's selected workspace id against the live

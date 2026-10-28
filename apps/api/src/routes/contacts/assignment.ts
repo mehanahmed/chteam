@@ -1,5 +1,5 @@
 import { zValidator } from "../../lib/validator.js";
-import { getContactDisplayName, toDbDate } from "@wateaminbox/shared";
+import { getContactDisplayName, toDbDate } from "@omniteam/shared";
 import { Hono } from "hono";
 import { forbidden, notFound } from "../../lib/errors.js";
 import { created, successData, successMessage } from "../../lib/response.js";

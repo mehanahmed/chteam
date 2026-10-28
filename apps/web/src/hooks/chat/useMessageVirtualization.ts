@@ -2,7 +2,7 @@ import {
   useVirtualizer,
   type VirtualItem as VirtualRow,
 } from "@tanstack/react-virtual";
-import type { Message, RemoteHistoryStatus } from "@wateaminbox/shared";
+import type { Message, RemoteHistoryStatus } from "@omniteam/shared";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { groupMediaAlbumMessages } from "@/components/chat/media-albums";
 import {

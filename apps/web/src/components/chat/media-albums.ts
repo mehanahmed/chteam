@@ -1,4 +1,4 @@
-import type { Message } from "@wateaminbox/shared";
+import type { Message } from "@omniteam/shared";
 import { getMessageAuthorKey } from "./message-grouping";
 
 /** Conservative fallback for albums received before protocol metadata existed. */

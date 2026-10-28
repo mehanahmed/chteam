@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import type { MessageReaction } from "@wateaminbox/shared";
+import type { MessageReaction } from "@omniteam/shared";
 import { api } from "../../lib/api";
 import { infiniteMessageKeys } from "../useInfiniteMessages";
 import type { InfiniteMessagesData, RetryMessageResponse } from "./types";

@@ -1,7 +1,7 @@
 import {
   TelegramBotAdapter,
   TelegramBotApiTransport,
-} from "@wateaminbox/adapter-telegram";
+} from "@omniteam/adapter-telegram";
 import { ChannelAdapterRegistry } from "./application/adapter-registry.js";
 import {
   ChannelCredentialKeyError,

@@ -1,5 +1,5 @@
 import { useQueryClient } from "@tanstack/react-query";
-import type { Contact, Message } from "@wateaminbox/shared";
+import type { Contact, Message } from "@omniteam/shared";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { useLocation, useNavigate, useParams } from "react-router";
@@ -279,19 +279,17 @@ export function useChatPageState(): ChatPageState & ChatPageActions {
   const lastMarkedRef = React.useRef<string | null>(null);
 
   React.useEffect(() => {
-    if (selectedChatId && lastMarkedRef.current !== selectedChatId) {
+    if (selectedChatId) {
       lastMarkedRef.current = selectedChatId;
 
       const timeoutId = setTimeout(() => {
-        if (lastMarkedRef.current === selectedChatId) {
-          markConversationAsRead(selectedChatId)
-            .then(() => {
-              queryClient.invalidateQueries({ queryKey: chatKeys.lists() });
-            })
-            .catch((error) => {
-              console.error("Failed to mark conversation as read:", error);
-            });
-        }
+        markConversationAsRead(selectedChatId)
+          .then(() => {
+            queryClient.invalidateQueries({ queryKey: chatKeys.lists() });
+          })
+          .catch((error) => {
+            console.error("Failed to mark conversation as read:", error);
+          });
       }, 300);
 
       return () => clearTimeout(timeoutId);
@@ -304,6 +302,13 @@ export function useChatPageState(): ChatPageState & ChatPageActions {
       setIsProfileOpen(false);
       setIsSearchOpen(false);
       setHighlightedMessageId(null);
+      if (chatId) {
+        markConversationAsRead(chatId)
+          .then(() => {
+            queryClient.invalidateQueries({ queryKey: chatKeys.lists() });
+          })
+          .catch(() => {});
+      }
       if (!activeWorkspaceId) return;
       // Carry the query string across: it holds the Chats/Groups filter, so
       // dropping it would silently send the user back to the Chats list when

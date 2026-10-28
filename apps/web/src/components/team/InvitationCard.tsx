@@ -1,4 +1,4 @@
-import { dayjs, nowMs } from "@wateaminbox/shared";
+import { dayjs, nowMs } from "@omniteam/shared";
 import { Clock, Mail, RefreshCw, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";

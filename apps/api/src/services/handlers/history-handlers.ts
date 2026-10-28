@@ -2,7 +2,7 @@ import {
   normalizeJid,
   toDbDate,
   type RemoteHistoryStatus,
-} from "@wateaminbox/shared";
+} from "@omniteam/shared";
 import type { HistorySyncPageEvent } from "../../lib/nats/index.js";
 import { broadcastToCompany } from "../../lib/realtime.js";
 import { getTenantConnection } from "../tenant.service.js";

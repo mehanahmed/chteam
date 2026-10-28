@@ -5,8 +5,8 @@
  */
 
 import { zValidator } from "../../lib/validator.js";
-import type { TenantDatabase } from "@wateaminbox/database";
-import { toDbDate } from "@wateaminbox/shared";
+import type { TenantDatabase } from "@omniteam/database";
+import { toDbDate } from "@omniteam/shared";
 import type { Context } from "hono";
 import { Hono } from "hono";
 import { type Kysely, sql } from "kysely";

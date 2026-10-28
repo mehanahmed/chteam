@@ -1,4 +1,4 @@
-import type { Message } from "@wateaminbox/shared";
+import type { Message } from "@omniteam/shared";
 
 /**
  * Whether a reply draft the agent already picked is still valid.

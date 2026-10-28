@@ -2,14 +2,14 @@ import type { useVirtualizer, VirtualItem } from "@tanstack/react-virtual";
 import {
   formatDateSeparator as formatDateSep,
   type RemoteHistoryStatus,
-} from "@wateaminbox/shared";
+} from "@omniteam/shared";
 import { ArchiveRestore, Loader2, Smartphone } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import type { GroupParticipant } from "@/hooks/useGroups";
 import type { TeamMemberIdentity } from "@/hooks/useTeam";
 import type { VirtualItem as MessageListItem } from "../../hooks/chat/useMessageVirtualization";
-import { isChannel } from "@wateaminbox/shared";
+import { isChannel } from "@omniteam/shared";
 import { channelDisplayName } from "@/components/connections/channel-catalog";
 import { ChannelBadge } from "./ChannelIdentity";
 import { MessageBubble } from "./MessageBubble";
@@ -57,7 +57,12 @@ interface VirtualMessageListProps {
   onBackgroundContextMenu?: (e: React.MouseEvent) => void;
   mentionParticipants?: Pick<
     GroupParticipant,
-    "jid" | "phoneNumber" | "mentionIds" | "displayName" | "contactId"
+    | "jid"
+    | "phoneNumber"
+    | "mentionIds"
+    | "displayName"
+    | "contactId"
+    | "profilePictureUrl"
   >[];
   onNavigateToMessage?: (target: MessageNavigationTarget) => void;
 }
@@ -99,11 +104,9 @@ export function VirtualMessageList({
   return (
     <div
       ref={scrollContainerRef}
-      // Wider gutters would eat the bubble width a phone needs; the column
-      // still centres on tablet and desktop. Deliberately not a flex
-      // container: the virtualiser's inner box is absolutely sized and must
-      // not be shrunk by flex layout.
-      className="relative z-10 mx-auto w-full min-h-0 max-w-4xl flex-1 overflow-y-auto px-2.5 pb-3 pt-2 sm:px-6 md:px-8"
+      // Deliberately not a flex container: the virtualiser's inner box is
+      // absolutely sized and must not be shrunk by flex layout.
+      className="relative z-10 w-full min-h-0 flex-1 overflow-y-auto px-2.5 pb-3 pt-2 sm:px-6 md:px-8"
       onScroll={onScroll}
       onContextMenu={onBackgroundContextMenu}
     >

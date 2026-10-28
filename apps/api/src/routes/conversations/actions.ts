@@ -1,5 +1,5 @@
 import { zValidator } from "../../lib/validator.js";
-import { isChannel, isChannelProvider } from "@wateaminbox/shared";
+import { isChannel, isChannelProvider } from "@omniteam/shared";
 import { createHash } from "node:crypto";
 import { Hono } from "hono";
 import { z } from "zod";

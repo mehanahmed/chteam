@@ -2,7 +2,7 @@
  * Engagement analytics
  */
 
-import { dayjs, toISOString } from "@wateaminbox/shared";
+import { dayjs, toISOString } from "@omniteam/shared";
 import { sql } from "kysely";
 import { getSchemaName, getTenantConnection } from "../tenant.service.js";
 import type { EngagementMetrics, EngagementTrend } from "./types.js";

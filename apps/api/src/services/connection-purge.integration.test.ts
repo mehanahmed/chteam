@@ -7,8 +7,8 @@
  * - and that a sibling connection in the same workspace keeps everything.
  */
 import { describe, expect, test } from "bun:test";
-import { db } from "@wateaminbox/database";
-import { DEFAULT_SLA_WEEKLY_SCHEDULE } from "@wateaminbox/shared";
+import { db } from "@omniteam/database";
+import { DEFAULT_SLA_WEEKLY_SCHEDULE } from "@omniteam/shared";
 import { type Kysely, sql } from "kysely";
 import {
   ConnectionNotArchivedError,

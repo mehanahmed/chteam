@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import type { SlaWeeklySchedule } from "@wateaminbox/shared";
+import type { SlaWeeklySchedule } from "@omniteam/shared";
 import { createSlaPolicySchema } from "./sla-policy.js";
 
 function alwaysOpenSchedule(): SlaWeeklySchedule {

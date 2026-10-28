@@ -8,7 +8,7 @@ import {
   TENANT_INDEX_TARGETS,
   TENANT_SCHEMA_NAME_LENGTH,
   TENANT_SUFFIX_BUDGET,
-} from "@wateaminbox/database";
+} from "@omniteam/database";
 
 /**
  * Every per-tenant identifier must survive PostgreSQL's 63-byte limit intact.

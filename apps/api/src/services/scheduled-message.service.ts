@@ -7,14 +7,14 @@
  * scheduled row sent, so a crash or a concurrent replica can never double-send.
  */
 
-import type { ScheduledMessagesTable } from "@wateaminbox/database";
-import { db } from "@wateaminbox/database";
+import type { ScheduledMessagesTable } from "@omniteam/database";
+import { db } from "@omniteam/database";
 import type {
   BulkRecipientSkipReason,
   ScheduledMessage,
   ScheduledMessageStatus,
-} from "@wateaminbox/shared";
-import { toDbDate } from "@wateaminbox/shared";
+} from "@omniteam/shared";
+import { toDbDate } from "@omniteam/shared";
 import type { Kysely, Selectable, Transaction } from "kysely";
 import { sql } from "kysely";
 import { shadowLinkedDeviceLegacyMutation } from "../channel-spine/providers/whatsapp-linked-device/shadow.js";

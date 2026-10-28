@@ -4,8 +4,8 @@
  * Handles connection status queries and updates.
  */
 
-import type { WhatsAppConnectionStatus } from "@wateaminbox/database";
-import { toDbDate } from "@wateaminbox/shared";
+import type { WhatsAppConnectionStatus } from "@omniteam/database";
+import { toDbDate } from "@omniteam/shared";
 import { type Kysely, sql } from "kysely";
 import { DuplicateWhatsAppPhoneError } from "../../lib/errors.js";
 import type { TenantDatabase } from "../tenant.service.js";

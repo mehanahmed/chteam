@@ -1,22 +1,27 @@
-import type { TenantDatabase } from "@wateaminbox/database";
+import { createHash } from "node:crypto";
+import type { TenantDatabase } from "@omniteam/database";
 import {
   assertNormalizedChannelEvent,
-  isDurableChannelEvent,
   type ExternalConversationReference,
   type ExternalEndpointReference,
+  isDurableChannelEvent,
   type MessageUpsertEventPayload,
   type NormalizedChannelEvent,
-} from "@wateaminbox/shared";
+} from "@omniteam/shared";
 import type { Kysely, Transaction } from "kysely";
 import { sql } from "kysely";
-import { createHash } from "node:crypto";
+import { createLogger, formatError } from "../../lib/logger.js";
+import { dispatchInboundMessageToAi } from "../../services/ai-agent/ai-orchestrator.service.js";
 import { openOrReopenCaseForInboundConversation } from "../../services/conversation-case.service.js";
 import { enqueueMessageSearch } from "../../services/message-search-outbox.service.js";
+
+const logger = createLogger("ChannelEventProcessor");
 
 export interface AppliedChannelEvent {
   outcome: "applied" | "duplicate" | "transient";
   conversationId?: string;
   messageId?: string;
+  contactId?: string | null;
 }
 
 export class ChannelEventIdentityCollisionError extends Error {}
@@ -39,41 +44,83 @@ export async function applyNormalizedChannelEvent(
   if (reserved === "duplicate") return { outcome: "duplicate" };
 
   try {
-    return await tenantDb.transaction().execute(async (trx) => {
-      const inbox = await trx
-        .selectFrom("channel_event_inbox")
-        .select(["status", "payload_digest"])
-        .where("channel_account_id", "=", event.channelAccountId)
-        .where("external_event_scope", "=", event.provider)
-        .where("external_event_id", "=", event.eventId)
-        .forUpdate()
-        .executeTakeFirstOrThrow();
-      if (inbox.payload_digest !== digest) {
-        throw new ChannelEventIdentityCollisionError(
-          "event identity was reused with another payload",
-        );
-      }
-      if (inbox.status === "applied") return { outcome: "duplicate" };
-      if (inbox.status === "quarantined") {
-        throw new ChannelEventIdentityCollisionError("event is quarantined");
-      }
+    const result: AppliedChannelEvent = await tenantDb
+      .transaction()
+      .execute(async (trx): Promise<AppliedChannelEvent> => {
+        const inbox = await trx
+          .selectFrom("channel_event_inbox")
+          .select(["status", "payload_digest"])
+          .where("channel_account_id", "=", event.channelAccountId)
+          .where("external_event_scope", "=", event.provider)
+          .where("external_event_id", "=", event.eventId)
+          .forUpdate()
+          .executeTakeFirstOrThrow();
+        if (inbox.payload_digest !== digest) {
+          throw new ChannelEventIdentityCollisionError(
+            "event identity was reused with another payload",
+          );
+        }
+        if (inbox.status === "applied") return { outcome: "duplicate" };
+        if (inbox.status === "quarantined") {
+          throw new ChannelEventIdentityCollisionError("event is quarantined");
+        }
 
-      await requireMatchingAccount(trx, event);
-      const applied = await applyDurableEvent(trx, event);
-      await trx
-        .updateTable("channel_event_inbox")
-        .set({
-          status: "applied",
-          applied_at: new Date(),
-          last_error_code: null,
-          attempts: sql`attempts + 1`,
-        })
-        .where("channel_account_id", "=", event.channelAccountId)
-        .where("external_event_scope", "=", event.provider)
-        .where("external_event_id", "=", event.eventId)
-        .execute();
-      return { outcome: "applied", ...applied };
-    });
+        await requireMatchingAccount(trx, event);
+        const applied = await applyDurableEvent(trx, event);
+        await trx
+          .updateTable("channel_event_inbox")
+          .set({
+            status: "applied",
+            applied_at: new Date(),
+            last_error_code: null,
+            attempts: sql`attempts + 1`,
+          })
+          .where("channel_account_id", "=", event.channelAccountId)
+          .where("external_event_scope", "=", event.provider)
+          .where("external_event_id", "=", event.eventId)
+          .execute();
+        return { outcome: "applied", ...applied };
+      });
+
+    if (
+      result.outcome === "applied" &&
+      event.kind === "message.upsert" &&
+      event.payload.direction === "inbound" &&
+      result.messageId &&
+      result.contactId &&
+      result.contactId.trim().length > 0
+    ) {
+      dispatchInboundMessageToAi({
+        companyId: event.companyId,
+        channelAccountId: event.channelAccountId,
+        contactId: result.contactId,
+        conversationId: result.conversationId ?? null,
+        messageId: result.messageId,
+        rawMessageId: event.payload.externalMessageId,
+        contactJid: event.payload.sender?.externalId ?? null,
+        senderJid: event.payload.sender?.externalId ?? null,
+        senderName: event.payload.sender?.displayName ?? null,
+        content: event.payload.textContent ?? "",
+        messageType: event.payload.normalizedType ?? "text",
+        mediaUrl: event.payload.attachments?.[0]?.storageUri ?? null,
+        mediaMimeType: event.payload.attachments?.[0]?.contentType ?? null,
+        isGroup: false,
+        receivedAt: new Date(event.providerOccurredAt ?? event.receivedAt),
+        channel: event.channel,
+        provider: event.provider,
+      }).catch((err) => {
+        logger.error(
+          {
+            error: formatError(err),
+            companyId: event.companyId,
+            messageId: result.messageId,
+          },
+          "Failed to dispatch inbound message from event-processor to AI Orchestrator",
+        );
+      });
+    }
+
+    return result;
   } catch (error) {
     await recordApplicationFailure(tenantDb, event, error);
     throw error;
@@ -151,7 +198,11 @@ async function requireMatchingAccount(
 async function applyDurableEvent(
   trx: Transaction<TenantDatabase>,
   event: NormalizedChannelEvent,
-): Promise<{ conversationId?: string; messageId?: string }> {
+): Promise<{
+  conversationId?: string;
+  messageId?: string;
+  contactId?: string | null;
+}> {
   switch (event.kind) {
     case "account.status":
       await trx
@@ -286,7 +337,11 @@ async function applyParticipantMutation(
 async function applyMessageUpsert(
   trx: Transaction<TenantDatabase>,
   event: Extract<NormalizedChannelEvent, { kind: "message.upsert" }>,
-): Promise<{ conversationId: string; messageId: string }> {
+): Promise<{
+  conversationId: string;
+  messageId: string;
+  contactId?: string | null;
+}> {
   const payload = event.payload;
   const conversationId = await ensureConversation(
     trx,
@@ -318,7 +373,7 @@ async function applyMessageUpsert(
     existing?.provider_occurred_at &&
     occurredAt.getTime() < existing.provider_occurred_at.getTime()
   ) {
-    return { conversationId, messageId: existing.id };
+    return { conversationId, messageId: existing.id, contactId };
   }
 
   const values = {
@@ -490,7 +545,7 @@ async function applyMessageUpsert(
     conversationId,
     messageId,
   );
-  return { conversationId, messageId };
+  return { conversationId, messageId, contactId };
 }
 
 async function applyMessageMutation(

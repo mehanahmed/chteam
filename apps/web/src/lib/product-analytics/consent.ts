@@ -1,7 +1,7 @@
 import type { ConsentDecision, ConsentState, ConsentStorage } from "./types";
 
 /** Versioned so a future consent-scope change can re-prompt visitors. */
-export const CONSENT_STORAGE_KEY = "wateaminbox:analytics-consent:v1";
+export const CONSENT_STORAGE_KEY = "omniteam:analytics-consent:v1";
 
 /**
  * Unavailable, throwing, or corrupt storage is always treated as "unknown"

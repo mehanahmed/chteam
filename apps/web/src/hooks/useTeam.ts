@@ -6,14 +6,14 @@ import type {
   CreateCompanyInput,
   MemberPermissions,
   UpdateCompanyInput,
-} from "@wateaminbox/shared";
+} from "@omniteam/shared";
 import { api } from "@/lib/api/client";
 import { productAnalytics } from "@/lib/product-analytics";
 import { useInvalidate, useQueryInvalidation } from "./query";
 import { queryKeys } from "./query-keys";
 
 // Re-export types for backward compatibility
-export type { CompanyMember } from "@wateaminbox/shared";
+export type { CompanyMember } from "@omniteam/shared";
 
 export interface TeamMemberIdentity {
   userId: string;

@@ -1,4 +1,4 @@
-import type { MessageReaction } from "@wateaminbox/shared";
+import type { MessageReaction } from "@omniteam/shared";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { formatPhoneNumber } from "@/lib/utils";
@@ -11,11 +11,17 @@ import {
   DialogTitle,
 } from "../ui/dialog";
 import { IdentityAvatarFallback } from "../ui/identity-avatar-fallback";
+import {
+  resolveParticipantAvatarUrl,
+  type ParticipantIdentity,
+} from "./group-participant-identity";
 
 interface MessageReactionsProps {
   reactions: MessageReaction[];
   isOwn: boolean;
   onRemoveOwnReaction?: () => void;
+  currentUserAvatarUrl?: string;
+  participants?: ParticipantIdentity[];
 }
 
 const ALL_REACTIONS = "all";
@@ -37,11 +43,34 @@ export function getReactorIdentityLabel(
   return phone.startsWith("+") ? formatPhoneNumber(phone) : phone;
 }
 
+export function resolveReactorAvatarUrl(
+  reaction: Pick<
+    MessageReaction,
+    "reactorJid" | "reactorPhoneNumber" | "reactorAvatarUrl" | "isOwn"
+  >,
+  participants: readonly ParticipantIdentity[] = [],
+  currentUserAvatarUrl?: string,
+): string | null {
+  if (reaction.isOwn && currentUserAvatarUrl) {
+    return currentUserAvatarUrl;
+  }
+  if (
+    reaction.reactorAvatarUrl &&
+    !reaction.reactorAvatarUrl.startsWith("s3://")
+  ) {
+    return reaction.reactorAvatarUrl;
+  }
+  const reactorIdentity = reaction.reactorJid || reaction.reactorPhoneNumber;
+  return resolveParticipantAvatarUrl(reactorIdentity, participants);
+}
+
 /** Displays compact reaction badges and a WhatsApp-style reactor list. */
 export function MessageReactions({
   reactions,
   isOwn,
   onRemoveOwnReaction,
+  currentUserAvatarUrl,
+  participants,
 }: MessageReactionsProps) {
   const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
@@ -160,6 +189,8 @@ export function MessageReactions({
               <ReactorRow
                 key={`${reaction.reactorJid}-${reaction.emoji}`}
                 reaction={reaction}
+                currentUserAvatarUrl={currentUserAvatarUrl}
+                participants={participants}
                 onRemove={
                   reaction.isOwn && onRemoveOwnReaction
                     ? removeOwnReaction
@@ -210,9 +241,13 @@ function ReactionTab({
 
 function ReactorRow({
   reaction,
+  currentUserAvatarUrl,
+  participants = [],
   onRemove,
 }: {
   reaction: MessageReaction;
+  currentUserAvatarUrl?: string;
+  participants?: ParticipantIdentity[];
   onRemove?: () => void;
 }) {
   const { t } = useTranslation();
@@ -224,12 +259,18 @@ function ReactorRow({
     jidLabel && !reaction.isOwn && reaction.reactorName?.trim(),
   );
 
+  const resolvedAvatarUrl = useMemo(
+    () =>
+      resolveReactorAvatarUrl(reaction, participants, currentUserAvatarUrl),
+    [reaction, participants, currentUserAvatarUrl],
+  );
+
   const content = (
     <>
       <Avatar className="h-10 w-10 ring-1 ring-black/5 dark:ring-white/10">
-        {reaction.reactorAvatarUrl && (
+        {resolvedAvatarUrl && (
           <AvatarImage
-            src={reaction.reactorAvatarUrl}
+            src={resolvedAvatarUrl}
             alt=""
             className="object-cover"
           />

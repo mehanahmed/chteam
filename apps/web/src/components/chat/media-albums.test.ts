@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import type { Message } from "@wateaminbox/shared";
+import type { Message } from "@omniteam/shared";
 import { groupMediaAlbumMessages } from "./media-albums";
 
 function media(

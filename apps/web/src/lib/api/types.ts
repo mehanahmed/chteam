@@ -3,7 +3,7 @@
  * Shared type definitions for API requests and responses
  */
 
-import type { Message } from "@wateaminbox/shared";
+import type { Message } from "@omniteam/shared";
 
 // Common types
 export interface ApiError {
@@ -177,7 +177,7 @@ export type {
   CreateCompanyInput,
   InviteMemberInput,
   UpdateCompanyInput,
-} from "@wateaminbox/shared";
+} from "@omniteam/shared";
 
 // Media types
 export interface UploadMediaResponse {

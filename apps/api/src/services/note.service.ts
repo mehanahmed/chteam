@@ -1,5 +1,5 @@
-import { db } from "@wateaminbox/database";
-import { getUserDisplayName } from "@wateaminbox/shared";
+import { db } from "@omniteam/database";
+import { getUserDisplayName } from "@omniteam/shared";
 
 /**
  * Shared and private note types for response transformation

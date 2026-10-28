@@ -2,7 +2,7 @@ import type {
   Channel,
   ChannelProvider,
   ResolvedCapabilities,
-} from "@wateaminbox/shared";
+} from "@omniteam/shared";
 import { api } from "./client";
 
 export type ChannelAccountStatus =

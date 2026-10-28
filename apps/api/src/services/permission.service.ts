@@ -1,8 +1,8 @@
-import { db } from "@wateaminbox/database";
+import { db } from "@omniteam/database";
 import {
   type MemberPermissions,
   ROLE_PERMISSION_PRESETS,
-} from "@wateaminbox/shared";
+} from "@omniteam/shared";
 import { NotFoundError, ForbiddenError } from "../lib/errors.js";
 import { invalidateCompanyMembership } from "./company-membership.service.js";
 import { getEffectivePermissions } from "./effective-permissions.js";
@@ -38,7 +38,7 @@ export const PERMISSIONS = {
 
 export type Permission = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];
 
-export type { MemberPermissions } from "@wateaminbox/shared";
+export type { MemberPermissions } from "@omniteam/shared";
 
 /**
  * Default permission presets for each role

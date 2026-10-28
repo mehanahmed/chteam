@@ -6,7 +6,7 @@
  * forward, retry, conversation-send, schedule-create).
  */
 
-import { getContactDisplayName } from "@wateaminbox/shared";
+import { getContactDisplayName } from "@omniteam/shared";
 import type { Kysely } from "kysely";
 import { broadcastToContactViewers } from "./message-broadcast.service.js";
 import type { TenantDatabase } from "./tenant.service.js";

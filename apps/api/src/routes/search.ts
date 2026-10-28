@@ -1,4 +1,4 @@
-import { getContactDisplayName, toDbDate } from "@wateaminbox/shared";
+import { getContactDisplayName, toDbDate } from "@omniteam/shared";
 import { Hono } from "hono";
 import { badRequest, forbidden, serviceUnavailable } from "../lib/errors.js";
 import { rateLimitConfig, rateLimitStore } from "../lib/rate-limit-store.js";

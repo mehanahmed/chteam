@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import type { NormalizedChannelEvent } from "@wateaminbox/shared";
+import type { NormalizedChannelEvent } from "@omniteam/shared";
 import { channelEventPayloadDigest } from "./event-processor";
 
 function event(

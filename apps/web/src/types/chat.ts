@@ -1,5 +1,5 @@
 /**
- * Chat-related type definitions for the wateaminbox application
+ * Chat-related type definitions for the omniteam application
  *
  * This file provides frontend-specific view models and re-exports shared types.
  */
@@ -9,7 +9,7 @@ import type {
   GroupInfo as SharedGroupInfo,
   GroupParticipant as SharedGroupParticipant,
   MessageType as SharedMessageType,
-} from "@wateaminbox/shared";
+} from "@omniteam/shared";
 
 /**
  * Message status with frontend-specific "sending" state
@@ -104,6 +104,8 @@ export interface ChatListItemProps {
   onClick: () => void;
   /** Optional callback to prefetch chat data on hover */
   onPrefetch?: (chatId: string) => void;
+  /** Optional callback for right-click context menu */
+  onContextMenu?: (e: React.MouseEvent) => void;
 }
 
 export interface ChatListSearchProps {

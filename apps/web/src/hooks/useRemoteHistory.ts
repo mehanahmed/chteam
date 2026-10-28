@@ -7,8 +7,8 @@ import type {
   HistoryLoadedPayload,
   PaginatedMessages,
   RemoteHistoryStatus,
-} from "@wateaminbox/shared";
-import { REMOTE_HISTORY_RESPONSE_TIMEOUT_MS } from "@wateaminbox/shared";
+} from "@omniteam/shared";
+import { REMOTE_HISTORY_RESPONSE_TIMEOUT_MS } from "@omniteam/shared";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRealtimeContext } from "../contexts";
 import { api } from "../lib/api";

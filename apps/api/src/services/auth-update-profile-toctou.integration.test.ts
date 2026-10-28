@@ -1,5 +1,5 @@
 import { afterAll, describe, expect, test } from "bun:test";
-import { db } from "@wateaminbox/database";
+import { db } from "@omniteam/database";
 import type { EmailResult } from "../lib/email.js";
 import { AuthError } from "../lib/errors.js";
 import { hashPassword } from "../lib/password.js";

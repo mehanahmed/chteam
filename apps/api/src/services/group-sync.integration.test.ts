@@ -1,9 +1,9 @@
 import { describe, expect, test } from "bun:test";
-import { db } from "@wateaminbox/database";
+import { db } from "@omniteam/database";
 import {
   formatPhoneLikeText,
   getContactDisplayName,
-} from "@wateaminbox/shared";
+} from "@omniteam/shared";
 import { sql } from "kysely";
 import type { ContactEvent } from "../lib/nats/index.js";
 import {

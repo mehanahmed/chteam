@@ -1,4 +1,4 @@
-import type { ResolvedCapabilities } from "@wateaminbox/shared";
+import type { ResolvedCapabilities } from "@omniteam/shared";
 import { Lock } from "lucide-react";
 import type { ReactNode } from "react";
 import {

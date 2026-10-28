@@ -211,6 +211,10 @@ export const env = {
 
   // Feature flags
   DEBUG: getEnvBoolean("DEBUG", false),
+  AI_AGENT_ENABLED: getEnvBoolean("AI_AGENT_ENABLED", true),
+  GEMINI_API_KEY: getEnv("GEMINI_API_KEY", ""),
+  GEMINI_PRIMARY_MODEL: getEnv("GEMINI_PRIMARY_MODEL", "gemini-2.0-flash"),
+  GEMINI_FALLBACK_MODEL: getEnv("GEMINI_FALLBACK_MODEL", "gemini-1.5-flash"),
 
   // Logging
   LOG_LEVEL: getEnv("LOG_LEVEL", "info"),

@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, expect, test } from "bun:test";
-import { db } from "@wateaminbox/database";
+import { db } from "@omniteam/database";
 import { sql } from "kysely";
 import {
   dispatchCompany,
@@ -45,7 +45,7 @@ beforeAll(async () => {
   const url = new URL(process.env.DATABASE_URL!);
   if (
     !["127.0.0.1", "localhost"].includes(url.hostname) ||
-    !["/wati_dispatch_test", "/wateaminbox"].includes(url.pathname)
+    !["/wati_dispatch_test", "/wateaminbox", "/omniteam"].includes(url.pathname)
   )
     throw new Error("This suite requires a local integration database");
   await sql`DELETE FROM public.message_search_outbox WHERE company_id NOT IN (SELECT id FROM public.companies)`.execute(

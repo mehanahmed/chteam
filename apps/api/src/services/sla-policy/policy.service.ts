@@ -7,8 +7,8 @@
  * whichever policy was active when a given response episode began.
  */
 
-import type { Database } from "@wateaminbox/database";
-import { db } from "@wateaminbox/database";
+import type { Database } from "@omniteam/database";
+import { db } from "@omniteam/database";
 import {
   DEFAULT_SLA_DIRECT_RESOLUTION_TARGET_MINUTES,
   DEFAULT_SLA_GROUP_RESOLUTION_TARGET_MINUTES,
@@ -18,7 +18,7 @@ import {
   type SlaScheduleException,
   type SlaWeeklySchedule,
   toDbDate,
-} from "@wateaminbox/shared";
+} from "@omniteam/shared";
 import type { Transaction } from "kysely";
 import { NotFoundError } from "../../lib/errors.js";
 import type { CreateSlaPolicyInput } from "../../lib/schemas/sla-policy.js";

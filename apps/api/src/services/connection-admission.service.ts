@@ -50,6 +50,8 @@ export async function admitConnectedPhone(input: {
     method: "POST",
     headers: {
       "content-type": "application/json",
+      "x-omniteam-timestamp": timestamp,
+      "x-omniteam-signature": signature,
       "x-wateaminbox-timestamp": timestamp,
       "x-wateaminbox-signature": signature,
     },

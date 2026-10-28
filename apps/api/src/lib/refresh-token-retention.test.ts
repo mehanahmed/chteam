@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import type { RetiredRefreshToken } from "@wateaminbox/database";
+import type { RetiredRefreshToken } from "@omniteam/database";
 import {
   isRetiredRefreshTokenAccepted,
   MAX_RETAINED_REFRESH_TOKENS,

@@ -1,5 +1,5 @@
 import { useQueryClient } from "@tanstack/react-query";
-import type { CompanyWithRole, MemberPermissions } from "@wateaminbox/shared";
+import type { CompanyWithRole, MemberPermissions } from "@omniteam/shared";
 import * as React from "react";
 import {
   clearCompanyId,
@@ -37,6 +37,10 @@ const WorkspaceContext = React.createContext<WorkspaceContextValue | undefined>(
 );
 
 function preferenceKey(userId: string): string {
+  return `omniteam:last-workspace:${userId}`;
+}
+
+function legacyPreferenceKey(userId: string): string {
   return `wateaminbox:last-workspace:${userId}`;
 }
 
@@ -81,7 +85,9 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
       const routeWorkspaceId = getRouteWorkspaceId(window.location.pathname);
       let preferredWorkspaceId: string | null = null;
       try {
-        preferredWorkspaceId = localStorage.getItem(preferenceKey(user.id));
+        preferredWorkspaceId =
+          localStorage.getItem(preferenceKey(user.id)) ??
+          localStorage.getItem(legacyPreferenceKey(user.id));
       } catch {
         // Storage can be unavailable in privacy-restricted environments.
       }

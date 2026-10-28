@@ -1,4 +1,4 @@
-import { GROUP_NAME_MAX_LENGTH } from "@wateaminbox/shared";
+import { GROUP_NAME_MAX_LENGTH } from "@omniteam/shared";
 import { Loader2, Users } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";

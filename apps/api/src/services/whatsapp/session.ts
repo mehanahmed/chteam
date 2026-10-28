@@ -1,4 +1,4 @@
-import { toDbDate } from "@wateaminbox/shared";
+import { toDbDate } from "@omniteam/shared";
 import { type Kysely, sql, type Transaction } from "kysely";
 import {
   ConnectionNotFoundError,

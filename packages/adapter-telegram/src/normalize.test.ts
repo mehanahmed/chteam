@@ -334,7 +334,7 @@ describe("Telegram service messages", () => {
         message: {
           message_id: 30,
           date: 1_757_332_800,
-          chat: { id: -100999, type: "group", title: "WATeamInboxTest" },
+          chat: { id: -100999, type: "group", title: "OmniTeamTest" },
           from: { id: 42, is_bot: false, first_name: "Ivar" },
           ...extra,
         },
@@ -350,10 +350,10 @@ describe("Telegram service messages", () => {
     // These carry no text at all, so the thread previously showed an empty
     // bubble attributed to whoever triggered the event.
     const payload = serviceMessage({
-      new_chat_members: [{ id: 7, is_bot: true, first_name: "WATeamInbox" }],
+      new_chat_members: [{ id: 7, is_bot: true, first_name: "OmniTeam" }],
     });
     expect(payload?.normalizedType).toBe("system");
-    expect(payload?.textContent).toBe("WATeamInbox joined the group");
+    expect(payload?.textContent).toBe("OmniTeam joined the group");
   });
 
   test("a rename and a departure read as events, not messages", () => {

@@ -1,6 +1,6 @@
 # Third-Party Notices
 
-WATeamInbox depends on third-party software distributed under its own license terms. The repository's MIT License applies to WATeamInbox's original content and does not replace third-party licenses.
+WATeamInbox depends on third-party software distributed under its own license terms. The repository's MIT License applies to OmniTeam's original content and does not replace third-party licenses.
 
 ## whatsmeow
 
@@ -27,4 +27,4 @@ JavaScript and Go manifests and lockfiles list additional direct and transitive 
 
 ## Trademarks and affiliation
 
-WATeamInbox is an independent project. It is not affiliated with, endorsed by, or sponsored by WhatsApp or Meta. Names and logos belonging to third parties are used only to identify compatible services or dependencies; all trademarks remain the property of their respective owners.
+OmniTeam is an independent project. It is not affiliated with, endorsed by, or sponsored by WhatsApp or Meta. Names and logos belonging to third parties are used only to identify compatible services or dependencies; all trademarks remain the property of their respective owners.

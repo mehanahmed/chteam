@@ -2,7 +2,7 @@
  * Connection event handlers - QR code, connected, disconnected
  */
 
-import { toDbDate } from "@wateaminbox/shared";
+import { toDbDate } from "@omniteam/shared";
 import type { Kysely } from "kysely";
 import {
   DuplicateWhatsAppPhoneError,

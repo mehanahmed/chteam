@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import type { Message, UpdateMessageInput } from "@wateaminbox/shared";
+import type { Message, UpdateMessageInput } from "@omniteam/shared";
 import { useAuth } from "../../contexts/auth-context";
 import { api } from "../../lib/api";
 import { queryKeys } from "../query-keys";

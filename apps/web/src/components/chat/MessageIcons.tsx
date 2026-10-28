@@ -42,6 +42,42 @@ export function ForwardIcon({ className }: IconProps) {
   );
 }
 
+/**
+ * Authentic WhatsApp forward curved arrow icon
+ */
+export function WhatsAppForwardIcon({ className = "h-3 w-3.5" }: IconProps) {
+  return (
+    <svg
+      viewBox="0 0 19 16"
+      className={className}
+      fill="currentColor"
+      preserveAspectRatio="xMidYMid meet"
+      aria-hidden="true"
+    >
+      <path d="M12.9 2.2c-.3-.3-.8-.3-1.1 0-.3.3-.3.8 0 1.1l3.3 3.3H4.5c-2.5 0-4.5 2-4.5 4.5s2 4.5 4.5 4.5h2.2c.4 0 .8-.3.8-.8s-.3-.8-.8-.8H4.5C2.8 14 1.5 12.7 1.5 11.1c0-1.7 1.3-3 3-3h10.6l-3.3 3.3c-.3.3-.3.8 0 1.1.1.1.3.2.5.2.2 0 .4-.1.5-.2l4.7-4.7c.3-.3.3-.8 0-1.1l-4.6-4.5z" />
+    </svg>
+  );
+}
+
+/**
+ * Authentic WhatsApp double forward arrow icon for frequently forwarded messages
+ */
+export function WhatsAppFrequentlyForwardedIcon({
+  className = "h-3 w-4",
+}: IconProps) {
+  return (
+    <svg
+      viewBox="0 0 24 16"
+      className={className}
+      fill="currentColor"
+      preserveAspectRatio="xMidYMid meet"
+      aria-hidden="true"
+    >
+      <path d="M9.9 2.2c-.3-.3-.8-.3-1.1 0-.3.3-.3.8 0 1.1l3.3 3.3H1.5c-.8 0-1.5.7-1.5 1.5s.7 1.5 1.5 1.5h10.6l-3.3 3.3c-.3.3-.3.8 0 1.1.1.1.3.2.5.2.2 0 .4-.1.5-.2l4.7-4.7c.3-.3.3-.8 0-1.1l-4.6-4.5zm7 0c-.3-.3-.8-.3-1.1 0-.3.3-.3.8 0 1.1l3.3 3.3H12c-.8 0-1.5.7-1.5 1.5s.7 1.5 1.5 1.5h7.1l-3.3 3.3c-.3.3-.3.8 0 1.1.1.1.3.2.5.2.2 0 .4-.1.5-.2l4.7-4.7c.3-.3.3-.8 0-1.1l-4.6-4.5z" />
+    </svg>
+  );
+}
+
 export function StarIcon({ className }: IconProps) {
   return (
     <svg

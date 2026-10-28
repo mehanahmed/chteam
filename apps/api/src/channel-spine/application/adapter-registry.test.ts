@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import type { ChannelAdapter, ResolvedCapabilities } from "@wateaminbox/shared";
+import type { ChannelAdapter, ResolvedCapabilities } from "@omniteam/shared";
 import {
   ChannelAdapterRegistry,
   resolveAdapterCapabilities,

@@ -6,7 +6,7 @@
  */
 
 import { zValidator } from "../../lib/validator.js";
-import { toDbDate } from "@wateaminbox/shared";
+import { toDbDate } from "@omniteam/shared";
 import { Hono } from "hono";
 import { badRequest, notFound } from "../../lib/errors.js";
 import { createLogger, formatError } from "../../lib/logger.js";

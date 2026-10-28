@@ -8,7 +8,7 @@ import {
   S3Client,
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
-import { nowMs } from "@wateaminbox/shared";
+import { nowMs } from "@omniteam/shared";
 import { env } from "./env.js";
 
 // S3 client configuration
@@ -353,6 +353,20 @@ export async function readMediaRange(
       Bucket: BUCKET,
       Key: key,
       Range: `bytes=${start}-${end}`,
+    }),
+  );
+  const body = await response.Body?.transformToByteArray();
+  return Buffer.from(body ?? new Uint8Array());
+}
+
+/**
+ * Read the entire object buffer from S3 storage.
+ */
+export async function readMediaObject(key: string): Promise<Buffer> {
+  const response = await s3Client.send(
+    new GetObjectCommand({
+      Bucket: BUCKET,
+      Key: key,
     }),
   );
   const body = await response.Body?.transformToByteArray();

@@ -3,8 +3,8 @@ import { resolveMcpEndpointUrl } from "./mcp-url";
 
 describe("resolveMcpEndpointUrl", () => {
   test("resolves the production-relative API base against the app origin", () => {
-    expect(resolveMcpEndpointUrl("/api", "https://app.wateaminbox.com")).toBe(
-      "https://app.wateaminbox.com/api/mcp",
+    expect(resolveMcpEndpointUrl("/api", "https://app.omniteam.com")).toBe(
+      "https://app.omniteam.com/api/mcp",
     );
   });
 

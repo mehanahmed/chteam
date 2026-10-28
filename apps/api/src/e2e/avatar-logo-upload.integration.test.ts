@@ -4,7 +4,7 @@ import {
   ListObjectsV2Command,
   S3Client,
 } from "@aws-sdk/client-s3";
-import { db } from "@wateaminbox/database";
+import { db } from "@omniteam/database";
 import { app } from "../app.js";
 import { hashPassword } from "../lib/password.js";
 

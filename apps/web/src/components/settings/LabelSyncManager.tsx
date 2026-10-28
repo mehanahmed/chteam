@@ -1,4 +1,4 @@
-import { formatStatusTime } from "@wateaminbox/shared";
+import { formatStatusTime } from "@omniteam/shared";
 import {
   AlertCircle,
   Check,

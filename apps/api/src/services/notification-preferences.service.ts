@@ -1,4 +1,4 @@
-import { normalizeJid } from "@wateaminbox/shared";
+import { normalizeJid } from "@omniteam/shared";
 import { type SqlBool, sql } from "kysely";
 import { AppError } from "../lib/errors.js";
 import { getTenantConnection } from "./tenant.service.js";

@@ -1,4 +1,6 @@
 import { Hono } from "hono";
+import { toDbDate } from "@omniteam/shared";
+import { notFound } from "../../lib/errors.js";
 import { successData } from "../../lib/response.js";
 import { getAuthorizedMediaUrlOrNull } from "../../lib/storage.js";
 import { authMiddleware } from "../../middleware/auth.js";
@@ -6,6 +8,7 @@ import { getRouteContext } from "../../middleware/context.js";
 import { requireConversationVisibility } from "../../middleware/resource-visibility.js";
 import { tenantMiddleware } from "../../middleware/tenant.js";
 import { getChannelSpineWorkspaceAuthority } from "../../services/channel-spine-authority.service.js";
+import { broadcastToContactViewers } from "../../services/message-broadcast.service.js";
 import {
   type ConversationCounterpart,
   resolveConversationCounterpart,
@@ -51,6 +54,7 @@ conversationRoutes.get("/", async (c) => {
     .split(",")
     .map((value) => value.trim())
     .filter((value) => UUID_PATTERN.test(value));
+  const isArchived = c.req.query("archived") === "true";
   const conversations = await tenantDb
     .selectFrom("conversations as conversation")
     .innerJoin(
@@ -72,6 +76,7 @@ conversationRoutes.get("/", async (c) => {
       "conversation.first_message_at",
       "conversation.last_message_at",
       "conversation.legacy_contact_id",
+      "conversation.archived_at",
       "account.channel",
       "account.provider",
       "account.display_name as account_display_name",
@@ -81,7 +86,7 @@ conversationRoutes.get("/", async (c) => {
       "state.last_message_preview",
       "state.status as conversation_status",
     ])
-    .where("conversation.archived_at", "is", null)
+    .where("conversation.archived_at", isArchived ? "is not" : "is", null)
     .where("account.archived_at", "is", null)
     // A linked-device WhatsApp conversation is a mirror of a legacy contact
     // thread, created by dual write and the backfill. The contacts and chats
@@ -192,6 +197,8 @@ conversationRoutes.get("/", async (c) => {
       unreadCount: Number(conversation.unread_count ?? 0),
       conversationStatus: conversation.conversation_status ?? "open",
       legacyContactId: conversation.legacy_contact_id,
+      isArchived: conversation.archived_at !== null,
+      archivedAt: conversation.archived_at,
       account: {
         displayName: conversation.account_display_name,
         // The handle the provider knows this account by, so a composer can say
@@ -243,6 +250,7 @@ conversationRoutes.get("/:id", requireConversationVisibility(), async (c) => {
       "conversation.first_message_at",
       "conversation.last_message_at",
       "conversation.legacy_contact_id",
+      "conversation.archived_at",
       "account.channel",
       "account.provider",
       "account.display_name as account_display_name",
@@ -252,7 +260,6 @@ conversationRoutes.get("/:id", requireConversationVisibility(), async (c) => {
       "state.last_message_preview",
       "state.status as conversation_status",
     ])
-    .where("conversation.archived_at", "is", null)
     .where("account.archived_at", "is", null)
     // A linked-device WhatsApp conversation is a mirror of a legacy contact
     // thread, created by dual write and the backfill. The contacts and chats
@@ -294,6 +301,8 @@ conversationRoutes.get("/:id", requireConversationVisibility(), async (c) => {
     unreadCount: Number(conversation.unread_count ?? 0),
     conversationStatus: conversation.conversation_status ?? "open",
     legacyContactId: conversation.legacy_contact_id,
+    isArchived: conversation.archived_at !== null,
+    archivedAt: conversation.archived_at,
     account: {
       displayName: conversation.account_display_name,
       username: accountUsername(conversation.account_provider_metadata),
@@ -324,8 +333,93 @@ async function authorizeCounterpartAvatar(
   };
 }
 
-// Resource routes below this point address a real contact ID.
 conversationRoutes.use("/:id/*", requireConversationVisibility());
+conversationRoutes.post("/:id/archive", async (c) => {
+  const { tenantDb, companyId } = getRouteContext(c);
+  const conversationId = c.req.param("id");
+  const conversation = await tenantDb
+    .selectFrom("conversations")
+    .select(["id", "legacy_contact_id"])
+    .where("id", "=", conversationId)
+    .executeTakeFirst();
+
+  if (!conversation) return notFound(c, "Conversation");
+
+  await tenantDb.transaction().execute(async (trx) => {
+    await trx
+      .updateTable("conversations")
+      .set({ archived_at: toDbDate(), updated_at: toDbDate() })
+      .where("id", "=", conversationId)
+      .execute();
+
+    if (conversation.legacy_contact_id) {
+      await trx
+        .updateTable("contacts")
+        .set({ archived_at: toDbDate(), updated_at: toDbDate() })
+        .where("id", "=", conversation.legacy_contact_id)
+        .execute();
+    }
+  });
+
+  if (conversation.legacy_contact_id) {
+    await broadcastToContactViewers(
+      companyId,
+      conversation.legacy_contact_id,
+      "contact:updated",
+      {
+        event: "archived",
+        contactId: conversation.legacy_contact_id,
+        isArchived: true,
+      },
+    );
+  }
+
+  return successData(c, { id: conversationId, isArchived: true });
+});
+
+conversationRoutes.post("/:id/unarchive", async (c) => {
+  const { tenantDb, companyId } = getRouteContext(c);
+  const conversationId = c.req.param("id");
+  const conversation = await tenantDb
+    .selectFrom("conversations")
+    .select(["id", "legacy_contact_id"])
+    .where("id", "=", conversationId)
+    .executeTakeFirst();
+
+  if (!conversation) return notFound(c, "Conversation");
+
+  await tenantDb.transaction().execute(async (trx) => {
+    await trx
+      .updateTable("conversations")
+      .set({ archived_at: null, updated_at: toDbDate() })
+      .where("id", "=", conversationId)
+      .execute();
+
+    if (conversation.legacy_contact_id) {
+      await trx
+        .updateTable("contacts")
+        .set({ archived_at: null, updated_at: toDbDate() })
+        .where("id", "=", conversation.legacy_contact_id)
+        .execute();
+    }
+  });
+
+  if (conversation.legacy_contact_id) {
+    await broadcastToContactViewers(
+      companyId,
+      conversation.legacy_contact_id,
+      "contact:updated",
+      {
+        event: "unarchived",
+        contactId: conversation.legacy_contact_id,
+        isArchived: false,
+      },
+    );
+  }
+
+  return successData(c, { id: conversationId, isArchived: false });
+});
+
 conversationRoutes.route("/", stateRoutes);
 conversationRoutes.route("/", conversationAssignmentRoutes);
 conversationRoutes.route("/", messageRoutes);

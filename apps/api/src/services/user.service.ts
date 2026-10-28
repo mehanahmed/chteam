@@ -1,5 +1,5 @@
-import { db } from "@wateaminbox/database";
-import { getEmailDisplayName } from "@wateaminbox/shared";
+import { db } from "@omniteam/database";
+import { getEmailDisplayName } from "@omniteam/shared";
 import { getGravatarUrl } from "../lib/gravatar.js";
 import { createLogger, formatError } from "../lib/logger.js";
 import { getPresignedUrl } from "../lib/storage.js";

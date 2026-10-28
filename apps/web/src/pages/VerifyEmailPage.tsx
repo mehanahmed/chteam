@@ -118,10 +118,10 @@ export function VerifyEmailPage() {
             asChild
             className="mt-7 w-full bg-whatsapp-green-a11y-button text-white"
           >
-            <Link to={state === "success" ? loginUrl : "/register"}>
+            <Link to={loginUrl}>
               {state === "success"
                 ? t("auth.continueToSignIn", "Continue to sign in")
-                : t("verify.backToRegistration", "Back to registration")}
+                : t("auth.backToSignIn", "Back to sign in")}
             </Link>
           </Button>
         )}

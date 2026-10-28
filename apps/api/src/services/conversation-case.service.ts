@@ -78,8 +78,8 @@ import type {
   ConversationCaseKind,
   ConversationCaseOpenSource,
   ConversationCaseResolutionOutcome,
-} from "@wateaminbox/database";
-import { toDbDate } from "@wateaminbox/shared";
+} from "@omniteam/database";
+import { toDbDate } from "@omniteam/shared";
 import type { Kysely, Transaction } from "kysely";
 import { sql } from "kysely";
 import {

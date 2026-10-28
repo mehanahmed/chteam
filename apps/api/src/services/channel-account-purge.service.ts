@@ -1,4 +1,4 @@
-import type { TenantDatabase } from "@wateaminbox/database";
+import type { TenantDatabase } from "@omniteam/database";
 import type { Kysely } from "kysely";
 import { sql } from "kysely";
 import { NotFoundError } from "../lib/errors.js";

@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import type { SlaWeeklySchedule } from "@wateaminbox/shared";
+import type { SlaWeeklySchedule } from "@omniteam/shared";
 import { MalformedSlaCalendarError } from "../../lib/errors.js";
 import {
   assertValidCalendarShape,

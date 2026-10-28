@@ -1,4 +1,4 @@
-import { dayjs, toDbDate, toISOString } from "@wateaminbox/shared";
+import { dayjs, toDbDate, toISOString } from "@omniteam/shared";
 import { Hono } from "hono";
 import { transformAuditLogs } from "../lib/data-transformers.js";
 import { successData, successPaginated } from "../lib/response.js";

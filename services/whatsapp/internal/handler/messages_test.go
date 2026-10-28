@@ -345,3 +345,62 @@ func TestGetGroupMentionsPreservesGroupSubjectForTextAndCaptions(t *testing.T) {
 		t.Fatal("nil message has mentions")
 	}
 }
+
+func TestIsMessageForwarded(t *testing.T) {
+	tests := []struct {
+		name      string
+		message   *waE2E.Message
+		wantFwd   bool
+		wantScore uint32
+	}{
+		{
+			name:      "nil message",
+			message:   nil,
+			wantFwd:   false,
+			wantScore: 0,
+		},
+		{
+			name:      "plain conversation message without context",
+			message:   &waE2E.Message{Conversation: proto.String("Hello")},
+			wantFwd:   false,
+			wantScore: 0,
+		},
+		{
+			name: "forwarded text message",
+			message: &waE2E.Message{
+				ExtendedTextMessage: &waE2E.ExtendedTextMessage{
+					Text: proto.String("Look at this"),
+					ContextInfo: &waE2E.ContextInfo{
+						IsForwarded:     proto.Bool(true),
+						ForwardingScore: proto.Uint32(1),
+					},
+				},
+			},
+			wantFwd:   true,
+			wantScore: 1,
+		},
+		{
+			name: "frequently forwarded image message",
+			message: &waE2E.Message{
+				ImageMessage: &waE2E.ImageMessage{
+					Caption: proto.String("Check this image"),
+					ContextInfo: &waE2E.ContextInfo{
+						IsForwarded:     proto.Bool(true),
+						ForwardingScore: proto.Uint32(5),
+					},
+				},
+			},
+			wantFwd:   true,
+			wantScore: 5,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotFwd, gotScore := isMessageForwarded(tt.message)
+			if gotFwd != tt.wantFwd || gotScore != tt.wantScore {
+				t.Errorf("isMessageForwarded() = (%v, %v), want (%v, %v)", gotFwd, gotScore, tt.wantFwd, tt.wantScore)
+			}
+		})
+	}
+}

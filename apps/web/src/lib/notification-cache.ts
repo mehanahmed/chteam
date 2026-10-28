@@ -1,4 +1,4 @@
-import { toISOString } from "@wateaminbox/shared";
+import { toISOString } from "@omniteam/shared";
 import type {
   InAppNotification,
   NotificationListParams,

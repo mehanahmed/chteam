@@ -1,4 +1,4 @@
-import { formatAuditTime } from "@wateaminbox/shared";
+import { formatAuditTime } from "@omniteam/shared";
 import {
   AlertCircle,
   Clock3,
@@ -10,6 +10,7 @@ import {
   PowerOff,
   QrCode,
   RefreshCw,
+  Sparkles,
   Trash2,
   Wifi,
   WifiOff,
@@ -22,6 +23,7 @@ import { WhatsAppMark } from "@/components/connections/channel-icons";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
+import { ConnectionAiSettingsModal } from "./ConnectionAiSettingsModal";
 import type { ConnectionWithState } from "@/hooks/useWhatsAppConnections";
 import { cn, formatPhoneNumber } from "@/lib/utils";
 
@@ -63,6 +65,7 @@ export function ConnectionCard({
   const { localState } = connection;
   const [showMenu, setShowMenu] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [showAiModal, setShowAiModal] = useState(false);
 
   const statusColor = {
     connected:
@@ -264,6 +267,18 @@ export function ConnectionCard({
               </Button>
             ) : null}
 
+            {/* AI Instructions Quick Action */}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowAiModal(true)}
+              className="border-emerald-200 text-emerald-700 hover:border-emerald-300 hover:bg-emerald-50 dark:border-emerald-500/20 dark:text-emerald-300 dark:hover:bg-emerald-500/10 gap-1.5"
+              title="Configure AI Assistant instructions for this number"
+            >
+              <Sparkles className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+              <span className="hidden sm:inline">AI Instructions</span>
+            </Button>
+
             {/* 3-dot menu */}
             <div className="relative">
               <Button
@@ -295,6 +310,16 @@ export function ConnectionCard({
                     >
                       <Edit2 className="h-4 w-4 text-gray-400 dark:text-dark-text-tertiary" />
                       Rename
+                    </button>
+                    <button
+                      className="w-full px-3.5 py-2.5 text-left text-sm text-emerald-700 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 flex items-center gap-2.5 transition-colors font-medium"
+                      onClick={() => {
+                        setShowAiModal(true);
+                        setShowMenu(false);
+                      }}
+                    >
+                      <Sparkles className="h-4 w-4 text-emerald-500" />
+                      AI Instructions
                     </button>
                     {connection.status === "connected" ? (
                       <button
@@ -380,6 +405,13 @@ export function ConnectionCard({
           setDeleteOpen(false);
         }}
         isDestructive
+      />
+      <ConnectionAiSettingsModal
+        connectionId={connection.id}
+        connectionName={connection.name}
+        phoneNumber={connection.phoneNumber}
+        isOpen={showAiModal}
+        onClose={() => setShowAiModal(false)}
       />
     </div>
   );

@@ -1,4 +1,4 @@
-import type { MediaDownloadStatus } from "@wateaminbox/shared";
+import type { MediaDownloadStatus } from "@omniteam/shared";
 import { useCallback, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { useRequestMediaDownload } from "../../hooks/useMessages";

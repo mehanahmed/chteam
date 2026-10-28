@@ -43,7 +43,7 @@ mcpRoutes.post("/", mcpRateLimiter, async (c) => {
   const scopes = c.get("apiToken").scopes;
 
   const server = new McpServer({
-    name: "wateaminbox",
+    name: "omniteam",
     version: MCP_SERVER_VERSION,
   });
 

@@ -10,7 +10,7 @@ import {
   SLA_RESOLUTION_TARGET_MINUTES_MIN,
   SLA_TARGET_MINUTES_MAX,
   SLA_TARGET_MINUTES_MIN,
-} from "@wateaminbox/shared";
+} from "@omniteam/shared";
 import { CircleAlert, LoaderCircle, Plus, Save, Trash2 } from "lucide-react";
 import { type ReactNode, useEffect, useState } from "react";
 import { toast } from "sonner";

@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { toDate } from "@wateaminbox/shared";
+import { toDate } from "@omniteam/shared";
 import { useMemo } from "react";
 import {
   api,
@@ -35,6 +35,7 @@ interface ChatListFilters {
   connectionId?: string;
   conversationStatus?: ConversationStatusFilter;
   tagIds?: readonly string[];
+  archived?: boolean;
 }
 
 /**
@@ -62,6 +63,7 @@ export function buildChatListQueryParams(
   connectionId?: string,
   conversationStatus: ConversationStatusFilter = "open",
   tagIds: readonly string[] = [],
+  archived?: boolean,
 ): Record<string, unknown> {
   const params: Record<string, unknown> = { limit: 100 };
   if (searchQuery.trim()) params.search = searchQuery;
@@ -74,6 +76,9 @@ export function buildChatListQueryParams(
     params.unassigned = "true";
   }
   params.conversationStatus = conversationStatus;
+  if (archived !== undefined) {
+    params.archived = archived ? "true" : "false";
+  }
   return params;
 }
 
@@ -89,6 +94,7 @@ export function useChats(
   connectionId?: string,
   conversationStatus: ConversationStatusFilter = "open",
   tagIds: readonly string[] = [],
+  archived?: boolean,
 ) {
   const companyId = getCompanyId();
 
@@ -102,6 +108,7 @@ export function useChats(
         connectionId,
         conversationStatus,
         tagIds,
+        archived,
       }),
     [
       companyId,
@@ -111,6 +118,7 @@ export function useChats(
       connectionId,
       conversationStatus,
       tagIds,
+      archived,
     ],
   );
 
@@ -138,6 +146,7 @@ export function useChats(
           connectionId,
           conversationStatus,
           tagIds,
+          archived,
         ),
       );
       const result = await api.get<ContactsListResponse>(

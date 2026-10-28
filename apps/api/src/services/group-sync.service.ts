@@ -26,7 +26,7 @@ import {
   extractPhoneFromJid,
   normalizeJid,
   toDbDate,
-} from "@wateaminbox/shared";
+} from "@omniteam/shared";
 import { sql, type Transaction } from "kysely";
 import {
   batchPlannedContacts,

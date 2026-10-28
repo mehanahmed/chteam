@@ -49,7 +49,7 @@ export function AuthPageShell({ children, variant }: AuthPageShellProps) {
             <BrandMark className="h-10 w-10 shrink-0 rounded-[0.9rem] object-contain shadow-sm shadow-[#075e54]/20" />
             <div className="leading-none">
               <p className="text-[1.05rem] font-bold tracking-[-0.03em] text-slate-900 dark:text-dark-text-primary">
-                WATeamInbox
+                OmniTeam
               </p>
               <p className="mt-1 text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-dark-text-tertiary">
                 {t("setup.whatsappForTeams", "WhatsApp for teams")}

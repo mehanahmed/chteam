@@ -1,6 +1,6 @@
 import type { ColumnDef } from "@tanstack/react-table";
-import type { BulkJob } from "@wateaminbox/shared";
-import { dayjs } from "@wateaminbox/shared";
+import type { BulkJob } from "@omniteam/shared";
+import { dayjs } from "@omniteam/shared";
 import {
   CalendarClock,
   ChevronRight,

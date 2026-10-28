@@ -1,4 +1,4 @@
-import type { Message } from "@wateaminbox/shared";
+import type { Message } from "@omniteam/shared";
 import { ChevronDown, MessageCircle, SearchX, Send } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useGroup } from "@/hooks/useGroups";
@@ -302,7 +302,7 @@ export function MessageThread({
         <div className="text-center max-w-md px-4">
           <BrandMark className="mx-auto mb-4 h-24 w-24 rounded-[1.75rem] object-contain shadow-sm" />
           <h2 className="text-xl font-semibold text-gray-600 dark:text-dark-text-secondary mb-2">
-            WATeamInbox
+            OmniTeam
           </h2>
           <p className="text-gray-500 dark:text-dark-text-tertiary">
             {t(

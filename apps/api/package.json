@@ -1,5 +1,5 @@
 {
-  "name": "@wateaminbox/api",
+  "name": "@omniteam/api",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -14,12 +14,13 @@
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1127.0",
     "@aws-sdk/s3-request-presigner": "^3.1127.0",
+    "@google/genai": "^2.31.0",
     "@hono/mcp": "^0.3.2",
     "@hono/zod-validator": "^0.9.1",
     "@modelcontextprotocol/sdk": "^1.30.0",
-    "@wateaminbox/adapter-telegram": "workspace:*",
-    "@wateaminbox/database": "workspace:*",
-    "@wateaminbox/shared": "workspace:*",
+    "@omniteam/adapter-telegram": "workspace:*",
+    "@omniteam/database": "workspace:*",
+    "@omniteam/shared": "workspace:*",
     "bcrypt": "^6.0.0",
     "dayjs": "^1.11.23",
     "fflate": "^0.8.2",

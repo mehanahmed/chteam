@@ -15,7 +15,7 @@ import {
   GROUP_LEAVE_SEMANTICS,
   getGroupDisplayName,
   toDbDate,
-} from "@wateaminbox/shared";
+} from "@omniteam/shared";
 import { Hono } from "hono";
 import { conflict, notFound } from "../../lib/errors.js";
 import {

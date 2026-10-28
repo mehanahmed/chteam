@@ -1,4 +1,4 @@
-import type { CompanyMember, MemberPermissions } from "@wateaminbox/shared";
+import type { CompanyMember, MemberPermissions } from "@omniteam/shared";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui";
 import {

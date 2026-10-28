@@ -8,7 +8,7 @@
  *
  * Usage in production (the image ships only `dist`, so run the bundle):
  *
- *   docker exec wateaminbox-production-api-1 /usr/local/bin/secret-entrypoint \
+ *   docker exec omniteam-production-api-1 /usr/local/bin/secret-entrypoint \
  *     bun run apps/api/dist/scripts/reindex-search.js verify --all
  *
  * The secret-entrypoint prefix is required, not decoration. The container's
@@ -39,8 +39,8 @@
  *   --dry-run          Report what would change without writing.
  */
 
-import { db } from "@wateaminbox/database";
-import { getContactDisplayName } from "@wateaminbox/shared";
+import { db } from "@omniteam/database";
+import { getContactDisplayName } from "@omniteam/shared";
 import { createLogger, formatError } from "../lib/logger.js";
 import * as meilisearchService from "../services/meilisearch.service.js";
 import {

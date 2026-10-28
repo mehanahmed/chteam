@@ -3,7 +3,7 @@ import {
   reconcileChannelSpineConcurrentIndexes,
   reconcileTenantSchema,
   type TenantDatabase as TenantDatabaseType,
-} from "@wateaminbox/database";
+} from "@omniteam/database";
 import { Kysely, PostgresDialect, sql } from "kysely";
 import { Pool as PgPool } from "pg";
 import { env } from "../lib/env.js";

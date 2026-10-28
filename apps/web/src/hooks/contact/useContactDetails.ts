@@ -18,6 +18,8 @@ export interface ContactDetail {
   displayName: string;
   isGroup: boolean;
   isBlocked: boolean;
+  isArchived?: boolean;
+  archivedAt?: string | null;
   isOnline: boolean;
   lastSeen: string | null;
   profilePictureUrl: string | null;
@@ -280,6 +282,89 @@ export function useBlockContact() {
       });
       // Also invalidate the contacts list to update block status there
       queryClient.invalidateQueries({ queryKey: queryKeys.contacts.all });
+    },
+  });
+}
+
+import {
+  archiveChannelConversation,
+  unarchiveChannelConversation,
+} from "@/lib/api/channel-conversations";
+
+/**
+ * Hook to archive or unarchive a contact or conversation
+ */
+export function useArchiveContact() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      contactId,
+      conversationId,
+      isArchived,
+    }: {
+      contactId?: string;
+      conversationId?: string;
+      isArchived: boolean;
+    }) => {
+      if (contactId) {
+        return api.patch<{
+          id: string;
+          isArchived: boolean;
+          archivedAt: string | null;
+          updatedAt: string;
+        }>(`/contacts/${contactId}`, { isArchived });
+      }
+      if (conversationId) {
+        return isArchived
+          ? archiveChannelConversation(conversationId)
+          : unarchiveChannelConversation(conversationId);
+      }
+      throw new Error("Either contactId or conversationId is required");
+    },
+    onMutate: async ({ contactId, isArchived }) => {
+      if (!contactId) return {};
+
+      await queryClient.cancelQueries({
+        queryKey: queryKeys.contacts.detail(contactId),
+      });
+
+      const previousContact = queryClient.getQueryData<ContactDetail>(
+        queryKeys.contacts.detail(contactId),
+      );
+
+      if (previousContact) {
+        queryClient.setQueryData(queryKeys.contacts.detail(contactId), {
+          ...previousContact,
+          isArchived,
+          archivedAt: isArchived ? new Date().toISOString() : null,
+        });
+      }
+
+      return { previousContact };
+    },
+    onError: (_error, variables, context) => {
+      if (variables.contactId && context?.previousContact) {
+        queryClient.setQueryData(
+          queryKeys.contacts.detail(variables.contactId),
+          context.previousContact,
+        );
+      }
+    },
+    onSettled: (_data, _error, variables) => {
+      if (variables.contactId) {
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.contacts.detail(variables.contactId),
+        });
+      }
+      if (variables.conversationId) {
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.channelConversations.detail(variables.conversationId),
+        });
+      }
+      queryClient.invalidateQueries({ queryKey: queryKeys.contacts.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.chats.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.channelConversations.all });
     },
   });
 }

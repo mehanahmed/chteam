@@ -2,7 +2,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import {
   type MemberPermissions,
   ROLE_PERMISSION_PRESETS,
-} from "@wateaminbox/shared";
+} from "@omniteam/shared";
 import {
   AlertCircle,
   ArrowLeft,

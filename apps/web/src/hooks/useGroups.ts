@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type {
   GroupJoinRequestAction,
   GroupMemberAddMode,
-} from "@wateaminbox/shared";
+} from "@omniteam/shared";
 import { toast } from "sonner";
 import { api } from "@/lib/api/client";
 import { createQueryKeyFactory } from "./query-keys";

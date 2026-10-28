@@ -1,4 +1,4 @@
-import { extractPhoneFromJid, normalizeJid } from "@wateaminbox/shared";
+import { extractPhoneFromJid, normalizeJid } from "@omniteam/shared";
 import type { NotificationSettings } from "./notifications";
 import { formatPhoneLikeText, formatPhoneNumber } from "./utils";
 

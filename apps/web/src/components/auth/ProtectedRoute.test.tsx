@@ -117,7 +117,7 @@ describe("ProtectedRoute session handling", () => {
 
     expect(navigateTargets).toEqual([]);
     expect(markup).toContain('aria-label="Loading your workspaces…"');
-    expect(markup).toContain("WATeamInbox");
+    expect(markup).toContain("OmniTeam");
     expect(markup).not.toContain("We’re restoring your session");
   });
 });

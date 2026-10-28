@@ -1,4 +1,4 @@
-import type { TenantDatabase } from "@wateaminbox/database";
+import type { TenantDatabase } from "@omniteam/database";
 import type { Kysely, Transaction } from "kysely";
 import { resolveWorkflowContactId } from "./channel-workflow.service.js";
 import { resolveCanonicalContactId } from "./contact-merge.service.js";

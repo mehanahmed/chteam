@@ -1,5 +1,5 @@
-import { db } from "@wateaminbox/database";
-import { isChannel, isChannelProvider } from "@wateaminbox/shared";
+import { db } from "@omniteam/database";
+import { isChannel, isChannelProvider } from "@omniteam/shared";
 import { createHash } from "node:crypto";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";

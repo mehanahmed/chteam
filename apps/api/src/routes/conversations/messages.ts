@@ -6,7 +6,7 @@ import {
   REMOTE_HISTORY_RESPONSE_TIMEOUT_MS,
   toDbDate,
   toISOString,
-} from "@wateaminbox/shared";
+} from "@omniteam/shared";
 import { Hono } from "hono";
 import { resolveAdapterCapabilities } from "../../channel-spine/application/adapter-registry.js";
 import { channelAdapterRegistry } from "../../channel-spine/registry.js";
@@ -305,6 +305,7 @@ messageRoutes.get(
     const reactionsMap = await loadMessageReactions(
       tenantDb,
       messages as MessageDbRow[],
+      companyId,
     );
 
     // Map to frontend format using shared formatter

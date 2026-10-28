@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 
 // Reserved UI-only value for an explicitly clearable selection. Translate to ""
 // at the call site; never persist this sentinel.
-const EMPTY_SELECT_VALUE = "__wateaminbox_empty_selection__";
+const EMPTY_SELECT_VALUE = "__omniteam_empty_selection__";
 
 const Select = SelectPrimitive.Root;
 

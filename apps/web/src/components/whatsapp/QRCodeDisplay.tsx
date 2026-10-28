@@ -1,7 +1,7 @@
 import { AlertCircle, Loader2, RefreshCw } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import QRCode from "qrcode";
-import { nowMs } from "@wateaminbox/shared";
+import { nowMs } from "@omniteam/shared";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";

@@ -3,7 +3,7 @@
  * Schedule outbound messages for future delivery, list them, and cancel them.
  */
 
-import type { ScheduledMessage } from "@wateaminbox/shared";
+import type { ScheduledMessage } from "@omniteam/shared";
 import { buildQueryString, fetchWithAuth } from "./client.js";
 
 export interface ScheduleMessageInput {

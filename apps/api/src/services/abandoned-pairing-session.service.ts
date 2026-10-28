@@ -1,5 +1,5 @@
-import { db } from "@wateaminbox/database";
-import { toDbDate } from "@wateaminbox/shared";
+import { db } from "@omniteam/database";
+import { toDbDate } from "@omniteam/shared";
 import { type Kysely, sql } from "kysely";
 import { createLogger, formatError } from "../lib/logger.js";
 import { broadcastToCompany } from "../lib/realtime.js";

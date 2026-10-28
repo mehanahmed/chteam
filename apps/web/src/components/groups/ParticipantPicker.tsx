@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { GROUP_PARTICIPANT_BATCH_LIMIT } from "@wateaminbox/shared";
+import { GROUP_PARTICIPANT_BATCH_LIMIT } from "@omniteam/shared";
 import { Check, Search, Users, X } from "lucide-react";
 import { useMemo, useState } from "react";
 import { queryKeys } from "@/hooks/query-keys";

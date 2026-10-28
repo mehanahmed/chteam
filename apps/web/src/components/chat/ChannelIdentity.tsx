@@ -1,4 +1,4 @@
-import type { Channel } from "@wateaminbox/shared";
+import type { Channel } from "@omniteam/shared";
 import { MessagesSquare } from "lucide-react";
 import type { ComponentType } from "react";
 import {

@@ -4,7 +4,7 @@
  * Routes for adding and removing reactions from messages.
  */
 
-import { isChannel, isChannelProvider } from "@wateaminbox/shared";
+import { isChannel, isChannelProvider } from "@omniteam/shared";
 import { createHash } from "node:crypto";
 import type { Context } from "hono";
 import { resolveAdapterCapabilities } from "../../channel-spine/application/adapter-registry.js";
@@ -17,7 +17,7 @@ import { isChannelSpineTenantReady } from "../../services/channel-spine-readines
 import { requireConversationSendAccess } from "../../services/send-access.service.js";
 import { broadcastToConversationViewers } from "../../services/message-broadcast.service.js";
 import { zValidator } from "../../lib/validator.js";
-import { nowMs } from "@wateaminbox/shared";
+import { nowMs } from "@omniteam/shared";
 import { Hono } from "hono";
 import { badRequest, notFound } from "../../lib/errors.js";
 import {

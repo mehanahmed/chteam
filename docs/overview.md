@@ -1,6 +1,6 @@
-# WATeamInbox Technical Overview
+# OmniTeam Technical Overview
 
-WATeamInbox is a multi-tenant collaborative omnichannel inbox. Teams can manage WhatsApp linked-device and Telegram Bot conversations today through one set of contacts, assignments, notes, notifications, audit logs, and analytics. Additional providers are expected to join through the same channel-neutral boundary rather than by expanding WhatsApp-specific models.
+OmniTeam is a multi-tenant collaborative omnichannel inbox. Teams can manage WhatsApp linked-device and Telegram Bot conversations today through one set of contacts, assignments, notes, notifications, audit logs, and analytics. Additional providers are expected to join through the same channel-neutral boundary rather than by expanding WhatsApp-specific models.
 
 ## Architecture
 

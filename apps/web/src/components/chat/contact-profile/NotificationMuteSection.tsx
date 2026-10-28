@@ -1,4 +1,4 @@
-import { normalizeJid } from "@wateaminbox/shared";
+import { normalizeJid } from "@omniteam/shared";
 import { Bell, BellOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { RightPanelSection } from "@/components/layout/right-panel";

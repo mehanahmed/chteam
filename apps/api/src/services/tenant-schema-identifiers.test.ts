@@ -4,7 +4,7 @@ import { join } from "node:path";
 import {
   getTenantSchemaName,
   TENANT_INDEX_TARGETS,
-} from "@wateaminbox/database";
+} from "@omniteam/database";
 
 /**
  * PostgreSQL truncates identifiers at 63 bytes, silently.

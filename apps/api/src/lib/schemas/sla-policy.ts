@@ -3,7 +3,7 @@ import {
   SLA_RESOLUTION_TARGET_MINUTES_MIN,
   SLA_TARGET_MINUTES_MAX,
   SLA_TARGET_MINUTES_MIN,
-} from "@wateaminbox/shared";
+} from "@omniteam/shared";
 import { z } from "zod";
 import {
   intervalsAreValidSortedAndNonOverlapping,

@@ -1,4 +1,4 @@
-import type { Channel } from "@wateaminbox/shared";
+import type { Channel } from "@omniteam/shared";
 import { IdentityAvatarFallback } from "@/components/ui/identity-avatar-fallback";
 import type { CustomerChat } from "@/lib/api/contacts";
 import { cn } from "@/lib/utils";

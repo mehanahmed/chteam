@@ -3,7 +3,7 @@ import {
   SLA_TARGET_MINUTES_MIN,
   subtractDays,
   toDbDate,
-} from "@wateaminbox/shared";
+} from "@omniteam/shared";
 import type { Context } from "hono";
 import { NotFoundError, ValidationError } from "./errors.js";
 

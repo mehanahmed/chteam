@@ -1,9 +1,9 @@
-import { db, getTenantSchemaName } from "@wateaminbox/database";
+import { db, getTenantSchemaName } from "@omniteam/database";
 import { sql } from "kysely";
 import {
   downloadTelegramFile,
   getTelegramProfilePhotoFileId,
-} from "@wateaminbox/adapter-telegram";
+} from "@omniteam/adapter-telegram";
 import { createLogger, formatError } from "../lib/logger.js";
 import { uploadMedia } from "../lib/storage.js";
 import { readChannelCredential } from "./channel-credential.service.js";

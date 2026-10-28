@@ -2,7 +2,7 @@ import {
   createTenantDatabase,
   db,
   getTenantSchemaName,
-} from "@wateaminbox/database";
+} from "@omniteam/database";
 import { backfillLinkedDeviceTenant } from "../channel-spine/providers/whatsapp-linked-device/backfill";
 import { getChannelSpineWorkspaceAuthority } from "../services/channel-spine-authority.service";
 

@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
-import { db } from "@wateaminbox/database";
-import { DEFAULT_SLA_WEEKLY_SCHEDULE } from "@wateaminbox/shared";
-import type { SlaWeeklySchedule } from "@wateaminbox/shared";
+import { db } from "@omniteam/database";
+import { DEFAULT_SLA_WEEKLY_SCHEDULE } from "@omniteam/shared";
+import type { SlaWeeklySchedule } from "@omniteam/shared";
 import { AnalyticsRangeTooWideError } from "../../lib/errors.js";
 import { getCurrentSlaPolicy, resolveCaseTargets } from "../sla-policy/policy.service.js";
 import {

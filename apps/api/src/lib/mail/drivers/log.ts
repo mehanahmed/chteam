@@ -1,4 +1,4 @@
-import { nowMs } from "@wateaminbox/shared";
+import { nowMs } from "@omniteam/shared";
 import { createLogger } from "../../logger.js";
 import type { EmailOptions, EmailResult, MailDriver } from "../types.js";
 

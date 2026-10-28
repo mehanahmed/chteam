@@ -25,7 +25,7 @@
  * its lifetime.
  */
 
-import { dayjs } from "@wateaminbox/shared";
+import { dayjs } from "@omniteam/shared";
 import { sql, type RawBuilder } from "kysely";
 import { AnalyticsRangeTooWideError, NotFoundError } from "../../lib/errors.js";
 import {

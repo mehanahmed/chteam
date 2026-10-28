@@ -2,12 +2,12 @@
  * Message event handlers - incoming messages, receipts, send confirmations
  */
 
-import { type MessageStatus, type MessageType } from "@wateaminbox/database";
+import { type MessageStatus, type MessageType } from "@omniteam/database";
 import {
   extractPhoneFromJid,
   normalizeJid,
   toDbDate,
-} from "@wateaminbox/shared";
+} from "@omniteam/shared";
 import { sql } from "kysely";
 import { normalizeLinkedDeviceMessageEvent } from "../../channel-spine/providers/whatsapp-linked-device/normalize.js";
 import { compareLinkedDeviceMessageShadow } from "../../channel-spine/providers/whatsapp-linked-device/shadow-compare.js";
@@ -29,6 +29,7 @@ import {
   getAutoReplyCandidate,
   scheduleFirstContactAutoReply,
 } from "../auto-reply.service.js";
+import { dispatchInboundMessageToAi } from "../ai-agent/ai-orchestrator.service.js";
 import { getChannelSpineWorkspaceAuthority } from "../channel-spine-authority.service.js";
 import {
   openOrReopenCaseForInboundMessage,
@@ -337,6 +338,18 @@ export async function handleMessageEvent(event: MessageEvent): Promise<void> {
             .forUpdate()
             .executeTakeFirstOrThrow();
         }
+        let senderAvatarUrl: string | null = null;
+        if (normalizedSenderJid) {
+          const senderContact = await trx
+            .selectFrom("contacts")
+            .select("profile_picture_url")
+            .where("jid", "=", normalizedSenderJid)
+            .where("whatsapp_connection_id", "=", connection.id)
+            .where("profile_picture_url", "is not", null)
+            .executeTakeFirst();
+          senderAvatarUrl = senderContact?.profile_picture_url ?? null;
+        }
+
         const insertQuery = trx.insertInto("messages").values({
           id: messageId,
           whatsapp_connection_id: connection.id,
@@ -345,7 +358,7 @@ export async function handleMessageEvent(event: MessageEvent): Promise<void> {
           from_me: payload.fromMe,
           sender_jid: normalizedSenderJid,
           sender_name: senderName,
-          sender_avatar_url: null,
+          sender_avatar_url: senderAvatarUrl,
           message_type: payload.messageType as MessageType,
           content: payload.content,
           search_vector: sql`to_tsvector('english', ${payload.content ?? ""})`,
@@ -366,7 +379,12 @@ export async function handleMessageEvent(event: MessageEvent): Promise<void> {
             : null,
           media_download_status: mediaDownloadStatus,
           quoted_message_id: payload.quotedMessageId || null,
-          is_forwarded: false,
+          is_forwarded: Boolean(
+            payload.isForwarded ||
+              incomingMetadata?.isForwarded ||
+              (typeof incomingMetadata?.forwardingScore === "number" &&
+                incomingMetadata.forwardingScore > 0),
+          ),
           is_starred: false,
           deleted_by_sender: false,
           status: messageStatus,
@@ -623,6 +641,39 @@ export async function handleMessageEvent(event: MessageEvent): Promise<void> {
         logger.warn(
           { error: formatError(error), jid: profilePictureRequestJid },
           "Failed to request contact profile picture",
+        );
+      });
+    }
+
+    // Asynchronously dispatch live inbound customer messages to AI Orchestrator
+    if (
+      !payload.fromMe &&
+      !payload.isHistorySync &&
+      !isGroupMessage &&
+      (payload.content || payload.mediaUrl)
+    ) {
+      dispatchInboundMessageToAi({
+        companyId,
+        connectionId: connection.id,
+        contactId: contact.id,
+        conversationId: null,
+        messageId: insertResult.id,
+        rawMessageId: payload.messageId,
+        contactJid,
+        senderJid: normalizedSenderJid,
+        senderName,
+        content: payload.content,
+        messageType: payload.messageType ?? "text",
+        mediaUrl: payload.mediaUrl ?? null,
+        mediaMimeType: payload.mediaType ?? null,
+        isGroup: isGroupMessage,
+        receivedAt: messageReceivedAt,
+        channel: "whatsapp",
+        provider: "whatsapp_linked_device",
+      }).catch((error) => {
+        logger.error(
+          { error: formatError(error), messageId: insertResult.id },
+          "Failed to dispatch inbound message to AI Orchestrator",
         );
       });
     }

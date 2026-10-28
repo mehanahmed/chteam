@@ -15,8 +15,8 @@ import type {
   ScheduledMessageUpdatedPayload,
   SyncStatusPayload,
   TypingPayload,
-} from "@wateaminbox/shared";
-import { advanceMessageStatus } from "@wateaminbox/shared";
+} from "@omniteam/shared";
+import { advanceMessageStatus } from "@omniteam/shared";
 import type { Dispatch, SetStateAction } from "react";
 import { queryKeys } from "../../hooks/query-keys";
 import { markConversationAsRead } from "../../lib/api/conversations";

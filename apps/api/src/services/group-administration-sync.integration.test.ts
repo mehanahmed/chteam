@@ -6,7 +6,7 @@
  * not clobber the fields it did not mention.
  */
 import { describe, expect, test } from "bun:test";
-import { db } from "@wateaminbox/database";
+import { db } from "@omniteam/database";
 import { sql } from "kysely";
 import type { GroupEvent } from "../lib/nats/index.js";
 import { handleGroupEvent } from "./handlers/group-handlers.js";

@@ -4,7 +4,7 @@
  * Handles ZIP file creation and README generation for data exports
  */
 
-import { dayjs } from "@wateaminbox/shared";
+import { dayjs } from "@omniteam/shared";
 import * as fflate from "fflate";
 import type { ContactExport, MessageExport } from "../export.service.js";
 import { toCSV } from "./csv.js";

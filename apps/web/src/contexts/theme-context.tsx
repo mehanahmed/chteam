@@ -25,14 +25,17 @@ export interface ThemeContextValue {
   toggleTheme: () => void;
 }
 
-const STORAGE_KEY = "wateaminbox-theme";
+const STORAGE_KEY = "omniteam-theme";
+const LEGACY_STORAGE_KEY = "wateaminbox-theme";
 const THEMES: Theme[] = ["light", "dark", "system"];
 
 const ThemeContext = createContext<ThemeContextValue | undefined>(undefined);
 
 function getStoredTheme(): Theme {
   try {
-    const stored = localStorage.getItem(STORAGE_KEY);
+    const stored =
+      localStorage.getItem(STORAGE_KEY) ??
+      localStorage.getItem(LEGACY_STORAGE_KEY);
     if (stored && THEMES.includes(stored as Theme)) {
       return stored as Theme;
     }

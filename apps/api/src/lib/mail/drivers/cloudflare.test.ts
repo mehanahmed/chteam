@@ -97,13 +97,13 @@ describe("cloudflare mail driver", () => {
     const fetchMock = fetchReturning(() => delivered(message.to));
 
     await driverWith(fetchMock, {
-      from: '"WATeamInbox, Support" <noreply@example.com>',
+      from: '"OmniTeam, Support" <noreply@example.com>',
     }).send(message);
 
     const [, request] = fetchMock.mock.calls[0] as [string, RequestInit];
     expect(JSON.parse(String(request.body)).from).toEqual({
       address: "noreply@example.com",
-      name: "WATeamInbox, Support",
+      name: "OmniTeam, Support",
     });
   });
 

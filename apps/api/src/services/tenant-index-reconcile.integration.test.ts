@@ -9,7 +9,7 @@ import {
   renameTenantRelation,
   TENANT_INDEX_TARGETS,
   targetIdentifier,
-} from "@wateaminbox/database";
+} from "@omniteam/database";
 import { sql } from "kysely";
 import {
   createTenantSchema,

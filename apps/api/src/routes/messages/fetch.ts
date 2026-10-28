@@ -3,7 +3,7 @@
  *
  * Routes for fetching and listing messages.
  */
-import { getContactDisplayName } from "@wateaminbox/shared";
+import { getContactDisplayName } from "@omniteam/shared";
 import { Hono } from "hono";
 import { badRequest, notFound } from "../../lib/errors.js";
 import {
@@ -61,6 +61,38 @@ fetchRoutes.get("/", async (c) => {
   }
 
   const messages = await query.execute();
+
+  // Populate sender avatar from contacts if missing on the message row
+  const missingAvatarSenderJids = [
+    ...new Set(
+      messages
+        .filter((m) => !m.sender_avatar_url && m.sender_jid)
+        .map((m) => m.sender_jid as string),
+    ),
+  ];
+  if (missingAvatarSenderJids.length > 0) {
+    const senderContacts = await tenantDb
+      .selectFrom("contacts")
+      .select(["jid", "profile_picture_url"])
+      .where("jid", "in", missingAvatarSenderJids)
+      .where("profile_picture_url", "is not", null)
+      .execute();
+
+    const senderAvatarMap = new Map(
+      senderContacts.map((c) => [c.jid, c.profile_picture_url]),
+    );
+
+    for (const msg of messages) {
+      if (
+        !msg.sender_avatar_url &&
+        msg.sender_jid &&
+        senderAvatarMap.has(msg.sender_jid)
+      ) {
+        msg.sender_avatar_url = senderAvatarMap.get(msg.sender_jid) ?? null;
+      }
+    }
+  }
+
   const senderUserIds = messages
     .map((message) => message.sent_by_user_id)
     .filter((id): id is string => Boolean(id));
@@ -96,6 +128,7 @@ fetchRoutes.get("/", async (c) => {
   const reactionsMap = await loadMessageReactions(
     tenantDb,
     messages as MessageDbRow[],
+    companyId,
   );
 
   // Return in chronological order (oldest first for display)

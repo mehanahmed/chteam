@@ -13,8 +13,8 @@
       "cache": false,
       "persistent": true
     },
-    "@wateaminbox/orchestrator#dev": {
-      "dependsOn": ["@wateaminbox/whatsapp#build"],
+    "@omniteam/orchestrator#dev": {
+      "dependsOn": ["@omniteam/whatsapp#build"],
       "cache": false,
       "persistent": true
     },

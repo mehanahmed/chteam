@@ -5,7 +5,7 @@
  */
 
 import { zValidator } from "../../lib/validator.js";
-import type { CompanyMember } from "@wateaminbox/shared";
+import type { CompanyMember } from "@omniteam/shared";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { z } from "zod";

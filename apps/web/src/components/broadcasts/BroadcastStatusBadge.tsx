@@ -1,4 +1,4 @@
-import type { BulkJobStatus } from "@wateaminbox/shared";
+import type { BulkJobStatus } from "@omniteam/shared";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
 

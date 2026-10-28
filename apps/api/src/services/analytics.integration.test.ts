@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
-import { db } from "@wateaminbox/database";
-import { getDateRange } from "@wateaminbox/shared";
+import { db } from "@omniteam/database";
+import { getDateRange } from "@omniteam/shared";
 import { sql } from "kysely";
 import {
   getContactStats,

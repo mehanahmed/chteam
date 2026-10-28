@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import type { Message, ResolvedCapabilities } from "@wateaminbox/shared";
+import type { Message, ResolvedCapabilities } from "@omniteam/shared";
 import { renderToStaticMarkup } from "react-dom/server";
 import {
   MessageActionsProvider,

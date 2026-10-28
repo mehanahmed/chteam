@@ -1,4 +1,4 @@
-import { db, getTenantSchemaName } from "@wateaminbox/database";
+import { db, getTenantSchemaName } from "@omniteam/database";
 import { sql, type Transaction } from "kysely";
 import { createLogger, formatError } from "../lib/logger.js";
 import { lockActiveConnectionForEvent } from "./handlers/connection-event-guard.js";

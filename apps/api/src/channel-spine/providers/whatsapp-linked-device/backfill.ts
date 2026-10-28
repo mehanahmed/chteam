@@ -1,4 +1,4 @@
-import type { TenantDatabase } from "@wateaminbox/database";
+import type { TenantDatabase } from "@omniteam/database";
 import { type Kysely, sql, type Transaction } from "kysely";
 import {
   ensureLinkedDeviceAccount,

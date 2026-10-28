@@ -7,7 +7,7 @@
  * visible - and an action WhatsApp rejected simply never produces one.
  */
 
-import { normalizeJid } from "@wateaminbox/shared";
+import { normalizeJid } from "@omniteam/shared";
 import type { Transaction } from "kysely";
 import { formatError } from "../../lib/logger.js";
 import type { GroupEvent } from "../../lib/nats/index.js";

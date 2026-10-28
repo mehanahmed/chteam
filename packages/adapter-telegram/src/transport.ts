@@ -3,7 +3,7 @@ import type {
   OutboundMessageIntent,
   ProviderActionResult,
   ProviderSendResult,
-} from "@wateaminbox/shared";
+} from "@omniteam/shared";
 import type { TelegramBotOutboundTransport } from "./adapter.js";
 import { telegramBotRequest } from "./api.js";
 

@@ -2,7 +2,7 @@
  * Message analytics
  */
 
-import { dayjs, subtractDays } from "@wateaminbox/shared";
+import { dayjs, subtractDays } from "@omniteam/shared";
 import { sql } from "kysely";
 import { getTenantConnection } from "../tenant.service.js";
 import type { MessageStats } from "./types.js";

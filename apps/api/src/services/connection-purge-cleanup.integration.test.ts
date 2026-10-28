@@ -8,7 +8,7 @@
  * cross-table reference scan, the claim lease, and the retry state.
  */
 import { describe, expect, test } from "bun:test";
-import { db } from "@wateaminbox/database";
+import { db } from "@omniteam/database";
 import { type Kysely, sql } from "kysely";
 import { MediaObjectReclaimedError } from "../lib/errors.js";
 import { getPrivateMediaReference } from "../lib/storage.js";
