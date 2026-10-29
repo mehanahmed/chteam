@@ -2,7 +2,7 @@ import type { Message } from "@omniteam/shared";
 import { formatMessageTime } from "@omniteam/shared";
 import type { TFunction } from "i18next";
 import { Smartphone } from "lucide-react";
-import { lazy, memo, Suspense, useCallback, useRef, useState } from "react";
+import { lazy, memo, Suspense, useCallback, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import { IdentityAvatarFallback } from "@/components/ui/identity-avatar-fallback";
@@ -321,6 +321,39 @@ export const MessageBubble = memo(function MessageBubble({
   const hasInlineMeta = !message.isDeleted && message.messageType === "text";
   const meta = <MessageMeta message={message} isOwn={isOwn} variant="inline" />;
 
+  // Resolve participant / teammate avatar and name for voice note player
+  const audioAvatarUrl = useMemo(() => {
+    if (isOwn) {
+      if (message.sentByUserId) {
+        const identity = teammateIdentities.get(message.sentByUserId);
+        if (identity?.avatarUrl) return identity.avatarUrl;
+      }
+      return (
+        currentUserAvatarUrl ||
+        currentUserGravatarUrl ||
+        ((message.metadata as unknown as { avatarUrl?: string })?.avatarUrl || null)
+      );
+    }
+    const senderIdentity = message.senderJid || message.senderId;
+    const participantAvatar = resolveParticipantAvatarUrl(
+      senderIdentity,
+      mentionParticipants as any,
+    );
+    return participantAvatar || ((message.metadata as unknown as { avatarUrl?: string })?.avatarUrl || null);
+  }, [
+    isOwn,
+    message,
+    teammateIdentities,
+    currentUserAvatarUrl,
+    currentUserGravatarUrl,
+    mentionParticipants,
+  ]);
+
+  const audioSenderName = useMemo(() => {
+    if (isOwn) return currentUserName || "You";
+    return getParticipantLabel(t, message);
+  }, [isOwn, currentUserName, t, message]);
+
   // A group event - someone joined, the title changed - is not anyone's
   // message. Rendering it as a bubble attributed to whoever triggered it made
   // an empty bubble that read as a failed send, so it gets the same centered
@@ -453,6 +486,9 @@ export const MessageBubble = memo(function MessageBubble({
             isOwn={isOwn}
             mentionParticipants={mentionParticipants}
             enableMediaPreview={!selectionMode}
+            avatarUrl={audioAvatarUrl}
+            senderName={audioSenderName}
+            meta={meta}
           />
         )}
 
@@ -468,9 +504,10 @@ export const MessageBubble = memo(function MessageBubble({
 
         {/* A failed send pushes its meta back below the retry banner, which
             would otherwise be separated from the status it explains. */}
-        {(!hasInlineMeta || (message.status === "failed" && isOwn)) && (
-          <MessageMeta message={message} isOwn={isOwn} variant="block" />
-        )}
+        {(!hasInlineMeta || (message.status === "failed" && isOwn)) &&
+          message.messageType !== "audio" && (
+            <MessageMeta message={message} isOwn={isOwn} variant="block" />
+          )}
 
         {/* Reaction display */}
         {hasReactions && (

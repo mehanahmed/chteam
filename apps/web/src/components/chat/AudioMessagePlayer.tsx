@@ -1,11 +1,15 @@
 import { AudioWave, useMediaAudio } from "@audiowave/react";
-import { Loader2, Pause, Play } from "lucide-react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Loader2 } from "lucide-react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-interface AudioMessagePlayerProps {
+export interface AudioMessagePlayerProps {
   src: string;
   duration?: number;
   isOwn?: boolean;
+  avatarUrl?: string | null;
+  senderName?: string;
+  timestamp?: string;
+  meta?: React.ReactNode;
   ariaLabel?: string;
   className?: string;
 }
@@ -20,21 +24,25 @@ function formatDuration(seconds: number): string {
 }
 
 const SPEED_OPTIONS = [1, 1.5, 2] as const;
-const BARS_COUNT = 64;
+const BARS_COUNT = 38;
 
-// Default natural speech amplitude contour (64 bars, percentage 15-100)
-const DEFAULT_64_BARS: number[] = [
-  20, 25, 32, 45, 60, 52, 40, 68, 85, 95, 82, 65, 55, 38, 28, 42,
-  64, 78, 88, 74, 60, 48, 68, 84, 100, 92, 72, 56, 42, 34, 48, 62,
-  74, 86, 94, 82, 62, 46, 36, 54, 68, 84, 76, 58, 48, 38, 58, 74,
-  86, 96, 82, 66, 52, 38, 32, 44, 58, 68, 54, 42, 32, 26, 20, 16,
+// Natural speech amplitude contour matching WhatsApp Web (active speech then trailing silence)
+const DEFAULT_WAVEFORM_BARS: number[] = [
+  22, 28, 38, 55, 75, 90, 100, 92, 85, 92,
+  98, 90, 80, 85, 72, 60, 48, 38, 30, 24,
+  20, 20, 20, 20, 20, 20, 20, 20, 20, 20,
+  20, 20, 20, 20, 20, 20, 20, 20,
 ];
 
 export function AudioMessagePlayer({
   src,
   duration: propDuration,
   isOwn = false,
-  ariaLabel = "Audio message",
+  avatarUrl,
+  senderName,
+  timestamp,
+  meta,
+  ariaLabel = "Voice message",
   className = "",
 }: AudioMessagePlayerProps) {
   const [isPlaying, setIsPlaying] = useState(false);
@@ -42,11 +50,13 @@ export function AudioMessagePlayer({
   const [duration, setDuration] = useState(propDuration || 0);
   const [isLoading, setIsLoading] = useState(false);
   const [speedIndex, setSpeedIndex] = useState(0);
-  const [waveformData, setWaveformData] = useState<number[]>(DEFAULT_64_BARS);
+  const [waveformData, setWaveformData] = useState<number[]>(DEFAULT_WAVEFORM_BARS);
   const [audioElement, setAudioElement] = useState<HTMLAudioElement | null>(null);
+  const [isAvatarHovered, setIsAvatarHovered] = useState(false);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const trackRef = useRef<HTMLDivElement | null>(null);
+  const isDraggingRef = useRef(false);
 
   // Set audio element ref safely for useMediaAudio
   const setRef = useCallback((node: HTMLAudioElement | null) => {
@@ -58,21 +68,19 @@ export function AudioMessagePlayer({
   const audioOptions = useMemo(
     () => ({
       source: audioElement,
-      onError: () => {
-        // Graceful error suppression, ensures audio element continues working even if Web Audio fails
-      },
+      onError: () => {},
     }),
     [audioElement],
   );
 
   const { source } = useMediaAudio(audioOptions);
 
-  // Extract 64-bar waveform peaks from audio data if accessible, fallback to natural contour
+  // Extract waveform peaks from audio data if accessible, fallback to natural contour
   useEffect(() => {
     if (!src) return;
     let isCancelled = false;
 
-    async function extract64BarWaveform() {
+    async function extractWaveform() {
       try {
         const response = await fetch(src, { mode: "cors" });
         if (!response.ok) return;
@@ -103,18 +111,18 @@ export function AudioMessagePlayer({
 
         const maxPeak = Math.max(...sampledBars, 0.001);
         const normalized = sampledBars.map((val) =>
-          Math.max(16, Math.min(100, Math.round((val / maxPeak) * 100))),
+          Math.max(18, Math.min(100, Math.round((val / maxPeak) * 100))),
         );
 
         if (!isCancelled && normalized.length === BARS_COUNT) {
           setWaveformData(normalized);
         }
       } catch {
-        // Safe fallback without any user-facing error
+        // Safe fallback without error
       }
     }
 
-    void extract64BarWaveform();
+    void extractWaveform();
     return () => {
       isCancelled = true;
     };
@@ -136,7 +144,6 @@ export function AudioMessagePlayer({
     } else {
       try {
         setIsLoading(true);
-        // Ensure playbackRate is preserved
         audio.playbackRate = SPEED_OPTIONS[speedIndex];
         await audio.play();
       } catch {
@@ -161,15 +168,15 @@ export function AudioMessagePlayer({
     [speedIndex],
   );
 
-  // Seek/Scrub along the 64-bar waveform
-  const handleSeek = useCallback(
-    (e: React.MouseEvent<HTMLDivElement>) => {
+  // Seek/Scrub along the waveform
+  const applySeekFromEvent = useCallback(
+    (clientX: number) => {
       const audio = audioRef.current;
       const track = trackRef.current;
       if (!audio || !track || !duration) return;
 
       const rect = track.getBoundingClientRect();
-      const clickX = Math.max(0, Math.min(e.clientX - rect.left, rect.width));
+      const clickX = Math.max(0, Math.min(clientX - rect.left, rect.width));
       const percentage = clickX / rect.width;
       const newTime = percentage * duration;
 
@@ -179,12 +186,45 @@ export function AudioMessagePlayer({
     [duration],
   );
 
+  const handlePointerDown = useCallback(
+    (e: React.PointerEvent<HTMLDivElement>) => {
+      e.stopPropagation();
+      isDraggingRef.current = true;
+      (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+      applySeekFromEvent(e.clientX);
+    },
+    [applySeekFromEvent],
+  );
+
+  const handlePointerMove = useCallback(
+    (e: React.PointerEvent<HTMLDivElement>) => {
+      if (!isDraggingRef.current) return;
+      e.stopPropagation();
+      applySeekFromEvent(e.clientX);
+    },
+    [applySeekFromEvent],
+  );
+
+  const handlePointerUp = useCallback(
+    (e: React.PointerEvent<HTMLDivElement>) => {
+      if (!isDraggingRef.current) return;
+      e.stopPropagation();
+      isDraggingRef.current = false;
+      try {
+        (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
+      } catch {
+        // Safe pointer release
+      }
+    },
+    [],
+  );
+
   const progressPercent = duration > 0 ? Math.min(100, (currentTime / duration) * 100) : 0;
   const currentSpeed = SPEED_OPTIONS[speedIndex];
 
   return (
     <div
-      className={`flex flex-col gap-1 min-w-[240px] max-w-[340px] select-none py-1 ${className}`}
+      className={`relative flex items-center justify-between gap-3 w-full min-w-[280px] max-w-[340px] select-none py-0.5 ${className}`}
       aria-label={ariaLabel}
     >
       {/* Hidden audio element that drives playback */}
@@ -193,14 +233,14 @@ export function AudioMessagePlayer({
         src={src}
         preload="metadata"
         crossOrigin="anonymous"
-        onPlay={() => setIsPlaying(true)}
+        onPlay={() => setIsPlaying(false === false && true)}
         onPause={() => setIsPlaying(false)}
         onEnded={() => {
           setIsPlaying(false);
           setCurrentTime(0);
         }}
         onTimeUpdate={() => {
-          if (audioRef.current) {
+          if (audioRef.current && !isDraggingRef.current) {
             setCurrentTime(audioRef.current.currentTime);
           }
         }}
@@ -213,111 +253,157 @@ export function AudioMessagePlayer({
         onPlaying={() => setIsLoading(false)}
       />
 
-      <div className="flex items-center gap-2.5">
-        {/* WhatsApp-style Play / Pause circular button */}
-        <button
-          type="button"
-          onClick={togglePlay}
-          className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#00a884] text-white transition-all active:scale-95 hover:bg-[#008f72] shadow-sm"
-          aria-label={isPlaying ? "Pause" : "Play"}
-        >
-          {isLoading ? (
-            <Loader2 className="h-5 w-5 animate-spin" />
-          ) : isPlaying ? (
-            <Pause className="h-5 w-5 fill-current" />
-          ) : (
-            <Play className="h-5 w-5 fill-current ml-0.5" />
-          )}
-        </button>
+      {/* LEFT SECTION: Play/Pause button + Waveform track + Duration & Meta */}
+      <div className="flex-1 min-w-0 flex flex-col justify-center">
+        <div className="flex items-center gap-3">
+          {/* WhatsApp-style minimal Play / Pause button */}
+          <button
+            type="button"
+            onClick={togglePlay}
+            className="flex size-[34px] shrink-0 items-center justify-center rounded-full text-[#54656f] transition-all hover:bg-black/5 active:scale-95 dark:text-[#aebac1] dark:hover:bg-white/10"
+            aria-label={isPlaying ? "Pause voice message" : "Play voice message"}
+          >
+            {isLoading ? (
+              <Loader2 className="size-5 animate-spin" />
+            ) : isPlaying ? (
+              /* WhatsApp Pause SVG */
+              <svg viewBox="0 0 24 24" height="24" width="24" fill="currentColor">
+                <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" />
+              </svg>
+            ) : (
+              /* WhatsApp Play SVG */
+              <svg viewBox="0 0 24 24" height="24" width="24" fill="currentColor">
+                <path d="M9.53 18.02a.91.91 0 0 1-1.02.04.95.95 0 0 1-.51-.88V6.82c0-.4.17-.7.51-.88a.91.91 0 0 1 1.02.03l8.15 5.18c.3.2.45.48.45.85s-.15.65-.45.85l-8.15 5.17Z" />
+              </svg>
+            )}
+          </button>
 
-        {/* 64-Bar Amplitude Waveform Scrubber with Scrubber Knob */}
-        <div
-          ref={trackRef}
-          onClick={handleSeek}
-          className="relative flex-1 cursor-pointer py-1.5 group select-none"
-          role="slider"
-          aria-valuenow={currentTime}
-          aria-valuemin={0}
-          aria-valuemax={duration}
-          tabIndex={0}
-        >
-          {/* Waveform bars container (64 bars) */}
-          <div className="relative h-7 w-full flex items-center justify-between gap-[1.5px]">
-            {waveformData.map((heightPct, idx) => {
-              const barPercent = (idx / BARS_COUNT) * 100;
-              const isFilled = barPercent <= progressPercent;
+          {/* Waveform track with Cyan Scrubber Knob */}
+          <div
+            ref={trackRef}
+            onPointerDown={handlePointerDown}
+            onPointerMove={handlePointerMove}
+            onPointerUp={handlePointerUp}
+            className="relative flex-1 h-6 flex items-center cursor-pointer select-none group touch-none"
+            role="slider"
+            aria-valuenow={currentTime}
+            aria-valuemin={0}
+            aria-valuemax={duration}
+            tabIndex={0}
+          >
+            {/* Waveform bars container (matching WhatsApp Web) */}
+            <div className="relative h-6 w-full flex items-center justify-between gap-[2px]">
+              {waveformData.map((heightPct, idx) => {
+                const barPercent = (idx / BARS_COUNT) * 100;
+                const isFilled = barPercent <= progressPercent;
 
-              return (
-                <span
-                  key={idx}
-                  className={`w-[2px] rounded-full transition-colors duration-100 ${
-                    isFilled
-                      ? "bg-[#00a884]"
-                      : isOwn
-                        ? "bg-[#8696a0]/60 dark:bg-white/35"
-                        : "bg-[#8696a0]/45 dark:bg-white/35"
-                  }`}
-                  style={{ height: `${heightPct}%` }}
-                />
-              );
-            })}
+                return (
+                  <span
+                    key={idx}
+                    className={`w-[2px] rounded-full transition-colors duration-100 ${
+                      isFilled
+                        ? "bg-[#29afdf]"
+                        : isOwn
+                          ? "bg-[#8696a0]/50 dark:bg-white/35"
+                          : "bg-[#c1c7cb] dark:bg-white/35"
+                    }`}
+                    style={{ height: `${heightPct}%` }}
+                  />
+                );
+              })}
 
-            {/* Playhead circular scrubber thumb handle */}
-            <div
-              className="pointer-events-none absolute top-1/2 -translate-y-1/2 -translate-x-1/2 transition-transform group-hover:scale-125"
-              style={{ left: `${progressPercent}%` }}
-            >
-              <div className="h-3 w-3 rounded-full bg-[#00a884] shadow ring-2 ring-white dark:ring-dark-secondary" />
+              {/* Cyan Playhead Scrubber Knob Dot */}
+              <div
+                className="pointer-events-none absolute top-1/2 -translate-y-1/2 -translate-x-1/2 transition-transform group-hover:scale-125"
+                style={{ left: `${progressPercent}%` }}
+              >
+                <div className="size-3 rounded-full bg-[#29afdf] shadow-[0_1px_3px_rgba(41,175,223,0.5)]" />
+              </div>
             </div>
-          </div>
 
-          {/* Optional live canvas visualizer from @audiowave/react when playing */}
-          {source && isPlaying && (
-            <div className="absolute inset-0 opacity-20 pointer-events-none overflow-hidden">
-              <AudioWave
-                source={source}
-                width="100%"
-                height={28}
-                barColor="#00a884"
-                secondaryBarColor="transparent"
-                barWidth={2}
-                gap={1.5}
-                rounded={1}
-                amplitudeMode="peak"
-                animateCurrentPick={true}
-                isPaused={!isPlaying}
-                onError={() => {}}
-              />
+            {/* Live canvas visualizer from @audiowave/react when playing */}
+            {source && isPlaying && (
+              <div className="absolute inset-0 pointer-events-none opacity-30 overflow-hidden">
+                <AudioWave
+                  source={source}
+                  width="100%"
+                  height={24}
+                  barColor="#29afdf"
+                  secondaryBarColor="transparent"
+                  barWidth={2}
+                  gap={2}
+                  rounded={1}
+                  amplitudeMode="peak"
+                  animateCurrentPick={true}
+                  isPaused={!isPlaying}
+                  onError={() => {}}
+                />
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Lower Row: Duration on Left, Timestamp / Status on Right */}
+        <div className="flex items-center justify-between text-[11px] leading-3 text-[#667781] dark:text-[#8696a0] mt-1 pl-[46px] pr-0.5 select-none tabular-nums">
+          <span>{isPlaying ? formatDuration(currentTime) : formatDuration(duration)}</span>
+          {meta ? (
+            <div className="flex items-center">{meta}</div>
+          ) : timestamp ? (
+            <span>{timestamp}</span>
+          ) : null}
+        </div>
+      </div>
+
+      {/* RIGHT SECTION: 55px Circular Avatar with Cyan Mic Badge & Speed Toggle */}
+      <div
+        className="relative shrink-0 size-[55px] ml-2 select-none group/avatar"
+        onMouseEnter={() => setIsAvatarHovered(true)}
+        onMouseLeave={() => setIsAvatarHovered(false)}
+      >
+        {/* 55px Avatar circle */}
+        <div className="size-[55px] rounded-full overflow-hidden bg-gray-200 dark:bg-gray-700 shadow-xs border border-black/5 dark:border-white/10">
+          {avatarUrl ? (
+            <img
+              src={avatarUrl}
+              alt={senderName || "Sender"}
+              className="size-full object-cover"
+              onError={(e) => {
+                (e.currentTarget as HTMLElement).style.display = "none";
+              }}
+            />
+          ) : (
+            <div className="size-full flex items-center justify-center bg-[#00a884] text-white font-semibold text-lg">
+              {(senderName || "U").charAt(0).toUpperCase()}
             </div>
           )}
         </div>
 
-        {/* Speed toggle chip (1x, 1.5x, 2x like WhatsApp) */}
+        {/* Cyan Mic badge at bottom-left corner of avatar */}
+        <div
+          className="absolute -bottom-0.5 -left-1.5 size-5 rounded-full bg-white dark:bg-[#202c33] shadow-[0_1px_3px_rgba(0,0,0,0.18)] flex items-center justify-center z-10 pointer-events-none"
+          title="Voice message"
+        >
+          <svg viewBox="0 0 24 24" height="13" width="13" fill="#29afdf">
+            <path d="M12 14a2.9 2.9 0 0 1-2.13-.88A2.9 2.9 0 0 1 9 11V5c0-.83.3-1.54.88-2.13A2.9 2.9 0 0 1 12 2c.83 0 1.54.3 2.13.88.58.58.87 1.29.87 2.12v6c0 .83-.3 1.54-.88 2.13A2.9 2.9 0 0 1 12 14Zm0 7a.97.97 0 0 1-.71-.29A.97.97 0 0 1 11 20v-2.1a6.86 6.86 0 0 1-5.92-5.82.84.84 0 0 1 .22-.76c.2-.21.47-.32.8-.32.23 0 .44.09.63.26.18.18.3.39.34.64a4.93 4.93 0 0 0 1.7 2.92c.92.79 2 1.18 3.23 1.18s2.3-.4 3.22-1.18a4.93 4.93 0 0 0 1.7-2.92c.05-.25.18-.46.37-.64a1 1 0 0 1 1.41.06c.2.22.28.47.23.75A6.86 6.86 0 0 1 13 17.9V20c0 .28-.1.52-.29.71A.94.94 0 0 1 12 21Z" />
+          </svg>
+        </div>
+
+        {/* Playback Speed Pill Button Overlay (displays when playing, hovered, or changed speed) */}
         <button
           type="button"
           onClick={cycleSpeed}
-          className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold transition-all active:scale-95 ${
-            currentSpeed === 2
-              ? "bg-[#00a884] text-white shadow-xs"
-              : currentSpeed === 1.5
-                ? "bg-[#00a884]/20 text-[#00a884] font-bold"
-                : isOwn
-                  ? "bg-black/5 hover:bg-black/10 text-gray-700 dark:bg-white/10 dark:text-gray-200"
-                  : "bg-black/5 hover:bg-black/10 text-gray-700 dark:bg-white/10 dark:text-gray-200"
+          className={`absolute inset-0 flex items-center justify-center rounded-full bg-black/45 backdrop-blur-[1px] transition-opacity cursor-pointer z-20 ${
+            isPlaying || isAvatarHovered || speedIndex > 0
+              ? "opacity-100"
+              : "opacity-0 group-hover/avatar:opacity-100"
           }`}
-          title="Change playback speed"
-          aria-label={`Playback speed: ${currentSpeed}x`}
+          title={`Playback speed: ${currentSpeed}× (click to change)`}
+          aria-label={`Change playback speed, currently ${currentSpeed}×`}
         >
-          {currentSpeed}x
+          <div className="rounded-full bg-black/75 px-2 py-0.5 text-[12px] font-semibold text-white shadow-xs">
+            {currentSpeed}×
+          </div>
         </button>
-      </div>
-
-      {/* Duration and current time display */}
-      <div className="flex items-center justify-between px-1 text-[11px] font-medium text-gray-500 dark:text-gray-400 tabular-nums">
-        <span>{isPlaying ? formatDuration(currentTime) : formatDuration(duration)}</span>
-        {duration > 0 && isPlaying && (
-          <span className="opacity-75">{formatDuration(duration)}</span>
-        )}
       </div>
     </div>
   );

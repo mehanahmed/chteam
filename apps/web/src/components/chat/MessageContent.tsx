@@ -32,6 +32,9 @@ interface MessageContentProps {
     "jid" | "phoneNumber" | "mentionIds" | "displayName" | "contactId"
   >[];
   enableMediaPreview?: boolean;
+  avatarUrl?: string | null;
+  senderName?: string;
+  meta?: React.ReactNode;
 }
 
 /**
@@ -44,6 +47,9 @@ export function MessageContent({
   isOwn,
   mentionParticipants = [],
   enableMediaPreview = true,
+  avatarUrl,
+  senderName,
+  meta,
 }: MessageContentProps) {
   const { t } = useTranslation();
   const [mediaPreviewOpen, setMediaPreviewOpen] = useState(false);
@@ -265,6 +271,9 @@ export function MessageContent({
           src={message.metadata?.mediaUrl || ""}
           duration={message.metadata?.duration}
           isOwn={isOwn}
+          avatarUrl={avatarUrl}
+          senderName={senderName}
+          meta={meta}
           ariaLabel={t("chat.audioMessage", "Audio message")}
         />
       );
