@@ -317,6 +317,15 @@ export const MessageBubble = memo(function MessageBubble({
       (typeof (message.metadata as unknown as { forwarding_score?: number })?.forwarding_score === "number" &&
         ((message.metadata as unknown as { forwarding_score?: number }).forwarding_score ?? 0) >= 5),
   );
+  // Media messages (images, videos, albums) use tight 3px padding in WhatsApp Web,
+  // while stickers have zero padding and transparent background.
+  const isMedia =
+    !message.isDeleted &&
+    (message.messageType === "image" ||
+      message.messageType === "video" ||
+      Boolean(albumMessages && albumMessages.length > 1));
+  const isSticker = !message.isDeleted && message.messageType === "sticker";
+
   // The timestamp shares the last text line when it fits, the way a phone
   // messenger does; media and system-ish rows keep their own meta row because
   // their content is not part of an inline formatting context.
@@ -407,9 +416,14 @@ export const MessageBubble = memo(function MessageBubble({
       <div
         ref={bubbleRef}
         className={cn(
-          "relative max-w-[85%] px-2.5 py-[7px] shadow-[0_1px_0.5px_rgba(11,20,26,0.13)] transition-[background-color,box-shadow] duration-300 sm:max-w-[75%] md:max-w-[70%] md:px-3 md:py-2",
-          bubbleRadiusClass(isOwn, groupPosition),
-          isOwn ? OWN_BUBBLE_CLASS : INCOMING_BUBBLE_CLASS,
+          "relative max-w-[85%] transition-[background-color,box-shadow] duration-300 sm:max-w-[75%] md:max-w-[70%]",
+          isSticker
+            ? "p-0 shadow-none bg-transparent"
+            : isMedia
+              ? "p-[3px] shadow-[0_1px_0.5px_rgba(11,20,26,0.13)]"
+              : "px-2.5 py-[7px] md:px-3 md:py-2 shadow-[0_1px_0.5px_rgba(11,20,26,0.13)]",
+          !isSticker && bubbleRadiusClass(isOwn, groupPosition),
+          !isSticker && (isOwn ? OWN_BUBBLE_CLASS : INCOMING_BUBBLE_CLASS),
           isHighlighted &&
             "ring-2 ring-yellow-400 ring-offset-2 dark:ring-offset-dark-primary",
           isSelected &&
@@ -425,18 +439,22 @@ export const MessageBubble = memo(function MessageBubble({
             but only once per run - repeating it on every bubble is what made
             a burst of replies unreadable. */}
         {isOwn && isRunStart && (
-          <TeamSenderLabel
-            message={message}
-            currentUserId={currentUserId}
-            currentUserName={currentUserName}
-          />
+          <div className={isMedia ? "px-1.5 pt-0.5 pb-1" : undefined}>
+            <TeamSenderLabel
+              message={message}
+              currentUserId={currentUserId}
+              currentUserName={currentUserName}
+            />
+          </div>
         )}
         {isGroup && !isOwn && isRunStart && !message.isDeleted && (
-          <GroupParticipantLabel
-            message={message}
-            participants={mentionParticipants}
-            selectionMode={selectionMode}
-          />
+          <div className={isMedia ? "px-1.5 pt-0.5 pb-1" : undefined}>
+            <GroupParticipantLabel
+              message={message}
+              participants={mentionParticipants}
+              selectionMode={selectionMode}
+            />
+          </div>
         )}
 
         {/* Forwarded indicator matching WhatsApp Web design */}
@@ -444,6 +462,7 @@ export const MessageBubble = memo(function MessageBubble({
           <div
             className={cn(
               "flex items-center gap-1.5 text-[12.5px] leading-4 italic mb-1 select-none",
+              isMedia && "px-1.5 pt-0.5",
               isOwn
                 ? "text-black/60 dark:text-white/60"
                 : "text-[#667781] dark:text-[#8696a0]",
@@ -464,14 +483,16 @@ export const MessageBubble = memo(function MessageBubble({
 
         {/* Reply preview */}
         {shouldShowReplyPreview(message) && (
-          <ReplyPreview
-            replyToMessage={message.replyToMessage}
-            replyToMessageId={message.replyToMessageId}
-            isOwn={isOwn}
-            currentUserId={currentUserId}
-            mentionParticipants={mentionParticipants}
-            onNavigateToMessage={onNavigateToMessage}
-          />
+          <div className={isMedia ? "p-1" : undefined}>
+            <ReplyPreview
+              replyToMessage={message.replyToMessage}
+              replyToMessageId={message.replyToMessageId}
+              isOwn={isOwn}
+              currentUserId={currentUserId}
+              mentionParticipants={mentionParticipants}
+              onNavigateToMessage={onNavigateToMessage}
+            />
+          </div>
         )}
 
         {/* Message content. Plain text is rendered here rather than through
@@ -514,7 +535,9 @@ export const MessageBubble = memo(function MessageBubble({
             would otherwise be separated from the status it explains. */}
         {(!hasInlineMeta || (message.status === "failed" && isOwn)) &&
           message.messageType !== "audio" && (
-            <MessageMeta message={message} isOwn={isOwn} variant="block" />
+            <div className={isMedia ? "px-1.5 pb-0.5" : undefined}>
+              <MessageMeta message={message} isOwn={isOwn} variant="block" />
+            </div>
           )}
 
         {/* Reaction display */}

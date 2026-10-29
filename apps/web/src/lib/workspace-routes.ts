@@ -31,7 +31,8 @@ export type WorkspaceDestination =
   | "team"
   | "audit"
   | "settings"
-  | "notifications";
+  | "notifications"
+  | "status";
 
 export function workspacePath(
   workspaceId: string,

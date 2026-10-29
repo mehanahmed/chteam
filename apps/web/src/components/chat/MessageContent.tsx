@@ -114,7 +114,7 @@ export function MessageContent({
             <>
               <button
                 type="button"
-                className={`group/media relative block max-w-full overflow-hidden rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/90 focus-visible:ring-offset-2 ${
+                className={`group/media relative block max-w-full overflow-hidden rounded-[calc(1.15rem-3px)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/90 focus-visible:ring-offset-2 ${
                   isOwn
                     ? "focus-visible:ring-offset-whatsapp-green"
                     : "focus-visible:ring-offset-white dark:focus-visible:ring-offset-dark-elevated"
@@ -156,13 +156,15 @@ export function MessageContent({
             </div>
           )}
           {mediaCaption && (
-            <LinkifiedText
-              text={mediaCaption}
-              isOwn={isOwn}
-              className="mt-1"
-              mentionParticipants={mentionParticipants}
-              groupMentions={message.metadata?.groupMentions}
-            />
+            <div className="px-1.5 pt-1.5 pb-0.5">
+              <LinkifiedText
+                text={mediaCaption}
+                isOwn={isOwn}
+                className="mt-0 text-[14.5px] leading-relaxed"
+                mentionParticipants={mentionParticipants}
+                groupMentions={message.metadata?.groupMentions}
+              />
+            </div>
           )}
         </div>
       );
@@ -189,7 +191,7 @@ export function MessageContent({
             <>
               <button
                 type="button"
-                className={`group/media relative block max-w-full overflow-hidden rounded-lg bg-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/90 focus-visible:ring-offset-2 ${
+                className={`group/media relative block max-w-full overflow-hidden rounded-[calc(1.15rem-3px)] bg-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/90 focus-visible:ring-offset-2 ${
                   isOwn
                     ? "focus-visible:ring-offset-whatsapp-green"
                     : "focus-visible:ring-offset-white dark:focus-visible:ring-offset-dark-elevated"
@@ -243,13 +245,15 @@ export function MessageContent({
             </div>
           )}
           {mediaCaption && (
-            <LinkifiedText
-              text={mediaCaption}
-              isOwn={isOwn}
-              className="mt-1"
-              mentionParticipants={mentionParticipants}
-              groupMentions={message.metadata?.groupMentions}
-            />
+            <div className="px-1.5 pt-1.5 pb-0.5">
+              <LinkifiedText
+                text={mediaCaption}
+                isOwn={isOwn}
+                className="mt-0 text-[14.5px] leading-relaxed"
+                mentionParticipants={mentionParticipants}
+                groupMentions={message.metadata?.groupMentions}
+              />
+            </div>
           )}
         </div>
       );
@@ -310,13 +314,15 @@ export function MessageContent({
         <div className="max-w-xs">
           {card}
           {mediaCaption && (
-            <LinkifiedText
-              text={mediaCaption}
-              isOwn={isOwn}
-              className="mt-1"
-              mentionParticipants={mentionParticipants}
-              groupMentions={message.metadata?.groupMentions}
-            />
+            <div className="px-1.5 pt-1.5 pb-0.5">
+              <LinkifiedText
+                text={mediaCaption}
+                isOwn={isOwn}
+                className="mt-0 text-[14.5px] leading-relaxed"
+                mentionParticipants={mentionParticipants}
+                groupMentions={message.metadata?.groupMentions}
+              />
+            </div>
           )}
         </div>
       );
