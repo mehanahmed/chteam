@@ -64,9 +64,6 @@ const NotificationsPage = lazy(() =>
     default: m.NotificationsPage,
   })),
 );
-const StatusPage = lazy(() =>
-  import("./pages/StatusPage").then((m) => ({ default: m.StatusPage })),
-);
 const AcceptInvitationPage = lazy(() =>
   import("./pages/AcceptInvitationPage").then((m) => ({
     default: m.AcceptInvitationPage,
@@ -196,14 +193,6 @@ function App() {
               }
             />
             <Route
-              path="status"
-              element={
-                <LazyPage>
-                  <StatusPage />
-                </LazyPage>
-              }
-            />
-            <Route
               path="team"
               element={
                 <ProtectedRoute
@@ -283,7 +272,6 @@ function App() {
         {[
           "/chat",
           "/chat/:contactId",
-          "/status",
           "/settings",
           "/settings/:section",
           "/dashboard",
