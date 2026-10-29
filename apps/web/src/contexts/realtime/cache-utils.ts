@@ -210,19 +210,30 @@ export function updateContactDetailsByJid(
  * history by hand risks putting it in the wrong place, which is
  * indistinguishable from a pagination bug.
  */
+let invalidateChatListTimer: ReturnType<typeof setTimeout> | null = null;
+let invalidateTimelinesTimer: ReturnType<typeof setTimeout> | null = null;
+
 export function invalidateCustomerTimelines(queryClient: QueryClient): void {
-  queryClient.invalidateQueries({ queryKey: customerTimelineKeys.all });
+  if (invalidateTimelinesTimer) return;
+  invalidateTimelinesTimer = setTimeout(() => {
+    invalidateTimelinesTimer = null;
+    queryClient.invalidateQueries({ queryKey: customerTimelineKeys.all });
+  }, 300);
 }
 
 export function invalidateChatList(queryClient: QueryClient): void {
-  queryClient.invalidateQueries({
-    queryKey: chatKeys.lists(),
-  });
-  // The Groups tab is a second projection of the same conversations. New
-  // messages and read events must refresh both projections together.
-  queryClient.invalidateQueries({
-    queryKey: queryKeys.groups.lists(),
-  });
+  if (invalidateChatListTimer) return;
+  invalidateChatListTimer = setTimeout(() => {
+    invalidateChatListTimer = null;
+    queryClient.invalidateQueries({
+      queryKey: chatKeys.lists(),
+    });
+    // The Groups tab is a second projection of the same conversations. New
+    // messages and read events must refresh both projections together.
+    queryClient.invalidateQueries({
+      queryKey: queryKeys.groups.lists(),
+    });
+  }, 300);
 }
 
 /**

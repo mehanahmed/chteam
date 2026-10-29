@@ -82,6 +82,8 @@ export function buildChatListQueryParams(
   return params;
 }
 
+const EMPTY_TAG_IDS: readonly string[] = [];
+
 /**
  * Hook to fetch and manage chat list data
  * Supports search filtering, group inclusion, assignment filtering, and the
@@ -93,10 +95,11 @@ export function useChats(
   assignmentFilter: AssignmentFilter = "all",
   connectionId?: string,
   conversationStatus: ConversationStatusFilter = "open",
-  tagIds: readonly string[] = [],
+  tagIds: readonly string[] = EMPTY_TAG_IDS,
   archived?: boolean,
 ) {
   const companyId = getCompanyId();
+  const tagIdsKey = tagIds.join(",");
 
   // Memoize the query key to prevent unnecessary re-renders
   const queryKey = useMemo(
@@ -107,7 +110,7 @@ export function useChats(
         assignmentFilter,
         connectionId,
         conversationStatus,
-        tagIds,
+        tagIds: tagIds.length === 0 ? EMPTY_TAG_IDS : tagIds,
         archived,
       }),
     [
@@ -117,7 +120,7 @@ export function useChats(
       assignmentFilter,
       connectionId,
       conversationStatus,
-      tagIds,
+      tagIdsKey,
       archived,
     ],
   );

@@ -279,20 +279,24 @@ export function useChatPageState(): ChatPageState & ChatPageActions {
   const lastMarkedRef = React.useRef<string | null>(null);
 
   React.useEffect(() => {
-    if (selectedChatId) {
+    if (selectedChatId && lastMarkedRef.current !== selectedChatId) {
       lastMarkedRef.current = selectedChatId;
 
       const timeoutId = setTimeout(() => {
-        markConversationAsRead(selectedChatId)
-          .then(() => {
-            queryClient.invalidateQueries({ queryKey: chatKeys.lists() });
-          })
-          .catch((error) => {
-            console.error("Failed to mark conversation as read:", error);
-          });
+        if (lastMarkedRef.current === selectedChatId) {
+          markConversationAsRead(selectedChatId)
+            .then(() => {
+              queryClient.invalidateQueries({ queryKey: chatKeys.lists() });
+            })
+            .catch((error) => {
+              console.error("Failed to mark conversation as read:", error);
+            });
+        }
       }, 300);
 
       return () => clearTimeout(timeoutId);
+    } else if (!selectedChatId) {
+      lastMarkedRef.current = null;
     }
   }, [selectedChatId, queryClient]);
 
@@ -302,7 +306,8 @@ export function useChatPageState(): ChatPageState & ChatPageActions {
       setIsProfileOpen(false);
       setIsSearchOpen(false);
       setHighlightedMessageId(null);
-      if (chatId) {
+      if (chatId && lastMarkedRef.current !== chatId) {
+        lastMarkedRef.current = chatId;
         markConversationAsRead(chatId)
           .then(() => {
             queryClient.invalidateQueries({ queryKey: chatKeys.lists() });

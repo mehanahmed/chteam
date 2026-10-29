@@ -7,13 +7,16 @@ import {
 import { ApiRequestError } from "@/lib/api/client";
 import { queryKeys } from "./query-keys";
 
+const EMPTY_TAG_IDS: readonly string[] = [];
+
 export function useChannelConversations(
   limit = 50,
-  tagIds: readonly string[] = [],
+  tagIds: readonly string[] = EMPTY_TAG_IDS,
   archived?: boolean,
 ) {
+  const stableTagIds = tagIds.length === 0 ? EMPTY_TAG_IDS : tagIds;
   return useQuery({
-    queryKey: [...queryKeys.channelConversations.lists(), { limit, tagIds, archived }],
+    queryKey: [...queryKeys.channelConversations.lists(), { limit, tagIds: stableTagIds, archived }],
     queryFn: async () => {
       try {
         return await getChannelConversations({ limit, tagIds, archived });

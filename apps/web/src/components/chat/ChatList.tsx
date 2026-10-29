@@ -68,6 +68,8 @@ import { resolveInboxConnectionState } from "./inbox-connection-state";
 const CHAT_ITEM_HEIGHT = 76;
 const MAX_TAG_FILTERS = 50;
 
+const EMPTY_TAG_IDS: readonly string[] = [];
+
 /**
  * Main chat list sidebar component
  * Displays searchable list of chats with last message preview
@@ -169,12 +171,12 @@ export const ChatList = memo(function ChatList({
     "all",
     undefined,
     "all",
-    [],
+    EMPTY_TAG_IDS,
     true,
   );
   const { data: archivedChannelConversations = [] } = useChannelConversations(
     100,
-    [],
+    EMPTY_TAG_IDS,
     true,
   );
   const archivedCount = useMemo(
