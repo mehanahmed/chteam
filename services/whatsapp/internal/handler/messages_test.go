@@ -3,6 +3,7 @@ package handler
 import (
 	"context"
 	"testing"
+	"time"
 
 	"go.mau.fi/whatsmeow"
 	"go.mau.fi/whatsmeow/proto/waCommon"
@@ -13,6 +14,8 @@ import (
 	"go.mau.fi/whatsmeow/types"
 	"go.mau.fi/whatsmeow/types/events"
 	"google.golang.org/protobuf/proto"
+
+	natsClient "github.com/ygncode-lab/whatsapp-web/services/whatsapp/internal/nats"
 )
 
 type fakeLIDStore struct {
@@ -402,5 +405,37 @@ func TestIsMessageForwarded(t *testing.T) {
 				t.Errorf("isMessageForwarded() = (%v, %v), want (%v, %v)", gotFwd, gotScore, tt.wantFwd, tt.wantScore)
 			}
 		})
+	}
+}
+
+func TestHandleStatusBroadcastText(t *testing.T) {
+	var publishedMessage bool
+	handler := New(Config{})
+	handler.publishMessage = func(msg natsClient.MessageEvent) error {
+		publishedMessage = true
+		return nil
+	}
+
+	senderJID := mustParseJID(t, "8801811974259@s.whatsapp.net")
+	msg := &events.Message{
+		Info: types.MessageInfo{
+			ID: "STATUS_TEST_1",
+			MessageSource: types.MessageSource{
+				Sender: senderJID,
+				Chat:   types.StatusBroadcastJID,
+			},
+			Timestamp: time.Now(),
+		},
+		Message: &waE2E.Message{
+			Conversation: proto.String("Hello from status"),
+		},
+	}
+
+	err := handler.handleMessage(msg)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if publishedMessage {
+		t.Errorf("status broadcast should not be published as regular chat message")
 	}
 }

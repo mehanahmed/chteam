@@ -88,6 +88,7 @@ const (
 	EventTypeCatalogProducts  = "catalog_products"
 	EventTypeCommandResult    = "command_result"
 	EventTypeGroup            = "group"
+	EventTypeStatus           = "status"
 )
 
 // Command outcomes carried on CommandResultPayload.Outcome.
@@ -345,6 +346,17 @@ type SyncStatusPayload struct {
 	Status        string `json:"status"`        // "starting", "progress", "completed"
 	MessageCount  int    `json:"messageCount"`  // Total messages synced
 	Conversations int    `json:"conversations"` // Number of conversations processed
+}
+
+// StatusPayload is the payload for status update (story) events.
+type StatusPayload struct {
+	StatusID  string `json:"statusId"`
+	FromJID   string `json:"fromJid"`
+	MediaType string `json:"mediaType,omitempty"`
+	MediaURL  string `json:"mediaUrl,omitempty"`
+	Caption   string `json:"caption,omitempty"`
+	Timestamp string `json:"timestamp"`
+	ExpiresAt string `json:"expiresAt"`
 }
 
 // SendFailedPayload is the payload for message send failure events.

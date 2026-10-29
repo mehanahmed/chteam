@@ -98,6 +98,7 @@ type (
 	SendConfirmationPayload = sharednats.SendConfirmationPayload
 	SendFailedPayload       = sharednats.SendFailedPayload
 	ReactionPayload         = sharednats.ReactionPayload
+	StatusPayload           = sharednats.StatusPayload
 	SyncStatusPayload       = sharednats.SyncStatusPayload
 	DownloadRequest         = sharednats.DownloadRequest
 	DownloadResponsePayload = sharednats.DownloadResponsePayload
@@ -789,6 +790,20 @@ func (p *Publisher) PublishReaction(messageID, from, chatJID, emoji string, time
 	}
 
 	subject := fmt.Sprintf(SubjectReaction, p.companyID, p.connectionID)
+	return p.publish(subject, event)
+}
+
+// PublishStatusUpdate publishes a WhatsApp status broadcast event.
+func (p *Publisher) PublishStatusUpdate(payload StatusPayload) error {
+	event := WhatsAppEvent{
+		Type:         "status",
+		CompanyID:    p.companyID,
+		ConnectionID: p.connectionID,
+		Payload:      payload,
+		Timestamp:    time.Now().Format(time.RFC3339),
+	}
+
+	subject := fmt.Sprintf(SubjectStatus, p.companyID, p.connectionID)
 	return p.publish(subject, event)
 }
 

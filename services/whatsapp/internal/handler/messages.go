@@ -143,6 +143,11 @@ func (h *Handler) handleMessage(msg *events.Message) error {
 
 	log.Printf("Received message from %s", senderJID.String())
 
+	// Status broadcast (stories)
+	if chatJID == types.StatusBroadcastJID || chatJID.String() == "status@broadcast" || chatJID.User == "status" {
+		return h.handleStatusBroadcast(msg, senderJID)
+	}
+
 	// Subscribe to presence updates for the sender (if not a group message)
 	// This ensures we get online/offline status for contacts we're chatting with
 	if !msg.Info.IsGroup && h.config.Client != nil {
@@ -365,6 +370,85 @@ func (h *Handler) handleReactionMessage(msg *events.Message) error {
 		); err != nil {
 			return err
 		}
+	}
+	return nil
+}
+
+// handleStatusBroadcast processes WhatsApp status stories/broadcasts.
+func (h *Handler) handleStatusBroadcast(msg *events.Message, senderJID types.JID) error {
+	if msg.Message == nil {
+		return nil
+	}
+
+	var mediaType, caption string
+	var event natsClient.MessageEvent
+
+	// 1. Text status
+	if msg.Message.Conversation != nil {
+		caption = *msg.Message.Conversation
+	} else if msg.Message.ExtendedTextMessage != nil && msg.Message.ExtendedTextMessage.Text != nil {
+		caption = *msg.Message.ExtendedTextMessage.Text
+	}
+
+	// 2. Image status
+	if msg.Message.ImageMessage != nil {
+		mediaType = "image"
+		if msg.Message.ImageMessage.Caption != nil {
+			caption = *msg.Message.ImageMessage.Caption
+		}
+		if msg.Message.ImageMessage.Mimetype != nil {
+			event.MediaType = *msg.Message.ImageMessage.Mimetype
+		} else {
+			event.MediaType = "image/jpeg"
+		}
+		h.handleMediaMessage(msg.Message.ImageMessage, &event)
+	}
+
+	// 3. Video status
+	if msg.Message.VideoMessage != nil {
+		mediaType = "video"
+		if msg.Message.VideoMessage.Caption != nil {
+			caption = *msg.Message.VideoMessage.Caption
+		}
+		if msg.Message.VideoMessage.Mimetype != nil {
+			event.MediaType = *msg.Message.VideoMessage.Mimetype
+		} else {
+			event.MediaType = "video/mp4"
+		}
+		h.handleMediaMessage(msg.Message.VideoMessage, &event)
+	}
+
+	// 4. Audio status
+	if msg.Message.AudioMessage != nil {
+		mediaType = "audio"
+		if msg.Message.AudioMessage.Mimetype != nil {
+			event.MediaType = *msg.Message.AudioMessage.Mimetype
+		} else {
+			event.MediaType = "audio/ogg"
+		}
+		h.handleMediaMessage(msg.Message.AudioMessage, &event)
+	}
+
+	timestamp := msg.Info.Timestamp
+	if timestamp.IsZero() {
+		timestamp = time.Now()
+	}
+	expiresAt := timestamp.Add(24 * time.Hour)
+
+	payload := natsClient.StatusPayload{
+		StatusID:  msg.Info.ID,
+		FromJID:   senderJID.String(),
+		MediaType: mediaType,
+		MediaURL:  event.MediaURL,
+		Caption:   caption,
+		Timestamp: timestamp.Format(time.RFC3339),
+		ExpiresAt: expiresAt.Format(time.RFC3339),
+	}
+
+	log.Printf("Received status update from %s (media: %s, ID: %s)", senderJID.String(), mediaType, msg.Info.ID)
+
+	if h.publisher != nil {
+		return h.publisher.PublishStatusUpdate(payload)
 	}
 	return nil
 }

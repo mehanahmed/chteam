@@ -65,6 +65,8 @@ type Publisher interface {
 	PublishSendConfirmation(pendingMessageID, messageID string, timestamp time.Time) error
 	// PublishReaction publishes a message reaction event.
 	PublishReaction(messageID, from, chatJID, emoji string, timestamp time.Time) error
+	// PublishStatusUpdate publishes a status update event.
+	PublishStatusUpdate(payload sharednats.StatusPayload) error
 	// PublishDownloadResponse publishes a media download response event.
 	PublishDownloadResponse(messageID, mediaURL string, mediaSize int64, success bool, errMsg string) error
 	// PublishSyncStatus publishes a sync status event.
