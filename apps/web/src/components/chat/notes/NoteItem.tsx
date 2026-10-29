@@ -1,9 +1,10 @@
+import { dayjs } from "@omniteam/shared";
 import { Edit2, Trash2 } from "lucide-react";
 import { useState } from "react";
-import { dayjs } from "@omniteam/shared";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { useTranslation } from "react-i18next";
+import { LinkifiedText } from "../LinkifiedText";
 
 export interface NoteItemNote {
   id: string;
@@ -95,9 +96,9 @@ export function NoteItem({
   return (
     <div className="group rounded-lg border border-gray-200 dark:border-dark-border bg-white dark:bg-dark-elevated p-3">
       <div className="flex items-start justify-between gap-2">
-        <p className="whitespace-pre-wrap text-sm text-gray-700 dark:text-dark-text-primary flex-1">
-          {note.content}
-        </p>
+        <div className="text-sm text-gray-700 dark:text-dark-text-primary flex-1">
+          <LinkifiedText text={note.content || ""} isOwn={false} />
+        </div>
         {isOwner && !isSystem && (
           <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
             <Button

@@ -80,6 +80,11 @@ export async function handleContactEvent(event: ContactEvent): Promise<void> {
     // Normalize JID to remove device suffix
     const contactJid = normalizeJid(payload.jid);
 
+    if (contactJid === "status@broadcast" || contactJid?.endsWith("@broadcast")) {
+      logger.info({ companyId, contactJid }, "Ignoring status broadcast in contact sync");
+      return;
+    }
+
     const syncedName = getSyncedContactName(payload);
     const formattedUsername =
       payload.username === undefined

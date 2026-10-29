@@ -20,7 +20,7 @@ import { useContact } from "@/hooks/useContact";
 import { useGroup } from "@/hooks/useGroups";
 import { api } from "@/lib/api/client";
 import type { CustomerChat } from "@/lib/api/contacts";
-import { cn, formatPhoneLikeText } from "@/lib/utils";
+import { cn, formatPhoneLikeText, formatPhoneNumber } from "@/lib/utils";
 
 interface MessageHeaderProps {
   contact: Contact | undefined;
@@ -158,18 +158,27 @@ export function MessageHeader({
     return null;
   }
 
-  const displayName = formatPhoneLikeText(
-    contact.customName || contact.name || contact.jid || "Unknown",
-  );
+  const isChannel = Boolean(contact.jid?.endsWith("@newsletter"));
+  const rawName =
+    contact.customName ||
+    contact.name ||
+    (isChannel
+      ? t("chat.channel", "WhatsApp Channel")
+      : contact.phoneNumber
+        ? formatPhoneNumber(contact.phoneNumber)
+        : "Unknown");
+  const displayName = formatPhoneLikeText(rawName);
   const isMerged = threadCount > 1;
-  const lastSeenText = contact.isGroup
-    ? group?.participantCount
-      ? t("chat.participantCount", {
-          defaultValue: "{{count}} participants",
-          count: group.participantCount,
-        })
-      : t("chat.group", "Group")
-    : formatLastSeen(contact.lastSeen, contact.isOnline, t);
+  const lastSeenText = isChannel
+    ? t("chat.channel", "Channel")
+    : contact.isGroup
+      ? group?.participantCount
+        ? t("chat.participantCount", {
+            defaultValue: "{{count}} participants",
+            count: group.participantCount,
+          })
+        : t("chat.group", "Group")
+      : formatLastSeen(contact.lastSeen, contact.isOnline, t);
   const statusText = isTyping ? t("chat.typingShort", "typing") : lastSeenText;
 
   return (
@@ -215,7 +224,7 @@ export function MessageHeader({
               <IdentityAvatarFallback
                 displayName={displayName}
                 identity={contact.jid || contact.phoneNumber || contact.id}
-                kind={contact.isGroup ? "group" : "user"}
+                kind={isChannel ? "channel" : contact.isGroup ? "group" : "user"}
                 className="text-lg"
               />
             )}

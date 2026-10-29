@@ -2,6 +2,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { AlertCircle, Loader2, MessageSquareText, Zap } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
+import { LinkifiedText } from "@/components/chat/LinkifiedText";
 import { Button } from "@/components/ui/button";
 import {
   DialogDescription,
@@ -12,8 +13,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
-  quickReplySchema,
   type QuickReplyFormData,
+  quickReplySchema,
 } from "@/lib/schemas/quick-reply";
 
 interface QuickReplyFormProps {
@@ -268,9 +269,11 @@ export function QuickReplyForm({
             </div>
             <div className="p-3">
               <div className="ml-auto max-w-[88%] rounded-lg rounded-tr-sm bg-[#d9fdd3] px-3 py-2 shadow-sm dark:bg-[#005c4b]">
-                <p className="whitespace-pre-wrap break-words text-sm leading-5 text-[#111b21] dark:text-dark-text-primary">
-                  {content}
-                </p>
+                <LinkifiedText
+                  text={content}
+                  isOwn={true}
+                  className="text-sm leading-5 text-[#111b21] dark:text-dark-text-primary"
+                />
               </div>
             </div>
           </div>

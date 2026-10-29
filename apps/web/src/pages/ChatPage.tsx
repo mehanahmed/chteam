@@ -308,12 +308,13 @@ export function ChatPage() {
   // `/contacts/:id/*` route (which responds with "Contact not found").
   const composerContactId =
     activeThread?.contactId ?? selectedContact?.id ?? selectedChatId ?? null;
-  const { access: composerAccess } = useComposerAccess(composerContactId);
-  const canSend = composerAccess.kind === "sendable";
   // The thread's own JID decides this. A merged customer's surviving contact
   // may be neutral and JID-less, which read as "not a group" and stripped
   // mentions from a WhatsApp group thread the operator was actually in.
   const threadJid = activeThread?.jid ?? threadContact?.jid;
+  const isSelectedChannel = Boolean(
+    threadJid?.endsWith("@newsletter") || threadContact?.jid?.endsWith("@newsletter"),
+  );
   const isSelectedGroup = Boolean(
     threadContact && (threadContact.isGroup || threadJid?.endsWith("@g.us")),
   );
@@ -322,15 +323,21 @@ export function ChatPage() {
   );
 
   const onlyAdminsCanSend = Boolean(
-    isSelectedGroup &&
-      selectedGroup?.settings?.isAnnounce &&
-      !selectedGroup?.isAdmin,
+    isSelectedChannel ||
+      (isSelectedGroup &&
+        selectedGroup?.settings?.isAnnounce &&
+        !selectedGroup?.isAdmin),
   );
   const isNotGroupMember = Boolean(
     isSelectedGroup &&
       selectedGroup &&
       selectedGroup.isMember === false,
   );
+
+  const { access: composerAccess } = useComposerAccess(composerContactId, {
+    onlyAdminsCanSend,
+  });
+  const canSend = composerAccess.kind === "sendable";
 
   // Publishes the on-screen keyboard overlap for the composer footer to pad
   // by. Gated on an open conversation: the inbox list has no composer to keep

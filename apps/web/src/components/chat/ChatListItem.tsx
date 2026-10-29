@@ -51,6 +51,9 @@ export const ChatListItem = memo(function ChatListItem({
   const displayName = useMemo(() => {
     if (contact.customName) return formatPhoneLikeText(contact.customName);
     if (contact.name) return formatPhoneLikeText(contact.name);
+    if (contact.jid?.endsWith("@newsletter")) {
+      return t("chat.channel", "WhatsApp Channel");
+    }
     // Use phone number if available, otherwise extract from JID
     const phone = contact.phoneNumber || extractPhoneFromJID(contact.jid);
     if (phone) return formatPhoneNumber(phone);
@@ -197,6 +200,7 @@ export const ChatListItem = memo(function ChatListItem({
             <IdentityAvatarFallback
               displayName={displayName}
               identity={contact.jid || contact.phoneNumber || contact.id}
+              kind={contact.jid?.endsWith("@newsletter") ? "channel" : contact.isGroup ? "group" : "user"}
               className="text-lg"
             />
           )}

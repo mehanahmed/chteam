@@ -38,6 +38,7 @@
 export type ComposerAccessState =
   | { kind: "loading" }
   | { kind: "no-permission" }
+  | { kind: "only-admins" }
   | { kind: "sendable" }
   | { kind: "blocked" }
   | { kind: "resolved" }
@@ -50,6 +51,8 @@ export interface ComposerAccessInput {
   lifecycleStatus: "open" | "pending" | "resolved" | null | undefined;
   /** Whether the contact is blocked (contacts.is_blocked). */
   isBlocked: boolean;
+  /** When true in an announcement group or channel, non-admins cannot send messages */
+  onlyAdminsCanSend?: boolean;
   /** The contact's current assignee user id, or null if unassigned. */
   assignedTo: string | null;
   assignedToName: string | null;
@@ -64,6 +67,10 @@ export function resolveComposerAccess(
 ): ComposerAccessState {
   if (input.isLoading) {
     return { kind: "loading" };
+  }
+
+  if (input.onlyAdminsCanSend) {
+    return { kind: "only-admins" };
   }
 
   if (input.isBlocked) {

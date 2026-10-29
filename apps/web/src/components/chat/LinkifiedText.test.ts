@@ -138,3 +138,45 @@ test("group mentions render as escaped text, never email or external links", () 
       expect(html).toContain("@&lt;script&gt;Bad&lt;/script&gt;");
   }
 });
+
+describe("markdown support in LinkifiedText", () => {
+  test("renders bold, italic, and strikethrough in message text", () => {
+    const html = renderToStaticMarkup(
+      createElement(LinkifiedText, {
+        text: "*bold* and _italic_ and ~strike~",
+        isOwn: false,
+      }),
+    );
+    expect(html).toContain("<strong");
+    expect(html).toContain("bold</strong>");
+    expect(html).toContain("<em");
+    expect(html).toContain("italic</em>");
+    expect(html).toContain("<del");
+    expect(html).toContain("strike</del>");
+  });
+
+  test("renders code blocks and inline code in message text", () => {
+    const html = renderToStaticMarkup(
+      createElement(LinkifiedText, {
+        text: "Here is `inline code` and a block:\n```js\nconst x = 10;\n```",
+        isOwn: false,
+      }),
+    );
+    expect(html).toContain("<code");
+    expect(html).toContain("inline code</code>");
+    expect(html).toContain("<pre");
+    expect(html).toContain("const x = 10;");
+  });
+
+  test("renders markdown links and blockquotes", () => {
+    const html = renderToStaticMarkup(
+      createElement(LinkifiedText, {
+        text: "> [Open Source](https://github.com/omniteam)",
+        isOwn: false,
+      }),
+    );
+    expect(html).toContain("<blockquote");
+    expect(html).toContain('href="https://github.com/omniteam"');
+    expect(html).toContain("Open Source</a>");
+  });
+});

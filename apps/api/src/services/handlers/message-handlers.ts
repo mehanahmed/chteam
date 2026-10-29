@@ -136,6 +136,16 @@ export async function handleMessageEvent(event: MessageEvent): Promise<void> {
         `Message ${payload.messageId} has invalid contact JID ${rawContactJid}`,
       );
     }
+    if (contactJid === "status@broadcast" || contactJid.endsWith("@broadcast")) {
+      logger.info(
+        { companyId, contactJid, messageId: payload.messageId },
+        "Ignoring status broadcast message in chat inbox handler",
+      );
+      return;
+    }
+    const isChannel = contactJid.endsWith("@newsletter");
+    const initialPushName = payload.senderName?.trim() || (isChannel ? "WhatsApp Channel" : null);
+
     let contact = await tenantDb
       .selectFrom("contacts")
       .select(["id", "profile_picture_url"])
@@ -160,6 +170,7 @@ export async function handleMessageEvent(event: MessageEvent): Promise<void> {
             whatsapp_connection_id: connection.id,
             jid: contactJid,
             phone_number: phoneNumber,
+            push_name: initialPushName,
             is_group: isGroupMessage || contactJid.includes("@g.us"),
             created_at: toDbDate(),
             updated_at: toDbDate(),
@@ -337,6 +348,14 @@ export async function handleMessageEvent(event: MessageEvent): Promise<void> {
             .where("id", "=", contact.id)
             .forUpdate()
             .executeTakeFirstOrThrow();
+        }
+        if (initialPushName) {
+          await trx
+            .updateTable("contacts")
+            .set({ push_name: initialPushName, updated_at: toDbDate() })
+            .where("id", "=", contact.id)
+            .where("push_name", "is", null)
+            .execute();
         }
         let senderAvatarUrl: string | null = null;
         if (normalizedSenderJid) {

@@ -95,6 +95,24 @@ export function ComposerLifecycleArea({
     );
   }
 
+  if (access.kind === "only-admins") {
+    return (
+      <ComposerFooter>
+        <footer className="bg-[#f0f2f5] dark:bg-dark-secondary">
+          <div className="flex min-h-[62px] w-full items-center justify-center border-t border-black/[0.06] bg-[#f0f2f5] px-4 py-3 text-center text-[14px] text-[#667781] select-none dark:border-white/[0.06] dark:bg-dark-secondary dark:text-[#8696a0]">
+            <span>
+              Only{" "}
+              <span className="font-medium text-[#008069] dark:text-[#00a884]">
+                admins
+              </span>{" "}
+              can send messages
+            </span>
+          </div>
+        </footer>
+      </ComposerFooter>
+    );
+  }
+
   if (access.kind === "no-permission") {
     return (
       <ComposerFooter>

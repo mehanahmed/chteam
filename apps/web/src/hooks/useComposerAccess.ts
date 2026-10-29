@@ -16,7 +16,10 @@ import {
  * interactive send route independently re-enforces all of them (see
  * requireSendAccess on the API side).
  */
-export function useComposerAccess(contactId: string | null): {
+export function useComposerAccess(
+  contactId: string | null,
+  options?: { onlyAdminsCanSend?: boolean },
+): {
   access: ComposerAccessState;
 } {
   const { can } = useWorkspace();
@@ -25,6 +28,9 @@ export function useComposerAccess(contactId: string | null): {
     useConversationState(contactId);
   const { data: contact, isLoading: contactLoading } = useContact(contactId);
 
+  const isChannel = Boolean(contact?.jid?.endsWith("@newsletter"));
+  const onlyAdmins = Boolean(isChannel || options?.onlyAdminsCanSend);
+
   const isLoading =
     !contactId || !user?.id || lifecycleLoading || contactLoading;
 
@@ -32,6 +38,7 @@ export function useComposerAccess(contactId: string | null): {
     isLoading,
     lifecycleStatus: lifecycleState?.status ?? null,
     isBlocked: contact?.isBlocked ?? false,
+    onlyAdminsCanSend: onlyAdmins,
     assignedTo: contact?.assignment?.assignedTo ?? null,
     assignedToName: contact?.assignment?.assignedToName ?? null,
     currentUserId: user?.id ?? "",

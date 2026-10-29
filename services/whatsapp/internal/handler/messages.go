@@ -163,6 +163,32 @@ func (h *Handler) handleMessage(msg *events.Message) error {
 		}()
 	}
 
+	// Resolve newsletter metadata if message is from a WhatsApp Channel
+	if chatJID.Server == types.NewsletterServer && h.config.Client != nil {
+		go func() {
+			client := h.config.Client.GetClient()
+			if client == nil {
+				return
+			}
+			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+			defer cancel()
+			meta, err := client.GetNewsletterInfo(ctx, chatJID)
+			if err == nil && meta != nil {
+				name := meta.ThreadMeta.Name.Text
+				desc := meta.ThreadMeta.Description.Text
+				picURL := ""
+				if meta.ThreadMeta.Picture != nil {
+					picURL = meta.ThreadMeta.Picture.URL
+				} else if meta.ThreadMeta.Preview.URL != "" {
+					picURL = meta.ThreadMeta.Preview.URL
+				}
+				if name != "" && h.publisher != nil {
+					_ = h.publisher.PublishContact(chatJID.String(), name, name, desc, nil, false, 0, nil, picURL)
+				}
+			}
+		}()
+	}
+
 	// Extract message content
 	msgEvent := newMessageEvent(msg, senderJID, chatJID)
 

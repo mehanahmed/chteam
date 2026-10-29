@@ -1,6 +1,3 @@
-import type { ReactNode } from "react";
-import { useFirstChatAcknowledgment } from "./FirstChatAcknowledgment";
-import { getCompanyId } from "@/lib/api/client";
 import type { Message, WhatsAppConnectionIdentity } from "@omniteam/shared";
 import { dayjs } from "@omniteam/shared";
 import {
@@ -12,6 +9,7 @@ import {
   Smile,
   X,
 } from "lucide-react";
+import type { ReactNode } from "react";
 import {
   type ChangeEvent,
   type KeyboardEvent,
@@ -26,6 +24,7 @@ import {
 } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
+import { getCompanyId } from "@/lib/api/client";
 import { useRealtimeContext } from "../../contexts/RealtimeProvider";
 import { useScheduleMessage } from "../../hooks/messages";
 import {
@@ -38,9 +37,11 @@ import { useQuickReplySuggestions } from "../../hooks/useQuickReplies";
 import { uploadMedia } from "../../lib/api";
 import { AttachmentPreviewDialog } from "./AttachmentPreviewDialog";
 import { useComposerFeatures } from "./composer-capabilities";
+import { formatComposerText } from "./composer-formatting";
 import { shouldSendMessageOnEnter } from "./composer-keyboard";
 import { pickPastedAttachment } from "./composer-paste";
 import { canScheduleMessage } from "./composer-schedule";
+import { useFirstChatAcknowledgment } from "./FirstChatAcknowledgment";
 import { GroupMentionPicker } from "./GroupMentionPicker";
 import {
   filterMentionParticipants,
@@ -514,6 +515,42 @@ function AcknowledgedMessageComposer({
       }
     }
 
+    // Markdown / WhatsApp formatting shortcuts (Ctrl+B, Ctrl+I, Ctrl+Shift+X, Ctrl+Shift+C)
+    const isMod = e.ctrlKey || e.metaKey;
+    if (isMod && !e.altKey) {
+      const key = e.key.toLowerCase();
+      let delim: string | null = null;
+      if (key === "b" && !e.shiftKey) {
+        delim = "*";
+      } else if (key === "i" && !e.shiftKey) {
+        delim = "_";
+      } else if (
+        (e.shiftKey && (key === "x" || key === "s")) ||
+        (!e.shiftKey && key === "u")
+      ) {
+        delim = "~";
+      } else if ((e.shiftKey && key === "c") || (!e.shiftKey && key === "e")) {
+        delim = "`";
+      }
+
+      if (delim && textareaRef.current) {
+        e.preventDefault();
+        const textarea = textareaRef.current;
+        const res = formatComposerText(
+          message,
+          textarea.selectionStart,
+          textarea.selectionEnd,
+          delim,
+        );
+        setMessage(res.text);
+        requestAnimationFrame(() => {
+          textarea.focus();
+          textarea.setSelectionRange(res.selectionStart, res.selectionEnd);
+        });
+        return;
+      }
+    }
+
     // Desktop keeps Enter-to-send; Shift+Enter remains a newline everywhere.
     if (
       shouldSendMessageOnEnter({
@@ -848,7 +885,10 @@ function AcknowledgedMessageComposer({
     return (
       <footer className="bg-[#f0f2f5] dark:bg-dark-secondary">
         <div className="flex min-h-[62px] w-full items-center justify-center border-t border-black/[0.06] bg-[#f0f2f5] px-4 py-3 text-center text-[14px] text-[#667781] select-none dark:border-white/[0.06] dark:bg-dark-secondary dark:text-[#8696a0]">
-          <span>Can&apos;t send messages to this group because you&apos;re no longer a participant.</span>
+          <span>
+            Can&apos;t send messages to this group because you&apos;re no longer
+            a participant.
+          </span>
         </div>
       </footer>
     );
@@ -867,8 +907,6 @@ function AcknowledgedMessageComposer({
               : `${connection?.name || connection?.phoneNumber || "This WhatsApp account"} is disconnected. This conversation cannot be rerouted to another number.`}
           </div>
         )}
-
-
 
         {/* Upcoming scheduled messages for this conversation */}
         {contactId && <ScheduledMessagesBar contactId={contactId} />}

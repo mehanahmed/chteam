@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import { LinkifiedText } from "@/components/chat/LinkifiedText";
 import { WhatsAppMark } from "@/components/connections/channel-icons";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -49,19 +50,23 @@ interface ChatEntry {
 const PRESET_QUERIES = [
   {
     label: "📦 Shipping Fee Inquiry",
-    query: "Do you have this in stock? What is the delivery charge to Chittagong?",
+    query:
+      "Do you have this in stock? What is the delivery charge to Chittagong?",
   },
   {
     label: "🔥 Discount & Promotions",
-    query: "If I order 3 items together, do I get any bundle discount or free shipping?",
+    query:
+      "If I order 3 items together, do I get any bundle discount or free shipping?",
   },
   {
     label: "📝 Full Order Booking",
-    query: "Name: Karim Ahmed, Phone: 01712345678, Address: House 12, Road 5, Banani, Dhaka. Please book 1 Black Shirt size L.",
+    query:
+      "Name: Karim Ahmed, Phone: 01712345678, Address: House 12, Road 5, Banani, Dhaka. Please book 1 Black Shirt size L.",
   },
   {
     label: "⚠️ Return & Escalation",
-    query: "My parcel arrived damaged! I want an immediate exchange or to speak with a human support agent!",
+    query:
+      "My parcel arrived damaged! I want an immediate exchange or to speak with a human support agent!",
   },
 ];
 
@@ -163,7 +168,8 @@ export function ConnectionAiSimulatorModal({
                 </Badge>
               </DialogTitle>
               <DialogDescription className="text-xs text-[#65736d] dark:text-dark-text-secondary">
-                Testing Q&A responses for {connectionName} {phoneNumber ? `• ${phoneNumber}` : ""}
+                Testing Q&A responses for {connectionName}{" "}
+                {phoneNumber ? `• ${phoneNumber}` : ""}
               </DialogDescription>
             </div>
           </div>
@@ -221,7 +227,7 @@ export function ConnectionAiSimulatorModal({
                     : "bg-white text-slate-900 dark:bg-dark-elevated dark:text-dark-text-primary rounded-tl-none border border-[#dce3de] dark:border-dark-border"
                 }`}
               >
-                <div className="whitespace-pre-wrap">{m.content}</div>
+                <LinkifiedText text={m.content} isOwn={m.role === "user"} />
 
                 {m.role === "model" && (m.detectedLang || m.latencyMs) && (
                   <div className="mt-2.5 pt-2 border-t border-[#e2e8e3] dark:border-dark-border flex items-center justify-between gap-3 text-[10px] text-[#65736d] dark:text-dark-text-secondary">
@@ -233,7 +239,9 @@ export function ConnectionAiSimulatorModal({
                         </span>
                       )}
                       {m.latencyMs && (
-                        <span className="font-mono tabular-nums">{m.latencyMs}ms</span>
+                        <span className="font-mono tabular-nums">
+                          {m.latencyMs}ms
+                        </span>
                       )}
                       {m.simulated && (
                         <span className="text-amber-600 dark:text-amber-400 italic">
@@ -274,8 +282,12 @@ export function ConnectionAiSimulatorModal({
 
                     <div className="space-y-1.5 text-xs text-[#65736d] dark:text-dark-text-secondary">
                       <div className="flex items-center gap-1.5">
-                        <span className="text-[#0b7a55] dark:text-emerald-400">✓</span>
-                        <span className="font-medium text-slate-700 dark:text-dark-text-primary">[Intent]:</span>
+                        <span className="text-[#0b7a55] dark:text-emerald-400">
+                          ✓
+                        </span>
+                        <span className="font-medium text-slate-700 dark:text-dark-text-primary">
+                          [Intent]:
+                        </span>
                         <span className="px-1.5 py-0.5 rounded bg-[#e7f7ef] text-[#0b7a55] dark:bg-emerald-500/10 dark:text-emerald-300 text-[10px]">
                           #customer_inquiry
                         </span>
@@ -283,21 +295,40 @@ export function ConnectionAiSimulatorModal({
                       </div>
 
                       <div className="flex items-center gap-1.5">
-                        <span className="text-[#0b7a55] dark:text-emerald-400">✓</span>
-                        <span className="font-medium text-slate-700 dark:text-dark-text-primary">[Dialect Mirror]:</span>
-                        <span>Matched {m.detectedLang || "Bangla/Banglish"} dialect seamlessly</span>
+                        <span className="text-[#0b7a55] dark:text-emerald-400">
+                          ✓
+                        </span>
+                        <span className="font-medium text-slate-700 dark:text-dark-text-primary">
+                          [Dialect Mirror]:
+                        </span>
+                        <span>
+                          Matched {m.detectedLang || "Bangla/Banglish"} dialect
+                          seamlessly
+                        </span>
                       </div>
 
                       <div className="flex items-center gap-1.5">
-                        <span className="text-[#0b7a55] dark:text-emerald-400">✓</span>
-                        <span className="font-medium text-slate-700 dark:text-dark-text-primary">[Context Injected]:</span>
-                        <span>Store policies, delivery matrix & custom FAQs injected</span>
+                        <span className="text-[#0b7a55] dark:text-emerald-400">
+                          ✓
+                        </span>
+                        <span className="font-medium text-slate-700 dark:text-dark-text-primary">
+                          [Context Injected]:
+                        </span>
+                        <span>
+                          Store policies, delivery matrix & custom FAQs injected
+                        </span>
                       </div>
 
                       <div className="flex items-center gap-1.5">
-                        <span className="text-[#0b7a55] dark:text-emerald-400">✓</span>
-                        <span className="font-medium text-slate-700 dark:text-dark-text-primary">[Safety Guardrail]:</span>
-                        <span className="text-[#0b7a55] dark:text-emerald-400 font-medium">Passed (Zero policy violations)</span>
+                        <span className="text-[#0b7a55] dark:text-emerald-400">
+                          ✓
+                        </span>
+                        <span className="font-medium text-slate-700 dark:text-dark-text-primary">
+                          [Safety Guardrail]:
+                        </span>
+                        <span className="text-[#0b7a55] dark:text-emerald-400 font-medium">
+                          Passed (Zero policy violations)
+                        </span>
                       </div>
                     </div>
                   </div>

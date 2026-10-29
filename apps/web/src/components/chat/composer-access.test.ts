@@ -13,6 +13,15 @@ const BASE = {
 };
 
 describe("resolveComposerAccess", () => {
+  test("onlyAdminsCanSend returns only-admins gate for channels and announcement groups", () => {
+    expect(
+      resolveComposerAccess({
+        ...BASE,
+        onlyAdminsCanSend: true,
+      }),
+    ).toEqual({ kind: "only-admins" });
+  });
+
   test("loading takes priority over everything else - never flashes a wrong state", () => {
     expect(resolveComposerAccess({ ...BASE, isLoading: true })).toEqual({
       kind: "loading",

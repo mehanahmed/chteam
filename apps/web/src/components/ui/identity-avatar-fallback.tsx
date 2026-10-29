@@ -1,4 +1,4 @@
-import { UserRound, UsersRound } from "lucide-react";
+import { Megaphone, UserRound, UsersRound } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const identityPalettes = [
@@ -18,7 +18,9 @@ export function isUnnamedIdentity(displayName: string | null | undefined) {
   if (
     normalized === "unknown" ||
     normalized === "unknown contact" ||
-    normalized === "unknown participant"
+    normalized === "unknown participant" ||
+    normalized === "channel" ||
+    normalized === "whatsapp channel"
   ) {
     return true;
   }
@@ -54,14 +56,17 @@ function getInitials(displayName: string): string {
   );
 }
 
-export type IdentityAvatarKind = "user" | "group";
-export type IdentityAvatarRenderKind = "user-icon" | "group-icon" | "initials";
+export type IdentityAvatarKind = "user" | "group" | "channel";
+export type IdentityAvatarRenderKind = "user-icon" | "group-icon" | "channel-icon" | "initials";
 
 export function getIdentityAvatarRenderKind(
   displayName: string | null | undefined,
   kind: IdentityAvatarKind = "user",
 ): IdentityAvatarRenderKind {
   if (kind === "group") return "group-icon";
+  if (kind === "channel") {
+    return isUnnamedIdentity(displayName) ? "channel-icon" : "initials";
+  }
   return isUnnamedIdentity(displayName) ? "user-icon" : "initials";
 }
 
@@ -102,6 +107,11 @@ export function IdentityAvatarFallback({
       {renderKind === "group-icon" ? (
         <UsersRound
           className={cn("h-[57%] w-[57%]", iconClassName)}
+          strokeWidth={2}
+        />
+      ) : renderKind === "channel-icon" ? (
+        <Megaphone
+          className={cn("h-[52%] w-[52%]", iconClassName)}
           strokeWidth={2}
         />
       ) : renderKind === "user-icon" ? (

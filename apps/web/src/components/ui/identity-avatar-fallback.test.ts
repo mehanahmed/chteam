@@ -28,6 +28,18 @@ describe("identity avatar fallbacks", () => {
     expect(getIdentityAvatarRenderKind("Mai", "user")).toBe("initials");
   });
 
+  test("uses a channel icon for unnamed channels", () => {
+    expect(getIdentityAvatarRenderKind("WhatsApp Channel", "channel")).toBe(
+      "channel-icon",
+    );
+    expect(getIdentityAvatarRenderKind("Channel", "channel")).toBe(
+      "channel-icon",
+    );
+    expect(getIdentityAvatarRenderKind("Next Future AI", "channel")).toBe(
+      "initials",
+    );
+  });
+
   test("assigns a stable color from the contact identity", () => {
     const identity = "66994862943@s.whatsapp.net";
     expect(getIdentityPaletteIndex(identity)).toBe(
@@ -45,7 +57,7 @@ describe("identity avatar fallbacks", () => {
     const profile = await Bun.file(
       new URL("../chat/contact-profile/ProfileHeader.tsx", import.meta.url),
     ).text();
-    expect(header).toContain('kind={contact.isGroup ? "group" : "user"}');
+    expect(header).toMatch(/contact\.isGroup \? "group" : "user"/);
     expect(profile).toContain('kind={contact.isGroup ? "group" : "user"}');
   });
 
