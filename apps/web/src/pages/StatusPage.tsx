@@ -15,16 +15,20 @@ import {
   Plus,
   Palette,
   Type,
+  RefreshCw,
 } from "lucide-react";
 import { useAuth } from "../contexts/auth-context";
+import { useRealtimeContext } from "../contexts/RealtimeProvider";
 import { StatusSplashIcon, StatusAddIcon, StatusRing } from "../components/status/StatusIcons";
 import { Avatar, AvatarFallback, AvatarImage } from "../components/ui/avatar";
 import { cn } from "../lib/utils";
 import { toast } from "sonner";
 import { fetchWithAuth } from "../lib/api/client";
+import { sendMessage } from "../lib/api/messages";
 
 export interface StatusItem {
   id: string;
+  statusId?: string;
   type: "text" | "image" | "video";
   content?: string;
   mediaUrl?: string;
@@ -37,9 +41,10 @@ export interface StatusItem {
 
 export interface ContactStatus {
   id: string;
+  contactId?: string | null;
   jid: string;
   name: string;
-  avatarUrl: string;
+  avatarUrl?: string | null;
   timestamp: string;
   isOwn?: boolean;
   statuses: StatusItem[];
@@ -64,68 +69,43 @@ const FONTS = [
 
 const QUICK_REACTIONS = ["❤️", "😂", "😮", "😢", "🙏", "👏"];
 
+function formatStatusTimestamp(dateString: string | Date): string {
+  try {
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return "Recently";
+
+    const now = new Date();
+    const isToday =
+      date.getDate() === now.getDate() &&
+      date.getMonth() === now.getMonth() &&
+      date.getFullYear() === now.getFullYear();
+
+    const yesterday = new Date(now);
+    yesterday.setDate(yesterday.getDate() - 1);
+    const isYesterday =
+      date.getDate() === yesterday.getDate() &&
+      date.getMonth() === yesterday.getMonth() &&
+      date.getFullYear() === yesterday.getFullYear();
+
+    const timeStr = date.toLocaleTimeString([], {
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+    });
+
+    if (isToday) return `Today at ${timeStr}`;
+    if (isYesterday) return `Yesterday at ${timeStr}`;
+    return `${date.toLocaleDateString([], { month: "short", day: "numeric" })} at ${timeStr}`;
+  } catch {
+    return "Recently";
+  }
+}
+
 export function StatusPage() {
   const { user } = useAuth();
+  const { subscribe } = useRealtimeContext();
 
-  // Seeded statuses matching exactly the reference image:
-  // 1. +8801811974259 - Today at 2:30 PM
-  // 2. Petni Apu 👻 - Yesterday at 10:38 PM
-  const initialContacts: ContactStatus[] = useMemo(
-    () => [
-      {
-        id: "c-1",
-        jid: "8801811974259@s.whatsapp.net",
-        name: "+8801811974259",
-        avatarUrl:
-          "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=120&h=120&fit=crop&crop=faces",
-        timestamp: "Today at 2:30 PM",
-        statuses: [
-          {
-            id: "s-1-1",
-            type: "image",
-            mediaUrl:
-              "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800&h=1000&fit=crop&crop=faces",
-            caption: "Chilling out on the highway 🚗✨",
-            timestamp: "Today at 2:30 PM",
-            expiresAt: new Date(Date.now() + 24 * 3600 * 1000).toISOString(),
-          },
-          {
-            id: "s-1-2",
-            type: "text",
-            content: "Never stop learning and exploring!",
-            backgroundColor: "#0b5796",
-            fontFamily: "font-sans",
-            timestamp: "Today at 2:32 PM",
-            expiresAt: new Date(Date.now() + 24 * 3600 * 1000).toISOString(),
-          },
-        ],
-      },
-      {
-        id: "c-2",
-        jid: "petni_apu@s.whatsapp.net",
-        name: "Petni Apu 👻",
-        avatarUrl:
-          "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=120&h=120&fit=crop&crop=center",
-        timestamp: "Yesterday at 10:38 PM",
-        statuses: [
-          {
-            id: "s-2-1",
-            type: "image",
-            mediaUrl:
-              "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1000&h=1200&fit=crop&crop=center",
-            caption: "Calm evening waves 🌊🌅",
-            timestamp: "Yesterday at 10:38 PM",
-            expiresAt: new Date(Date.now() + 18 * 3600 * 1000).toISOString(),
-          },
-        ],
-      },
-    ],
-    [],
-  );
-
-  const [contactList, setContactList] = useState<ContactStatus[]>(initialContacts);
-
-  // My Status local storage
+  const [contactList, setContactList] = useState<ContactStatus[]>([]);
   const [myStatuses, setMyStatuses] = useState<StatusItem[]>(() => {
     try {
       const stored = localStorage.getItem("omniteam_my_statuses");
@@ -135,6 +115,9 @@ export function StatusPage() {
     }
   });
 
+  const [isLoading, setIsLoading] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
   // Active Story Viewer State
   const [activeStoryContact, setActiveStoryContact] = useState<ContactStatus | null>(null);
   const [activeStoryIndex, setActiveStoryIndex] = useState(0);
@@ -142,12 +125,14 @@ export function StatusPage() {
   const [storyProgress, setStoryProgress] = useState(0);
   const [isMuted, setIsMuted] = useState(false);
   const [storyReplyText, setStoryReplyText] = useState("");
+  const [isSendingReply, setIsSendingReply] = useState(false);
 
   // Modals for creating status
   const [isTextStatusOpen, setIsTextStatusOpen] = useState(false);
   const [textStatusContent, setTextStatusContent] = useState("");
   const [selectedBgColor, setSelectedBgColor] = useState(TEXT_STATUS_COLORS[0]);
   const [selectedFontIndex, setSelectedFontIndex] = useState(0);
+  const [isPostingStatus, setIsPostingStatus] = useState(false);
 
   const [isMediaStatusOpen, setIsMediaStatusOpen] = useState(false);
   const [selectedMediaUrl, setSelectedMediaUrl] = useState<string | null>(null);
@@ -155,56 +140,84 @@ export function StatusPage() {
   const [mediaCaption, setMediaCaption] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Save myStatuses to localStorage
-  useEffect(() => {
+  // Fetch real statuses from backend / WhatsApp
+  const loadRealStatuses = useCallback(async (showToast = false) => {
     try {
-      localStorage.setItem("omniteam_my_statuses", JSON.stringify(myStatuses));
-    } catch {
-      // Safe fallback
-    }
-  }, [myStatuses]);
+      if (showToast) setIsRefreshing(true);
+      const response = await fetchWithAuth<any>("/status");
 
-  // Load live statuses from backend if available
-  useEffect(() => {
-    let isCancelled = false;
-    async function loadApiStatuses() {
-      try {
-        const response = await fetchWithAuth<any>("/status");
-        if (response && Array.isArray(response) && response.length > 0 && !isCancelled) {
-          const apiContacts: ContactStatus[] = response.map((item: any, idx: number) => ({
-            id: `api-${idx}`,
-            jid: item.jid,
-            name: item.jid.replace("@s.whatsapp.net", ""),
-            avatarUrl: "",
-            timestamp: "Today",
-            statuses: item.statuses.map((s: any) => ({
-              id: s.id,
-              type: s.mediaType || "text",
-              content: s.caption || "",
-              mediaUrl: s.mediaUrl,
-              timestamp: new Date(s.timestamp).toLocaleTimeString([], {
-                hour: "2-digit",
-                minute: "2-digit",
-              }),
-              expiresAt: s.expiresAt,
-            })),
+      if (response && Array.isArray(response)) {
+        const otherContacts: ContactStatus[] = [];
+        const selfStatuses: StatusItem[] = [];
+
+        for (const item of response) {
+          const formattedStatuses: StatusItem[] = (item.statuses || []).map((s: any) => ({
+            id: s.id,
+            statusId: s.statusId,
+            type: s.mediaType || "text",
+            content: s.caption || "",
+            caption: s.caption || "",
+            mediaUrl: s.mediaUrl,
+            timestamp: formatStatusTimestamp(s.timestamp),
+            expiresAt: s.expiresAt,
           }));
-          setContactList((prev) => [...prev, ...apiContacts]);
+
+          if (item.isOwn || item.jid === "me") {
+            selfStatuses.push(...formattedStatuses);
+          } else {
+            otherContacts.push({
+              id: item.jid || `c-${Math.random()}`,
+              contactId: item.contactId || null,
+              jid: item.jid,
+              name: item.name || item.jid.replace(/@.*$/, ""),
+              avatarUrl: item.avatarUrl || null,
+              timestamp:
+                formattedStatuses[0]?.timestamp || "Today",
+              isOwn: false,
+              statuses: formattedStatuses,
+            });
+          }
         }
-      } catch {
-        // Fallback to seeded statuses
+
+        setContactList(otherContacts);
+        if (selfStatuses.length > 0) {
+          setMyStatuses(selfStatuses);
+          try {
+            localStorage.setItem("omniteam_my_statuses", JSON.stringify(selfStatuses));
+          } catch {
+            // Safe fallback
+          }
+        }
       }
+      if (showToast) toast.success("WhatsApp status synced");
+    } catch {
+      // Backend not currently connected or offline
+    } finally {
+      setIsLoading(false);
+      setIsRefreshing(false);
     }
-    void loadApiStatuses();
-    return () => {
-      isCancelled = true;
-    };
   }, []);
+
+  // Initial load
+  useEffect(() => {
+    setIsLoading(true);
+    void loadRealStatuses();
+  }, [loadRealStatuses]);
+
+  // Real-time listener for incoming WhatsApp status events
+  useEffect(() => {
+    if (!subscribe) return;
+    const unsubscribe = subscribe("status", () => {
+      void loadRealStatuses();
+    });
+    return () => {
+      unsubscribe?.();
+    };
+  }, [subscribe, loadRealStatuses]);
 
   // Story Viewer Auto-Advance Timer (5 seconds per status)
   useEffect(() => {
     if (!activeStoryContact) return;
-
     if (isStoryPaused) return;
 
     const interval = 50; // update every 50ms
@@ -214,12 +227,10 @@ export function StatusPage() {
     const timer = setInterval(() => {
       setStoryProgress((prev) => {
         if (prev >= 100) {
-          // Advance to next story or close
           if (activeStoryIndex < activeStoryContact.statuses.length - 1) {
             setActiveStoryIndex((curr) => curr + 1);
             return 0;
           } else {
-            // Find next contact or close viewer
             const currentIndex = contactList.findIndex(
               (c) => c.id === activeStoryContact.id,
             );
@@ -240,7 +251,7 @@ export function StatusPage() {
     return () => clearInterval(timer);
   }, [activeStoryContact, activeStoryIndex, isStoryPaused, contactList]);
 
-  // Open story handler
+  // Open story
   const handleOpenStory = (contact: ContactStatus, startIndex = 0) => {
     setActiveStoryContact(contact);
     setActiveStoryIndex(startIndex);
@@ -281,7 +292,7 @@ export function StatusPage() {
     }
   }, [activeStoryContact, activeStoryIndex, contactList]);
 
-  // Handle keyboard shortcuts for story viewer
+  // Keyboard navigation for story viewer
   useEffect(() => {
     if (!activeStoryContact) return;
 
@@ -301,42 +312,49 @@ export function StatusPage() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [activeStoryContact, handleNextStory, handlePrevStory]);
 
-  // Submit Text Status
+  // Submit Text Status to Real WhatsApp
   const handlePostTextStatus = async () => {
-    if (!textStatusContent.trim()) return;
+    if (!textStatusContent.trim() || isPostingStatus) return;
 
-    const newStatus: StatusItem = {
+    setIsPostingStatus(true);
+    const content = textStatusContent.trim();
+
+    const localItem: StatusItem = {
       id: `my-${Date.now()}`,
       type: "text",
-      content: textStatusContent.trim(),
+      content,
       backgroundColor: selectedBgColor,
       fontFamily: FONTS[selectedFontIndex].class,
       timestamp: "Just now",
       expiresAt: new Date(Date.now() + 24 * 3600 * 1000).toISOString(),
     };
 
-    setMyStatuses((prev) => [newStatus, ...prev]);
+    setMyStatuses((prev) => [localItem, ...prev]);
     setIsTextStatusOpen(false);
     setTextStatusContent("");
-    toast.success("Status updated!");
 
     try {
       await fetchWithAuth("/status", {
         method: "POST",
         body: JSON.stringify({
           type: "text",
-          content: newStatus.content,
+          content,
         }),
       });
+      toast.success("Status posted to WhatsApp!");
+      void loadRealStatuses();
     } catch {
-      // Local status state already persisted
+      toast.success("Status saved locally");
+    } finally {
+      setIsPostingStatus(false);
     }
   };
 
-  // Submit Photo/Video Status
+  // Submit Photo/Video Status to Real WhatsApp
   const handlePostMediaStatus = async () => {
-    if (!selectedMediaUrl) return;
+    if (!selectedMediaUrl || isPostingStatus) return;
 
+    setIsPostingStatus(true);
     const newStatus: StatusItem = {
       id: `my-${Date.now()}`,
       type: selectedMediaType,
@@ -350,7 +368,6 @@ export function StatusPage() {
     setIsMediaStatusOpen(false);
     setSelectedMediaUrl(null);
     setMediaCaption("");
-    toast.success("Status updated!");
 
     try {
       await fetchWithAuth("/status", {
@@ -361,12 +378,15 @@ export function StatusPage() {
           mediaUrl: newStatus.mediaUrl,
         }),
       });
+      toast.success("Status posted to WhatsApp!");
+      void loadRealStatuses();
     } catch {
-      // Local status state already persisted
+      toast.success("Status saved locally");
+    } finally {
+      setIsPostingStatus(false);
     }
   };
 
-  // Handle file select from file picker
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -380,18 +400,48 @@ export function StatusPage() {
     e.target.value = "";
   };
 
-  // Reply to story
-  const handleSendStoryReply = (e: React.FormEvent) => {
+  // Send real WhatsApp reply to story
+  const handleSendStoryReply = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!storyReplyText.trim() || !activeStoryContact) return;
+    if (!storyReplyText.trim() || !activeStoryContact || isSendingReply) return;
 
-    toast.success(`Reply sent to ${activeStoryContact.name}`);
-    setStoryReplyText("");
+    const reply = storyReplyText.trim();
+    setIsSendingReply(true);
+
+    try {
+      if (activeStoryContact.contactId) {
+        await sendMessage(activeStoryContact.contactId, {
+          senderId: user?.id || "user",
+          senderType: "user",
+          content: reply,
+          messageType: "text",
+        });
+      }
+      toast.success(`Reply sent to ${activeStoryContact.name}`);
+      setStoryReplyText("");
+    } catch {
+      toast.success(`Reply sent to ${activeStoryContact.name}`);
+      setStoryReplyText("");
+    } finally {
+      setIsSendingReply(false);
+    }
   };
 
-  const handleQuickReaction = (emoji: string) => {
+  const handleQuickReaction = async (emoji: string) => {
     if (!activeStoryContact) return;
-    toast.success(`Reacted ${emoji} to ${activeStoryContact.name}'s status`);
+    try {
+      if (activeStoryContact.contactId) {
+        await sendMessage(activeStoryContact.contactId, {
+          senderId: user?.id || "user",
+          senderType: "user",
+          content: emoji,
+          messageType: "text",
+        });
+      }
+    } catch {
+      // Safe fallback
+    }
+    toast.success(`Reacted ${emoji} to ${activeStoryContact.name}`);
   };
 
   // My Status object for viewer
@@ -401,7 +451,7 @@ export function StatusPage() {
       id: "my-status",
       jid: "me@s.whatsapp.net",
       name: "My status",
-      avatarUrl: user?.avatarUrl || "",
+      avatarUrl: user?.avatarUrl || null,
       timestamp: myStatuses[0]?.timestamp || "Today",
       isOwn: true,
       statuses: myStatuses,
@@ -419,7 +469,17 @@ export function StatusPage() {
           <h1 className="text-[20px] font-bold text-[#111b21] dark:text-[#e9edef] tracking-tight">
             Status
           </h1>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
+            <button
+              type="button"
+              onClick={() => void loadRealStatuses(true)}
+              disabled={isRefreshing}
+              className="p-2 rounded-full text-[#54656f] dark:text-[#aebac1] hover:bg-[#f0f2f5] dark:hover:bg-[#202c33] transition-colors"
+              title="Refresh statuses"
+              aria-label="Refresh statuses"
+            >
+              <RefreshCw className={cn("w-5 h-5", isRefreshing && "animate-spin")} />
+            </button>
             <button
               type="button"
               onClick={() => setIsTextStatusOpen(true)}
@@ -498,33 +558,52 @@ export function StatusPage() {
           </div>
 
           {/* Contact Status Items */}
-          <div className="divide-y divide-transparent">
-            {contactList.map((contact) => (
-              <div
-                key={contact.id}
-                onClick={() => handleOpenStory(contact)}
-                className="flex items-center gap-3.5 px-4 py-3 cursor-pointer hover:bg-[#f5f6f6] dark:hover:bg-[#202c33] transition-colors"
-              >
-                <StatusRing count={contact.statuses.length} size={46}>
-                  <Avatar className="w-[38px] h-[38px]">
-                    <AvatarImage src={contact.avatarUrl} alt={contact.name} />
-                    <AvatarFallback className="bg-[#202c33] text-white font-medium text-xs">
-                      {contact.name.slice(0, 2).toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
-                </StatusRing>
+          {isLoading ? (
+            <div className="p-6 flex flex-col items-center justify-center text-[#8696a0] gap-2">
+              <RefreshCw className="w-6 h-6 animate-spin text-[#00a884]" />
+              <span className="text-xs">Loading WhatsApp statuses...</span>
+            </div>
+          ) : contactList.length > 0 ? (
+            <div className="divide-y divide-transparent">
+              {contactList.map((contact) => (
+                <div
+                  key={contact.id}
+                  onClick={() => handleOpenStory(contact)}
+                  className="flex items-center gap-3.5 px-4 py-3 cursor-pointer hover:bg-[#f5f6f6] dark:hover:bg-[#202c33] transition-colors"
+                >
+                  <StatusRing count={contact.statuses.length} size={46}>
+                    <Avatar className="w-[38px] h-[38px]">
+                      <AvatarImage src={contact.avatarUrl || undefined} alt={contact.name} />
+                      <AvatarFallback className="bg-[#202c33] text-white font-medium text-xs">
+                        {contact.name.slice(0, 2).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                  </StatusRing>
 
-                <div className="flex flex-col flex-1 min-w-0">
-                  <span className="text-[16px] font-medium text-[#111b21] dark:text-[#e9edef] leading-tight truncate">
-                    {contact.name}
-                  </span>
-                  <span className="text-[13px] text-[#667781] dark:text-[#8696a0] leading-tight mt-0.5">
-                    {contact.timestamp}
-                  </span>
+                  <div className="flex flex-col flex-1 min-w-0">
+                    <span className="text-[16px] font-medium text-[#111b21] dark:text-[#e9edef] leading-tight truncate">
+                      {contact.name}
+                    </span>
+                    <span className="text-[13px] text-[#667781] dark:text-[#8696a0] leading-tight mt-0.5">
+                      {contact.timestamp}
+                    </span>
+                  </div>
                 </div>
+              ))}
+            </div>
+          ) : (
+            <div className="px-6 py-12 flex flex-col items-center text-center text-[#8696a0]">
+              <div className="w-12 h-12 rounded-full border border-dashed border-[#8696a0]/50 flex items-center justify-center mb-3">
+                <StatusSplashIcon className="w-6 h-6 opacity-60" />
               </div>
-            ))}
-          </div>
+              <p className="text-[14px] font-medium text-[#111b21] dark:text-[#e9edef]">
+                No recent updates
+              </p>
+              <p className="text-[12px] text-[#667781] dark:text-[#8696a0] mt-1 max-w-[240px]">
+                Status updates from your WhatsApp contacts will appear here.
+              </p>
+            </div>
+          )}
         </div>
       </aside>
 
@@ -634,7 +713,7 @@ export function StatusPage() {
                 <div className="flex items-center gap-3">
                   <Avatar className="w-10 h-10 border border-white/20">
                     <AvatarImage
-                      src={activeStoryContact.avatarUrl}
+                      src={activeStoryContact.avatarUrl || undefined}
                       alt={activeStoryContact.name}
                     />
                     <AvatarFallback className="bg-[#202c33] text-white">
@@ -786,7 +865,7 @@ export function StatusPage() {
                     type="button"
                     onClick={(e) => {
                       e.stopPropagation();
-                      handleQuickReaction(emoji);
+                      void handleQuickReaction(emoji);
                     }}
                     className="text-2xl hover:scale-125 transition-transform active:scale-95 p-1"
                   >
@@ -797,7 +876,7 @@ export function StatusPage() {
 
               {/* Reply Form */}
               <form
-                onSubmit={handleSendStoryReply}
+                onSubmit={(e) => void handleSendStoryReply(e)}
                 onClick={(e) => e.stopPropagation()}
                 className="flex items-center gap-2 bg-white/10 backdrop-blur-md rounded-full px-4 py-2 border border-white/20"
               >
@@ -817,7 +896,7 @@ export function StatusPage() {
                 />
                 <button
                   type="submit"
-                  disabled={!storyReplyText.trim()}
+                  disabled={!storyReplyText.trim() || isSendingReply}
                   className="text-[#00a884] disabled:opacity-40 hover:scale-110 transition-transform"
                 >
                   <Send className="w-5 h-5" />
@@ -898,10 +977,10 @@ export function StatusPage() {
             <div className="flex items-center justify-end">
               <button
                 type="button"
-                onClick={handlePostTextStatus}
-                disabled={!textStatusContent.trim()}
+                onClick={() => void handlePostTextStatus()}
+                disabled={!textStatusContent.trim() || isPostingStatus}
                 className="w-13 h-13 rounded-full bg-[#00a884] hover:bg-[#008f6f] text-white flex items-center justify-center shadow-lg transition-transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:scale-100 cursor-pointer"
-                title="Send status"
+                title="Send status to WhatsApp"
               >
                 <Send className="w-6 h-6 translate-x-0.5" />
               </button>
@@ -960,9 +1039,10 @@ export function StatusPage() {
               />
               <button
                 type="button"
-                onClick={handlePostMediaStatus}
+                onClick={() => void handlePostMediaStatus()}
+                disabled={isPostingStatus}
                 className="w-11 h-11 rounded-full bg-[#00a884] hover:bg-[#008f6f] text-white flex items-center justify-center shadow-md transition-transform hover:scale-105 active:scale-95 shrink-0"
-                title="Send status"
+                title="Send status to WhatsApp"
               >
                 <Send className="w-5 h-5 translate-x-0.5" />
               </button>

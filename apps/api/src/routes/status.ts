@@ -83,20 +83,69 @@ statusRoutes.get("/", async (c) => {
     groupedByContact[jid].push(status);
   }
 
-  // Transform to contact-grouped format
+  // Resolve real contact identities and avatar URLs for each sender JID
+  const uniqueJids = Object.keys(groupedByContact);
+  const contactRecords =
+    uniqueJids.length > 0
+      ? await tenantDb
+          .selectFrom("contacts")
+          .select([
+            "id",
+            "jid",
+            "phone_number",
+            "push_name",
+            "custom_name",
+            "display_name",
+            "profile_picture_url",
+            "avatar_url",
+          ])
+          .where("jid", "in", uniqueJids)
+          .execute()
+      : [];
+
+  const contactMap = new Map(
+    contactRecords
+      .filter((c): c is typeof c & { jid: string } => Boolean(c.jid))
+      .map((c) => [c.jid, c]),
+  );
+
+  const activeConn = await tenantDb
+    .selectFrom("whatsapp_connections")
+    .select(["jid", "phone_number"])
+    .where("status", "=", "connected")
+    .executeTakeFirst();
+
+  // Transform to contact-grouped format with real names and avatars
   const contacts = Object.entries(groupedByContact).map(
-    ([jid, contactStatuses]) => ({
-      jid,
-      statuses: contactStatuses.map((s) => ({
-        id: s.id,
-        statusId: s.status_id,
-        mediaType: s.media_type,
-        mediaUrl: s.media_url,
-        caption: s.caption,
-        timestamp: s.timestamp,
-        expiresAt: s.expires_at,
-      })),
-    }),
+    ([jid, contactStatuses]) => {
+      const contactInfo = contactMap.get(jid);
+      const isOwn =
+        jid === "me" || (activeConn?.jid && jid === activeConn.jid);
+      const resolvedName =
+        contactInfo?.custom_name ||
+        contactInfo?.display_name ||
+        contactInfo?.push_name ||
+        contactInfo?.phone_number ||
+        jid.replace(/@.*$/, "");
+
+      return {
+        contactId: contactInfo?.id || null,
+        jid,
+        name: isOwn ? "My status" : resolvedName,
+        avatarUrl:
+          contactInfo?.avatar_url || contactInfo?.profile_picture_url || null,
+        isOwn: Boolean(isOwn),
+        statuses: contactStatuses.map((s) => ({
+          id: s.id,
+          statusId: s.status_id,
+          mediaType: s.media_type,
+          mediaUrl: s.media_url,
+          caption: s.caption,
+          timestamp: s.timestamp,
+          expiresAt: s.expires_at,
+        })),
+      };
+    },
   );
 
   // Get total count
