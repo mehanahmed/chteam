@@ -442,6 +442,7 @@ export function ChatPage() {
                 currentUserName={user?.name}
                 currentUserAvatarUrl={user?.avatarUrl}
                 currentUserGravatarUrl={user?.gravatarUrl}
+                contactAvatarUrl={threadContact?.avatarUrl || selectedContact?.avatarUrl}
                 isGroup={isSelectedGroup}
                 highlightedMessageId={highlightedMessageId}
                 onOpenContactInfo={handleOpenProfile}

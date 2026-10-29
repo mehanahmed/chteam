@@ -96,6 +96,7 @@ interface MessageBubbleProps {
   currentUserName?: string;
   currentUserAvatarUrl?: string;
   currentUserGravatarUrl?: string;
+  contactAvatarUrl?: string | null;
   /** Workspace teammate profiles keyed by user ID. */
   teammateIdentities: ReadonlyMap<string, TeamMemberIdentity>;
   /** Retry handler passed directly (local to MessageThread) */
@@ -139,6 +140,7 @@ export const MessageBubble = memo(function MessageBubble({
   currentUserName,
   currentUserAvatarUrl,
   currentUserGravatarUrl,
+  contactAvatarUrl,
   teammateIdentities,
   onRetry,
   isHighlighted = false,
@@ -339,7 +341,12 @@ export const MessageBubble = memo(function MessageBubble({
       senderIdentity,
       mentionParticipants as any,
     );
-    return participantAvatar || ((message.metadata as unknown as { avatarUrl?: string })?.avatarUrl || null);
+    return (
+      participantAvatar ||
+      ((message.metadata as unknown as { avatarUrl?: string })?.avatarUrl) ||
+      contactAvatarUrl ||
+      null
+    );
   }, [
     isOwn,
     message,
@@ -347,6 +354,7 @@ export const MessageBubble = memo(function MessageBubble({
     currentUserAvatarUrl,
     currentUserGravatarUrl,
     mentionParticipants,
+    contactAvatarUrl,
   ]);
 
   const audioSenderName = useMemo(() => {

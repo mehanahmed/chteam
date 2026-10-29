@@ -24,14 +24,13 @@ function formatDuration(seconds: number): string {
 }
 
 const SPEED_OPTIONS = [1, 1.5, 2] as const;
-const BARS_COUNT = 38;
+const BARS_COUNT = 30;
 
-// Natural speech amplitude contour matching WhatsApp Web (active speech then trailing silence)
+// Natural speech amplitude contour matching the exact reference image
 const DEFAULT_WAVEFORM_BARS: number[] = [
-  22, 28, 38, 55, 75, 90, 100, 92, 85, 92,
-  98, 90, 80, 85, 72, 60, 48, 38, 30, 24,
-  20, 20, 20, 20, 20, 20, 20, 20, 20, 20,
-  20, 20, 20, 20, 20, 20, 20, 20,
+  28, 45, 68, 85, 96, 100, 94, 88, 92, 96,
+  88, 80, 84, 70, 56, 44, 32, 24, 18, 18,
+  18, 18, 18, 18, 18, 18, 18, 18, 18, 18,
 ];
 
 export function AudioMessagePlayer({
@@ -224,7 +223,7 @@ export function AudioMessagePlayer({
 
   return (
     <div
-      className={`relative flex items-center justify-between gap-3 w-full min-w-[280px] max-w-[340px] select-none py-0.5 ${className}`}
+      className={`relative flex items-center justify-between w-full min-w-[290px] max-w-[340px] select-none ${className}`}
       aria-label={ariaLabel}
     >
       {/* Hidden audio element that drives playback */}
@@ -233,7 +232,7 @@ export function AudioMessagePlayer({
         src={src}
         preload="metadata"
         crossOrigin="anonymous"
-        onPlay={() => setIsPlaying(false === false && true)}
+        onPlay={() => setIsPlaying(true)}
         onPause={() => setIsPlaying(false)}
         onEnded={() => {
           setIsPlaying(false);
@@ -253,32 +252,33 @@ export function AudioMessagePlayer({
         onPlaying={() => setIsLoading(false)}
       />
 
-      {/* LEFT SECTION: Play/Pause button + Waveform track + Duration & Meta */}
-      <div className="flex-1 min-w-0 flex flex-col justify-center">
-        <div className="flex items-center gap-3">
-          {/* WhatsApp-style minimal Play / Pause button */}
+      {/* LEFT SECTION: Play button + Waveform + Duration & Timestamp */}
+      <div className="flex-1 min-w-0 flex flex-col justify-center pr-3">
+        {/* Top relative row with context menu chevron and waveform */}
+        <div className="relative flex items-center gap-2.5">
+          {/* WhatsApp-style minimal solid black Play / Pause button */}
           <button
             type="button"
             onClick={togglePlay}
-            className="flex size-[34px] shrink-0 items-center justify-center rounded-full text-[#54656f] transition-all hover:bg-black/5 active:scale-95 dark:text-[#aebac1] dark:hover:bg-white/10"
+            className="flex size-7 shrink-0 items-center justify-center text-black dark:text-[#e9edef] transition-transform active:scale-95"
             aria-label={isPlaying ? "Pause voice message" : "Play voice message"}
           >
             {isLoading ? (
-              <Loader2 className="size-5 animate-spin" />
+              <Loader2 className="size-4.5 animate-spin text-black dark:text-[#e9edef]" />
             ) : isPlaying ? (
               /* WhatsApp Pause SVG */
-              <svg viewBox="0 0 24 24" height="24" width="24" fill="currentColor">
+              <svg viewBox="0 0 24 24" height="20" width="20" fill="currentColor">
                 <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" />
               </svg>
             ) : (
-              /* WhatsApp Play SVG */
-              <svg viewBox="0 0 24 24" height="24" width="24" fill="currentColor">
+              /* WhatsApp Play Triangle SVG */
+              <svg viewBox="0 0 24 24" height="20" width="20" fill="currentColor">
                 <path d="M9.53 18.02a.91.91 0 0 1-1.02.04.95.95 0 0 1-.51-.88V6.82c0-.4.17-.7.51-.88a.91.91 0 0 1 1.02.03l8.15 5.18c.3.2.45.48.45.85s-.15.65-.45.85l-8.15 5.17Z" />
               </svg>
             )}
           </button>
 
-          {/* Waveform track with Cyan Scrubber Knob */}
+          {/* Waveform track with Cyan Scrubber Thumb */}
           <div
             ref={trackRef}
             onPointerDown={handlePointerDown}
@@ -291,7 +291,7 @@ export function AudioMessagePlayer({
             aria-valuemax={duration}
             tabIndex={0}
           >
-            {/* Waveform bars container (matching WhatsApp Web) */}
+            {/* Waveform bars container (matching WhatsApp Web pixel-by-pixel) */}
             <div className="relative h-6 w-full flex items-center justify-between gap-[2px]">
               {waveformData.map((heightPct, idx) => {
                 const barPercent = (idx / BARS_COUNT) * 100;
@@ -302,10 +302,10 @@ export function AudioMessagePlayer({
                     key={idx}
                     className={`w-[2px] rounded-full transition-colors duration-100 ${
                       isFilled
-                        ? "bg-[#29afdf]"
+                        ? "bg-[#34B7F1]"
                         : isOwn
                           ? "bg-[#8696a0]/50 dark:bg-white/35"
-                          : "bg-[#c1c7cb] dark:bg-white/35"
+                          : "bg-[#c5cacd] dark:bg-white/35"
                     }`}
                     style={{ height: `${heightPct}%` }}
                   />
@@ -314,10 +314,10 @@ export function AudioMessagePlayer({
 
               {/* Cyan Playhead Scrubber Knob Dot */}
               <div
-                className="pointer-events-none absolute top-1/2 -translate-y-1/2 -translate-x-1/2 transition-transform group-hover:scale-125"
+                className="pointer-events-none absolute top-1/2 -translate-y-1/2 -translate-x-1/2 transition-transform group-hover:scale-115"
                 style={{ left: `${progressPercent}%` }}
               >
-                <div className="size-3 rounded-full bg-[#29afdf] shadow-[0_1px_3px_rgba(41,175,223,0.5)]" />
+                <div className="size-3.5 rounded-full bg-[#34B7F1] shadow-[0_1px_3px_rgba(52,183,241,0.5)] ring-1 ring-white/60 dark:ring-black/20" />
               </div>
             </div>
 
@@ -328,7 +328,7 @@ export function AudioMessagePlayer({
                   source={source}
                   width="100%"
                   height={24}
-                  barColor="#29afdf"
+                  barColor="#34B7F1"
                   secondaryBarColor="transparent"
                   barWidth={2}
                   gap={2}
@@ -341,10 +341,17 @@ export function AudioMessagePlayer({
               </div>
             )}
           </div>
+
+          {/* Context menu chevron icon at top right */}
+          <div className="absolute right-0 -top-2 opacity-60 hover:opacity-100 transition-opacity text-[#8696a0] pointer-events-none">
+            <svg viewBox="0 0 18 18" height="15" width="15" fill="currentColor">
+              <path d="M3.3 5.7L9 11.4l5.7-5.7.8.8-6.5 6.5L2.5 6.5l.8-.8z" />
+            </svg>
+          </div>
         </div>
 
-        {/* Lower Row: Duration on Left, Timestamp / Status on Right */}
-        <div className="flex items-center justify-between text-[11px] leading-3 text-[#667781] dark:text-[#8696a0] mt-1 pl-[46px] pr-0.5 select-none tabular-nums">
+        {/* Lower Row: Duration on Left (0:03), Timestamp / Status on Right (3:39 PM) */}
+        <div className="flex items-center justify-between text-[11px] leading-3 text-[#667781] dark:text-[#8696a0] mt-1.5 pl-[38px] select-none tabular-nums">
           <span>{isPlaying ? formatDuration(currentTime) : formatDuration(duration)}</span>
           {meta ? (
             <div className="flex items-center">{meta}</div>
@@ -356,7 +363,7 @@ export function AudioMessagePlayer({
 
       {/* RIGHT SECTION: 55px Circular Avatar with Cyan Mic Badge & Speed Toggle */}
       <div
-        className="relative shrink-0 size-[55px] ml-2 select-none group/avatar"
+        className="relative shrink-0 size-[55px] select-none group/avatar"
         onMouseEnter={() => setIsAvatarHovered(true)}
         onMouseLeave={() => setIsAvatarHovered(false)}
       >
@@ -372,7 +379,7 @@ export function AudioMessagePlayer({
               }}
             />
           ) : (
-            <div className="size-full flex items-center justify-center bg-[#00a884] text-white font-semibold text-lg">
+            <div className="size-full flex items-center justify-center bg-[#00a884] text-white font-semibold text-xl">
               {(senderName || "U").charAt(0).toUpperCase()}
             </div>
           )}
@@ -380,10 +387,10 @@ export function AudioMessagePlayer({
 
         {/* Cyan Mic badge at bottom-left corner of avatar */}
         <div
-          className="absolute -bottom-0.5 -left-1.5 size-5 rounded-full bg-white dark:bg-[#202c33] shadow-[0_1px_3px_rgba(0,0,0,0.18)] flex items-center justify-center z-10 pointer-events-none"
+          className="absolute -bottom-0.5 -left-1.5 size-5 rounded-full bg-white dark:bg-[#202c33] shadow-[0_1px_2px_rgba(0,0,0,0.18)] flex items-center justify-center z-10 pointer-events-none"
           title="Voice message"
         >
-          <svg viewBox="0 0 24 24" height="13" width="13" fill="#29afdf">
+          <svg viewBox="0 0 24 24" height="13" width="13" fill="#34B7F1">
             <path d="M12 14a2.9 2.9 0 0 1-2.13-.88A2.9 2.9 0 0 1 9 11V5c0-.83.3-1.54.88-2.13A2.9 2.9 0 0 1 12 2c.83 0 1.54.3 2.13.88.58.58.87 1.29.87 2.12v6c0 .83-.3 1.54-.88 2.13A2.9 2.9 0 0 1 12 14Zm0 7a.97.97 0 0 1-.71-.29A.97.97 0 0 1 11 20v-2.1a6.86 6.86 0 0 1-5.92-5.82.84.84 0 0 1 .22-.76c.2-.21.47-.32.8-.32.23 0 .44.09.63.26.18.18.3.39.34.64a4.93 4.93 0 0 0 1.7 2.92c.92.79 2 1.18 3.23 1.18s2.3-.4 3.22-1.18a4.93 4.93 0 0 0 1.7-2.92c.05-.25.18-.46.37-.64a1 1 0 0 1 1.41.06c.2.22.28.47.23.75A6.86 6.86 0 0 1 13 17.9V20c0 .28-.1.52-.29.71A.94.94 0 0 1 12 21Z" />
           </svg>
         </div>

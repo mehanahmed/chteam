@@ -55,6 +55,7 @@ interface MessageThreadProps {
   currentUserName?: string;
   currentUserAvatarUrl?: string;
   currentUserGravatarUrl?: string;
+  contactAvatarUrl?: string | null;
   isGroup?: boolean;
   /** ID of message to highlight and scroll to */
   highlightedMessageId?: string | null;
@@ -79,6 +80,7 @@ export function MessageThread({
   currentUserName,
   currentUserAvatarUrl,
   currentUserGravatarUrl,
+  contactAvatarUrl,
   isGroup = false,
   highlightedMessageId,
   onOpenContactInfo,
@@ -440,6 +442,7 @@ export function MessageThread({
         currentUserName={currentUserName}
         currentUserAvatarUrl={currentUserAvatarUrl}
         currentUserGravatarUrl={currentUserGravatarUrl}
+        contactAvatarUrl={contactAvatarUrl}
         teammateIdentities={teammateIdentityMap}
         highlightedMessageId={activeHighlightedMessageId}
         retryingMessageId={retryingMessageId}

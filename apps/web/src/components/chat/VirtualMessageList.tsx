@@ -31,6 +31,7 @@ interface VirtualMessageListProps {
   currentUserName?: string;
   currentUserAvatarUrl?: string;
   currentUserGravatarUrl?: string;
+  contactAvatarUrl?: string | null;
   teammateIdentities: ReadonlyMap<string, TeamMemberIdentity>;
   highlightedMessageId?: string | null;
   retryingMessageId: string | null;
@@ -78,6 +79,7 @@ export function VirtualMessageList({
   currentUserName,
   currentUserAvatarUrl,
   currentUserGravatarUrl,
+  contactAvatarUrl,
   teammateIdentities,
   highlightedMessageId,
   retryingMessageId,
@@ -277,6 +279,7 @@ export function VirtualMessageList({
                 currentUserName={currentUserName}
                 currentUserAvatarUrl={currentUserAvatarUrl}
                 currentUserGravatarUrl={currentUserGravatarUrl}
+                contactAvatarUrl={contactAvatarUrl}
                 teammateIdentities={teammateIdentities}
                 onRetry={selectionMode ? undefined : onRetryMessage}
                 isHighlighted={item.albumMessages.some(
