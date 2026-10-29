@@ -321,6 +321,17 @@ export function ChatPage() {
     isSelectedGroup ? (selectedChatId ?? null) : null,
   );
 
+  const onlyAdminsCanSend = Boolean(
+    isSelectedGroup &&
+      selectedGroup?.settings?.isAnnounce &&
+      !selectedGroup?.isAdmin,
+  );
+  const isNotGroupMember = Boolean(
+    isSelectedGroup &&
+      selectedGroup &&
+      selectedGroup.isMember === false,
+  );
+
   // Publishes the on-screen keyboard overlap for the composer footer to pad
   // by. Gated on an open conversation: the inbox list has no composer to keep
   // above the keyboard, so it should not hold visual-viewport listeners or a
@@ -494,6 +505,9 @@ export function ChatPage() {
                       ? `@${channelConversation.account.username}`
                       : null
                   }
+                  onlyAdminsCanSend={onlyAdminsCanSend}
+                  isNotGroupMember={isNotGroupMember}
+                  onOpenGroupInfo={handleOpenProfile}
                 />
               </ChannelComposerGate>
             ) : (
@@ -524,6 +538,9 @@ export function ChatPage() {
                 mentionParticipants={selectedGroup?.participants}
                 onSelectChat={handleThreadSelect}
                 channelAddress={null}
+                onlyAdminsCanSend={onlyAdminsCanSend}
+                isNotGroupMember={isNotGroupMember}
+                onOpenGroupInfo={handleOpenProfile}
               />
             )}
           </ComposerLifecycleArea>

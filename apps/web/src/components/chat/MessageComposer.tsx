@@ -171,6 +171,12 @@ interface MessageComposerProps {
   channelAddress?: string | null;
   /** Conversation actions, hosted in the composer's context row. */
   trailing?: ReactNode;
+  /** When true in an announcement group, non-admin members cannot send messages */
+  onlyAdminsCanSend?: boolean;
+  /** When true, the user is no longer a participant in the group */
+  isNotGroupMember?: boolean;
+  /** Callback to open group details/members */
+  onOpenGroupInfo?: () => void;
 }
 
 function AcknowledgedMessageComposer({
@@ -184,6 +190,9 @@ function AcknowledgedMessageComposer({
   connection,
   channelAccount,
   mentionParticipants = [],
+  onlyAdminsCanSend = false,
+  isNotGroupMember = false,
+  onOpenGroupInfo,
 }: MessageComposerProps) {
   const { t } = useTranslation();
   const isMobile = useIsMobile();
@@ -807,6 +816,42 @@ function AcknowledgedMessageComposer({
 
   if (!conversationId) {
     return null;
+  }
+
+  if (onlyAdminsCanSend) {
+    return (
+      <footer className="bg-[#f0f2f5] dark:bg-dark-secondary">
+        <div className="flex min-h-[62px] w-full items-center justify-center border-t border-black/[0.06] bg-[#f0f2f5] px-4 py-3 text-center text-[14px] text-[#667781] select-none dark:border-white/[0.06] dark:bg-dark-secondary dark:text-[#8696a0]">
+          <span>
+            Only{" "}
+            {onOpenGroupInfo ? (
+              <button
+                type="button"
+                onClick={onOpenGroupInfo}
+                className="font-medium text-[#008069] transition-colors hover:underline focus-visible:outline-none dark:text-[#00a884]"
+              >
+                admins
+              </button>
+            ) : (
+              <span className="font-medium text-[#008069] dark:text-[#00a884]">
+                admins
+              </span>
+            )}{" "}
+            can send messages
+          </span>
+        </div>
+      </footer>
+    );
+  }
+
+  if (isNotGroupMember) {
+    return (
+      <footer className="bg-[#f0f2f5] dark:bg-dark-secondary">
+        <div className="flex min-h-[62px] w-full items-center justify-center border-t border-black/[0.06] bg-[#f0f2f5] px-4 py-3 text-center text-[14px] text-[#667781] select-none dark:border-white/[0.06] dark:bg-dark-secondary dark:text-[#8696a0]">
+          <span>Can&apos;t send messages to this group because you&apos;re no longer a participant.</span>
+        </div>
+      </footer>
+    );
   }
 
   return (
