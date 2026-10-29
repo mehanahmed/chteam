@@ -10,6 +10,7 @@ import { LinkifiedText } from "./LinkifiedText";
 import { MediaAlbumContent } from "./MediaAlbumContent";
 import { MediaLightbox } from "./MediaLightbox";
 import { MediaPendingPlaceholder } from "./MediaPendingPlaceholder";
+import { AudioMessagePlayer } from "./AudioMessagePlayer";
 
 /**
  * Only workspaces that actually receive animated stickers pay for the Lottie
@@ -260,23 +261,12 @@ export function MessageContent({
         );
       }
       return (
-        <div className="flex items-center gap-2 min-w-[200px]">
-          <audio
-            src={message.metadata?.mediaUrl}
-            controls
-            className="w-full"
-            aria-label={t("chat.audioMessage", "Audio message")}
-          />
-          {message.metadata?.duration && (
-            <span
-              className="text-xs text-gray-500 tabular-nums"
-              aria-hidden="true"
-            >
-              {Math.floor(message.metadata.duration / 60)}:
-              {String(message.metadata.duration % 60).padStart(2, "0")}
-            </span>
-          )}
-        </div>
+        <AudioMessagePlayer
+          src={message.metadata?.mediaUrl || ""}
+          duration={message.metadata?.duration}
+          isOwn={isOwn}
+          ariaLabel={t("chat.audioMessage", "Audio message")}
+        />
       );
     },
     document: () => {

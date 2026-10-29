@@ -47,6 +47,7 @@
       "name": "@omniteam/web",
       "version": "0.0.1",
       "dependencies": {
+        "@audiowave/react": "^0.6.2",
         "@hookform/resolvers": "^5.9.1",
         "@omniteam/shared": "workspace:*",
         "@radix-ui/react-avatar": "^1.1.11",
@@ -156,6 +157,10 @@
     "esbuild": "0.28.1",
   },
   "packages": {
+    "@audiowave/core": ["@audiowave/core@0.3.1", "", {}, "sha512-KtC2MTWKp6Orkedty3I8IklVBVQ2IFaFWDJ1cz+UsACpX2x1gINwZGTRZT7bw/dx8KazNSMuVK5lm1jL67KQkQ=="],
+
+    "@audiowave/react": ["@audiowave/react@0.6.2", "", { "dependencies": { "@audiowave/core": "0.3.1" }, "peerDependencies": { "react": ">=16.8.0", "react-dom": ">=16.8.0" } }, "sha512-hajG2Iv3mVxived9wXad8L0ZQF+HmYnB3IrfOkIdkTv4RxOJDXwFWMAd0zb7ZU1Qz0IEYZXCbASFWyuxEQ7PAw=="],
+
     "@aws-sdk/checksums": ["@aws-sdk/checksums@3.1000.29", "", { "dependencies": { "@aws-sdk/core": "^3.977.9", "@aws-sdk/types": "^3.974.5", "@smithy/core": "^3.33.3", "@smithy/types": "^4.17.2", "tslib": "^2.6.2" } }, "sha512-Dtu0gr4dnATZAPwEYbpCsG+MpLM7OAliy2gTepEFQwl1vZ6DL3QMH2FveMa3HLvPsOdhJsPRB3KtxVhph9T75A=="],
 
     "@aws-sdk/client-s3": ["@aws-sdk/client-s3@3.1127.0", "", { "dependencies": { "@aws-sdk/checksums": "^3.1000.29", "@aws-sdk/core": "^3.977.9", "@aws-sdk/credential-provider-node": "^3.972.82", "@aws-sdk/middleware-sdk-s3": "^3.972.75", "@aws-sdk/signature-v4-multi-region": "^3.996.46", "@aws-sdk/types": "^3.974.5", "@smithy/core": "^3.33.3", "@smithy/fetch-http-handler": "^5.7.2", "@smithy/node-http-handler": "^4.11.3", "@smithy/types": "^4.17.2", "tslib": "^2.6.2" } }, "sha512-0ZSAgmEda33xPqVPt+bx2KzrXV1cUCKRRVPGliLu+V7DzHPa04CqPSi1maGEM4O0LDP0iI6HRSW5ULloNwayNw=="],
