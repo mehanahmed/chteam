@@ -24,7 +24,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "../components/ui/avatar";
 import { cn } from "../lib/utils";
 import { toast } from "sonner";
 import { fetchWithAuth } from "../lib/api/client";
-import { sendMessage } from "../lib/api/messages";
+import { sendMessage, uploadMedia } from "../lib/api/messages";
 
 export interface StatusItem {
   id: string;
@@ -135,6 +135,7 @@ export function StatusPage() {
   const [isPostingStatus, setIsPostingStatus] = useState(false);
 
   const [isMediaStatusOpen, setIsMediaStatusOpen] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [selectedMediaUrl, setSelectedMediaUrl] = useState<string | null>(null);
   const [selectedMediaType, setSelectedMediaType] = useState<"image" | "video">("image");
   const [mediaCaption, setMediaCaption] = useState("");
@@ -145,48 +146,51 @@ export function StatusPage() {
     try {
       if (showToast) setIsRefreshing(true);
       const response = await fetchWithAuth<any>("/status");
+      const items: any[] = Array.isArray(response)
+        ? response
+        : Array.isArray(response?.data)
+        ? response.data
+        : [];
 
-      if (response && Array.isArray(response)) {
-        const otherContacts: ContactStatus[] = [];
-        const selfStatuses: StatusItem[] = [];
+      const otherContacts: ContactStatus[] = [];
+      const selfStatuses: StatusItem[] = [];
 
-        for (const item of response) {
-          const formattedStatuses: StatusItem[] = (item.statuses || []).map((s: any) => ({
-            id: s.id,
-            statusId: s.statusId,
-            type: s.mediaType || "text",
-            content: s.caption || "",
-            caption: s.caption || "",
-            mediaUrl: s.mediaUrl,
-            timestamp: formatStatusTimestamp(s.timestamp),
-            expiresAt: s.expiresAt,
-          }));
+      for (const item of items) {
+        const formattedStatuses: StatusItem[] = (item.statuses || []).map((s: any) => ({
+          id: s.id,
+          statusId: s.statusId,
+          type: s.mediaType || "text",
+          content: s.caption || "",
+          caption: s.caption || "",
+          mediaUrl: s.mediaUrl,
+          timestamp: formatStatusTimestamp(s.timestamp),
+          expiresAt: s.expiresAt,
+        }));
 
-          if (item.isOwn || item.jid === "me") {
-            selfStatuses.push(...formattedStatuses);
-          } else {
-            otherContacts.push({
-              id: item.jid || `c-${Math.random()}`,
-              contactId: item.contactId || null,
-              jid: item.jid,
-              name: item.name || item.jid.replace(/@.*$/, ""),
-              avatarUrl: item.avatarUrl || null,
-              timestamp:
-                formattedStatuses[0]?.timestamp || "Today",
-              isOwn: false,
-              statuses: formattedStatuses,
-            });
-          }
+        if (item.isOwn || item.jid === "me") {
+          selfStatuses.push(...formattedStatuses);
+        } else {
+          otherContacts.push({
+            id: item.jid || `c-${Math.random()}`,
+            contactId: item.contactId || null,
+            jid: item.jid,
+            name: item.name || item.jid.replace(/@.*$/, ""),
+            avatarUrl: item.avatarUrl || null,
+            timestamp:
+              formattedStatuses[0]?.timestamp || "Today",
+            isOwn: false,
+            statuses: formattedStatuses,
+          });
         }
+      }
 
-        setContactList(otherContacts);
-        if (selfStatuses.length > 0) {
-          setMyStatuses(selfStatuses);
-          try {
-            localStorage.setItem("omniteam_my_statuses", JSON.stringify(selfStatuses));
-          } catch {
-            // Safe fallback
-          }
+      setContactList(otherContacts);
+      if (selfStatuses.length > 0) {
+        setMyStatuses(selfStatuses);
+        try {
+          localStorage.setItem("omniteam_my_statuses", JSON.stringify(selfStatuses));
+        } catch {
+          // Safe fallback
         }
       }
       if (showToast) toast.success("WhatsApp status synced");
@@ -355,33 +359,44 @@ export function StatusPage() {
     if (!selectedMediaUrl || isPostingStatus) return;
 
     setIsPostingStatus(true);
-    const newStatus: StatusItem = {
-      id: `my-${Date.now()}`,
-      type: selectedMediaType,
-      mediaUrl: selectedMediaUrl,
-      caption: mediaCaption.trim() || undefined,
-      timestamp: "Just now",
-      expiresAt: new Date(Date.now() + 24 * 3600 * 1000).toISOString(),
-    };
-
-    setMyStatuses((prev) => [newStatus, ...prev]);
-    setIsMediaStatusOpen(false);
-    setSelectedMediaUrl(null);
-    setMediaCaption("");
+    let uploadedMediaUrl: string | null = null;
 
     try {
+      if (selectedFile) {
+        toast.loading("Uploading media...", { id: "media-upload" });
+        const uploadResult = await uploadMedia(selectedFile);
+        uploadedMediaUrl = uploadResult.mediaUrl;
+        toast.dismiss("media-upload");
+      }
+
+      const newStatus: StatusItem = {
+        id: `my-${Date.now()}`,
+        type: selectedMediaType,
+        mediaUrl: uploadedMediaUrl || selectedMediaUrl,
+        caption: mediaCaption.trim() || undefined,
+        timestamp: "Just now",
+        expiresAt: new Date(Date.now() + 24 * 3600 * 1000).toISOString(),
+      };
+
+      setMyStatuses((prev) => [newStatus, ...prev]);
+      setIsMediaStatusOpen(false);
+      setSelectedMediaUrl(null);
+      setSelectedFile(null);
+      setMediaCaption("");
+
       await fetchWithAuth("/status", {
         method: "POST",
         body: JSON.stringify({
           type: selectedMediaType,
           content: newStatus.caption,
-          mediaUrl: newStatus.mediaUrl,
+          mediaUrl: uploadedMediaUrl || undefined,
         }),
       });
       toast.success("Status posted to WhatsApp!");
       void loadRealStatuses();
-    } catch {
-      toast.success("Status saved locally");
+    } catch (err: any) {
+      toast.dismiss("media-upload");
+      toast.error(err?.message || "Failed to post media status");
     } finally {
       setIsPostingStatus(false);
     }
@@ -391,6 +406,7 @@ export function StatusPage() {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    setSelectedFile(file);
     const isVideo = file.type.startsWith("video/");
     setSelectedMediaType(isVideo ? "video" : "image");
 

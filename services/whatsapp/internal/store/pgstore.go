@@ -373,7 +373,7 @@ func (c *PGContainer) MarkEventPublished(ctx context.Context, eventID string) er
   WITH retained AS (
    UPDATE worker_event_outbox SET published_at = now()
    WHERE connection_id = $1 AND event_id = $2
-    AND convert_from(payload, 'UTF8')::jsonb ? 'eventId'
+    AND replace(convert_from(payload, 'UTF8'), chr(0), '')::jsonb ? 'eventId'
     AND split_part(subject, '.', 5) IN ('history_message', 'history_contact', 'sync_status', 'history_sync_page')
    RETURNING event_id
   )
