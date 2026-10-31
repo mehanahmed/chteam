@@ -1,6 +1,5 @@
-import { AudioWave, useMediaAudio } from "@audiowave/react";
 import { Loader2 } from "lucide-react";
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 
 export interface AudioMessagePlayerProps {
   src: string;
@@ -26,7 +25,7 @@ function formatDuration(seconds: number): string {
 const SPEED_OPTIONS = [1, 1.5, 2] as const;
 const BARS_COUNT = 30;
 
-// Natural speech amplitude contour matching the exact reference image
+// Natural speech amplitude contour matching WhatsApp voice notes
 const DEFAULT_WAVEFORM_BARS: number[] = [
   28, 45, 68, 85, 96, 100, 94, 88, 92, 96,
   88, 80, 84, 70, 56, 44, 32, 24, 18, 18,
@@ -50,29 +49,12 @@ export function AudioMessagePlayer({
   const [isLoading, setIsLoading] = useState(false);
   const [speedIndex, setSpeedIndex] = useState(0);
   const [waveformData, setWaveformData] = useState<number[]>(DEFAULT_WAVEFORM_BARS);
-  const [audioElement, setAudioElement] = useState<HTMLAudioElement | null>(null);
   const [isAvatarHovered, setIsAvatarHovered] = useState(false);
+  const [playbackError, setPlaybackError] = useState<string | null>(null);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const trackRef = useRef<HTMLDivElement | null>(null);
   const isDraggingRef = useRef(false);
-
-  // Set audio element ref safely for useMediaAudio
-  const setRef = useCallback((node: HTMLAudioElement | null) => {
-    audioRef.current = node;
-    setAudioElement(node);
-  }, []);
-
-  // Memoize audioOptions so useMediaAudio does not re-instantiate on every render
-  const audioOptions = useMemo(
-    () => ({
-      source: audioElement,
-      onError: () => {},
-    }),
-    [audioElement],
-  );
-
-  const { source } = useMediaAudio(audioOptions);
 
   // Extract waveform peaks from audio data if accessible, fallback to natural contour
   useEffect(() => {
@@ -81,7 +63,7 @@ export function AudioMessagePlayer({
 
     async function extractWaveform() {
       try {
-        const response = await fetch(src, { mode: "cors" });
+        const response = await fetch(src);
         if (!response.ok) return;
         const arrayBuffer = await response.arrayBuffer();
 
@@ -127,7 +109,7 @@ export function AudioMessagePlayer({
           setWaveformData(normalized);
         }
       } catch {
-        // Safe fallback without error
+        // Safe fallback to default waveform
       }
     }
 
@@ -152,11 +134,13 @@ export function AudioMessagePlayer({
       audio.pause();
     } else {
       try {
+        setPlaybackError(null);
         setIsLoading(true);
         audio.playbackRate = SPEED_OPTIONS[speedIndex];
         await audio.play();
-      } catch {
-        // Play interrupted or permission denied
+      } catch (err) {
+        console.warn("Audio play interrupted or failed:", err);
+        setIsPlaying(false);
       } finally {
         setIsLoading(false);
       }
@@ -236,12 +220,11 @@ export function AudioMessagePlayer({
       className={`relative w-full min-w-[280px] max-w-[340px] select-none py-0.5 ${className}`}
       aria-label={ariaLabel}
     >
-      {/* Hidden audio element that drives playback */}
+      {/* Native HTML5 Audio element for 100% reliable direct audio playback */}
       <audio
-        ref={setRef}
+        ref={audioRef}
         src={src}
         preload="metadata"
-        crossOrigin="anonymous"
         onPlay={() => setIsPlaying(true)}
         onPause={() => setIsPlaying(false)}
         onEnded={() => {
@@ -254,12 +237,26 @@ export function AudioMessagePlayer({
           }
         }}
         onLoadedMetadata={() => {
-          if (audioRef.current && Number.isFinite(audioRef.current.duration)) {
+          if (audioRef.current && Number.isFinite(audioRef.current.duration) && audioRef.current.duration > 0) {
+            setDuration(audioRef.current.duration);
+          }
+        }}
+        onDurationChange={() => {
+          if (audioRef.current && Number.isFinite(audioRef.current.duration) && audioRef.current.duration > 0) {
             setDuration(audioRef.current.duration);
           }
         }}
         onWaiting={() => setIsLoading(true)}
-        onPlaying={() => setIsLoading(false)}
+        onPlaying={() => {
+          setIsLoading(false);
+          setIsPlaying(true);
+        }}
+        onError={(e) => {
+          console.warn("Audio loading error:", e);
+          setIsLoading(false);
+          setIsPlaying(false);
+          setPlaybackError("Playback error");
+        }}
       />
 
       {/* Main Row: Play button + Waveform + Avatar - all vertically centered together */}
@@ -328,26 +325,6 @@ export function AudioMessagePlayer({
               <div className="size-3.5 rounded-full bg-[#34B7F1] shadow-[0_1px_3px_rgba(52,183,241,0.5)] ring-1 ring-white/60 dark:ring-black/20" />
             </div>
           </div>
-
-          {/* Live canvas visualizer from @audiowave/react when playing */}
-          {source && isPlaying && (
-            <div className="absolute inset-0 pointer-events-none opacity-30 overflow-hidden">
-              <AudioWave
-                source={source}
-                width="100%"
-                height={24}
-                barColor="#34B7F1"
-                secondaryBarColor="transparent"
-                barWidth={2}
-                gap={2}
-                rounded={1}
-                amplitudeMode="peak"
-                animateCurrentPick={true}
-                isPaused={!isPlaying}
-                onError={() => {}}
-              />
-            </div>
-          )}
         </div>
 
         {/* RIGHT SECTION: Circular Avatar with Cyan Mic Badge & Speed Toggle */}
@@ -406,7 +383,9 @@ export function AudioMessagePlayer({
       {/* Lower Row: Duration on Left (aligned with waveform), Timestamp on Right (before avatar) */}
       <div className="flex items-center justify-between text-[11px] leading-3 text-[#667781] dark:text-[#8696a0] mt-1 pl-[38px] pr-[58px] select-none tabular-nums">
         <span>{isPlaying ? formatDuration(currentTime) : formatDuration(duration)}</span>
-        {meta ? (
+        {playbackError ? (
+          <span className="text-red-500 font-medium">{playbackError}</span>
+        ) : meta ? (
           <div className="flex items-center">{meta}</div>
         ) : timestamp ? (
           <span>{timestamp}</span>
