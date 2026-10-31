@@ -89,6 +89,9 @@ export function MessageHeader({
         : "Unknown");
   const displayName = formatPhoneLikeText(rawName);
   const isMerged = threadCount > 1;
+  const lastSeenDate =
+    contact.lastSeen ??
+    (_thread?.lastMessageAt ? new Date(_thread.lastMessageAt) : undefined);
   const lastSeenText = isChannel
     ? t("chat.channel", "Channel")
     : contact.isGroup
@@ -98,7 +101,7 @@ export function MessageHeader({
             count: group.participantCount,
           })
         : t("chat.group", "Group")
-      : formatLastSeen(contact.lastSeen, contact.isOnline, t);
+      : formatLastSeen(lastSeenDate, contact.isOnline, t);
   const statusText = isTyping ? t("chat.typingShort", "typing") : lastSeenText;
 
   return (
@@ -179,6 +182,10 @@ export function MessageHeader({
                   {t("chat.typingShort", "typing")}
                   <span className="typing-dots" />
                 </span>
+              </span>
+            ) : contact.isOnline ? (
+              <span className="truncate font-medium text-whatsapp-green">
+                {statusText}
               </span>
             ) : (
               statusText && (

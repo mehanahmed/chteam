@@ -1,10 +1,12 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-import { cn } from "@/lib/utils";
-import { EMOJI_CATEGORIES, type CategoryKey } from "./emoji-data";
+import { useEffect, useRef } from "react";
+import EmojiPicker, {
+  EmojiStyle,
+  Theme,
+  type EmojiClickData,
+  SuggestionMode,
+} from "emoji-picker-react";
 import { useTranslation } from "react-i18next";
-
-const STORAGE_KEY = "whatsapp-web-recent-emojis";
-const MAX_RECENT = 24;
+import { useTheme } from "@/contexts";
 
 interface EmojiInputPickerProps {
   onSelectEmoji: (emoji: string) => void;
@@ -16,45 +18,8 @@ export function EmojiInputPicker({
   onClose,
 }: EmojiInputPickerProps) {
   const { t } = useTranslation();
-
-  const [activeCategory, setActiveCategory] = useState<CategoryKey>("smileys");
-  const [recentEmojis, setRecentEmojis] = useState<string[]>([]);
-  const [searchQuery, setSearchQuery] = useState("");
+  const { resolvedTheme } = useTheme();
   const containerRef = useRef<HTMLDivElement>(null);
-
-  // Load recent emojis from localStorage
-  useEffect(() => {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) {
-      try {
-        const parsed = JSON.parse(stored);
-        if (Array.isArray(parsed)) {
-          setRecentEmojis(parsed);
-        }
-      } catch {
-        // Ignore parse errors
-      }
-    }
-  }, []);
-
-  // Update recent emojis
-  const addToRecent = useCallback((emoji: string) => {
-    setRecentEmojis((prev) => {
-      const filtered = prev.filter((e) => e !== emoji);
-      const updated = [emoji, ...filtered].slice(0, MAX_RECENT);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-      return updated;
-    });
-  }, []);
-
-  const handleSelectEmoji = useCallback(
-    (emoji: string) => {
-      addToRecent(emoji);
-      onSelectEmoji(emoji);
-      onClose();
-    },
-    [addToRecent, onSelectEmoji, onClose],
-  );
 
   // Close on click outside
   useEffect(() => {
@@ -83,79 +48,27 @@ export function EmojiInputPicker({
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [onClose]);
 
-  // Get emojis for current category or search results
-  const displayEmojis = searchQuery
-    ? Object.values(EMOJI_CATEGORIES)
-        .flatMap((cat) => cat.emojis)
-        .filter((emoji) => emoji.includes(searchQuery))
-    : activeCategory === "recent"
-      ? recentEmojis
-      : EMOJI_CATEGORIES[activeCategory].emojis;
-
-  // Get category keys (filter out recent if empty)
-  const categoryKeys = (Object.keys(EMOJI_CATEGORIES) as CategoryKey[]).filter(
-    (key) => key !== "recent" || recentEmojis.length > 0,
-  );
+  const handleEmojiClick = (emojiData: EmojiClickData) => {
+    onSelectEmoji(emojiData.emoji);
+    onClose();
+  };
 
   return (
     <div
       ref={containerRef}
-      className="absolute bottom-full mb-2 left-0 w-80 bg-white dark:bg-dark-elevated rounded-xl shadow-lg border border-gray-200 dark:border-dark-border overflow-hidden z-20"
+      className="absolute bottom-full mb-2 left-0 z-20 shadow-2xl rounded-2xl overflow-hidden border border-gray-200 dark:border-dark-border"
     >
-      {/* Search input */}
-      <div className="p-2 border-b border-gray-200 dark:border-dark-border">
-        <input
-          type="text"
-          placeholder={t("chat.searchEmoji", "Search emoji…")}
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full px-3 py-1.5 text-sm bg-gray-100 dark:bg-dark-tertiary text-gray-900 dark:text-dark-text-primary placeholder-gray-500 dark:placeholder-dark-text-tertiary rounded-lg focus:outline-none focus:ring-1 focus:ring-whatsapp-green"
-        />
-      </div>
-
-      {/* Category tabs */}
-      {!searchQuery && (
-        <div className="flex border-b border-gray-200 dark:border-dark-border overflow-x-auto scrollbar-hide">
-          {categoryKeys.map((key) => (
-            <button
-              type="button"
-              key={key}
-              onClick={() => setActiveCategory(key)}
-              className={cn(
-                "flex-shrink-0 p-2 text-lg transition-colors",
-                activeCategory === key
-                  ? "bg-gray-100 dark:bg-dark-tertiary"
-                  : "hover:bg-gray-50 dark:hover:bg-dark-tertiary",
-              )}
-              title={EMOJI_CATEGORIES[key].name}
-            >
-              {EMOJI_CATEGORIES[key].icon}
-            </button>
-          ))}
-        </div>
-      )}
-
-      {/* Emoji grid */}
-      <div className="h-64 overflow-y-auto p-2">
-        {displayEmojis.length > 0 ? (
-          <div className="grid grid-cols-8 gap-0.5">
-            {displayEmojis.map((emoji, index) => (
-              <button
-                type="button"
-                key={`${emoji}-${index}`}
-                onClick={() => handleSelectEmoji(emoji)}
-                className="p-1.5 text-xl hover:bg-gray-100 dark:hover:bg-dark-tertiary rounded transition-colors"
-              >
-                {emoji}
-              </button>
-            ))}
-          </div>
-        ) : (
-          <div className="flex items-center justify-center h-full text-gray-500 dark:text-dark-text-tertiary text-sm">
-            {searchQuery ? "No emojis found" : "No recent emojis"}
-          </div>
-        )}
-      </div>
+      <EmojiPicker
+        onEmojiClick={handleEmojiClick}
+        emojiStyle={EmojiStyle.FACEBOOK}
+        theme={resolvedTheme === "dark" ? Theme.DARK : Theme.LIGHT}
+        lazyLoadEmojis={true}
+        searchPlaceHolder={t("chat.searchEmoji", "Search emoji…")}
+        previewConfig={{ showPreview: false }}
+        suggestedEmojisMode={SuggestionMode.RECENT}
+        width={340}
+        height={400}
+      />
     </div>
   );
 }

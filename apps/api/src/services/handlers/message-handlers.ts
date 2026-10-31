@@ -495,6 +495,15 @@ export async function handleMessageEvent(event: MessageEvent): Promise<void> {
           ReturnType<typeof openOrReopenCaseForInboundMessage>
         > = null;
         if (!payload.fromMe && !payload.isHistorySync) {
+          await trx
+            .updateTable("contacts")
+            .set({
+              last_seen: messageReceivedAt,
+              updated_at: toDbDate(),
+            })
+            .where("id", "=", contact.id)
+            .execute();
+
           caseResult = await openOrReopenCaseForInboundMessage(
             trx,
             companyId,

@@ -1,5 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import EmojiPicker, {
+  Emoji,
+  EmojiStyle,
+  Theme,
+  SuggestionMode,
+} from "emoji-picker-react";
+import { useTheme } from "@/contexts";
 
 interface EmojiReactionPickerProps {
   onSelectReaction: (emoji: string) => void;
@@ -17,234 +24,12 @@ interface EmojiReactionPickerProps {
 // Popular WhatsApp-style reactions
 const QUICK_REACTIONS = ["❤️", "😂", "😮", "😢", "🙏", "👍"];
 
-// Extended emoji palette organized by category
-const EMOJI_CATEGORIES = {
-  "Smileys & People": [
-    "😀",
-    "😃",
-    "😄",
-    "😁",
-    "😆",
-    "😅",
-    "🤣",
-    "😂",
-    "🙂",
-    "🙃",
-    "😉",
-    "😊",
-    "😇",
-    "🥰",
-    "😍",
-    "🤩",
-    "😘",
-    "😗",
-    "☺️",
-    "😚",
-    "😙",
-    "🥲",
-    "😋",
-    "😛",
-    "😜",
-    "🤪",
-    "😝",
-    "🤑",
-    "🤗",
-    "🤭",
-    "🤫",
-    "🤔",
-    "🤐",
-    "🤨",
-    "😐",
-    "😑",
-    "😶",
-    "😏",
-    "😒",
-    "🙄",
-    "😬",
-    "🤥",
-    "😌",
-    "😔",
-    "😪",
-    "🤤",
-    "😴",
-    "😷",
-    "🤒",
-    "🤕",
-    "🤢",
-    "🤮",
-    "🤧",
-    "🥵",
-    "🥶",
-    "😶‍🌫️",
-    "🥴",
-    "😵",
-    "🤯",
-    "🤠",
-    "🥳",
-    "🥸",
-    "😎",
-    "🤓",
-    "🧐",
-    "😕",
-    "😟",
-    "🙁",
-    "☹️",
-    "😮",
-    "😯",
-    "😲",
-    "😳",
-    "🥺",
-    "😦",
-    "😧",
-    "😨",
-    "😰",
-    "😥",
-    "😢",
-    "😭",
-    "😱",
-    "😖",
-    "😣",
-    "😞",
-    "😓",
-    "😩",
-    "😫",
-    "🥱",
-    "😤",
-    "😡",
-    "😠",
-    "🤬",
-    "😈",
-    "👿",
-    "💀",
-    "☠️",
-    "💩",
-    "🤡",
-    "👹",
-    "👺",
-    "👻",
-    "👽",
-    "👾",
-    "🤖",
-    "😺",
-    "😸",
-    "😹",
-    "😻",
-    "😼",
-    "😽",
-    "🙀",
-    "😿",
-    "😾",
-  ],
-  "Gestures & Body": [
-    "👋",
-    "🤚",
-    "🖐️",
-    "✋",
-    "🖖",
-    "👌",
-    "🤌",
-    "🤏",
-    "✌️",
-    "🤞",
-    "🤟",
-    "🤘",
-    "🤙",
-    "👈",
-    "👉",
-    "👆",
-    "🖕",
-    "👇",
-    "☝️",
-    "👍",
-    "👎",
-    "✊",
-    "👊",
-    "🤛",
-    "🤜",
-    "👏",
-    "🙌",
-    "👐",
-    "🤲",
-    "🤝",
-    "🙏",
-    "✍️",
-    "💅",
-    "🤳",
-    "💪",
-    "🦾",
-    "🦿",
-    "🦵",
-    "🦶",
-  ],
-  "Hearts & Love": [
-    "❤️",
-    "🧡",
-    "💛",
-    "💚",
-    "💙",
-    "💜",
-    "🖤",
-    "🤍",
-    "🤎",
-    "💔",
-    "❤️‍🔥",
-    "❤️‍🩹",
-    "💕",
-    "💞",
-    "💓",
-    "💗",
-    "💖",
-    "💘",
-    "💝",
-    "💟",
-    "💌",
-    "💋",
-    "💏",
-    "💑",
-  ],
-  "Objects & Symbols": [
-    "🎉",
-    "🎊",
-    "🎈",
-    "🎁",
-    "🏆",
-    "🥇",
-    "🥈",
-    "🥉",
-    "⚽",
-    "🏀",
-    "🏈",
-    "⚾",
-    "🎾",
-    "🏐",
-    "🏉",
-    "🥏",
-    "🎱",
-    "🏓",
-    "🏸",
-    "🏒",
-    "🏑",
-    "🥍",
-    "🏏",
-    "🥅",
-    "⚡",
-    "🔥",
-    "✨",
-    "💫",
-    "⭐",
-    "🌟",
-    "💥",
-    "💢",
-    "✅",
-    "❌",
-    "❓",
-    "❗",
-    "💯",
-    "🔔",
-    "🔕",
-    "📢",
-  ],
-};
+function emojiToUnified(emoji: string): string {
+  return Array.from(emoji)
+    .map((c) => c.codePointAt(0)!.toString(16))
+    .filter((hex) => hex !== "fe0f")
+    .join("-");
+}
 
 export function EmojiReactionPicker({
   onSelectReaction,
@@ -253,10 +38,9 @@ export function EmojiReactionPicker({
   allowedEmojis,
 }: EmojiReactionPickerProps) {
   const { t } = useTranslation();
+  const { resolvedTheme } = useTheme();
 
   const [showExtended, setShowExtended] = useState(false);
-  const [selectedCategory, setSelectedCategory] =
-    useState<string>("Smileys & People");
   const [adjustedPosition, setAdjustedPosition] = useState(position);
   const pickerRef = useRef<HTMLDivElement>(null);
 
@@ -276,7 +60,7 @@ export function EmojiReactionPicker({
       }
 
       // Check left boundary
-      if (rect.left < 0) {
+      if (adjustedX < 10) {
         adjustedX = 10;
       }
 
@@ -286,13 +70,13 @@ export function EmojiReactionPicker({
       }
 
       // Check top boundary
-      if (rect.top < 0) {
+      if (adjustedY < 10) {
         adjustedY = 10;
       }
 
       setAdjustedPosition({ x: adjustedX, y: adjustedY });
     }
-  }, [position]);
+  }, [position, showExtended]);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -330,11 +114,6 @@ export function EmojiReactionPicker({
     allowedEmojis.includes(emoji) ||
     allowedEmojis.includes(emoji.replace(/\uFE0F/g, ""));
   const quickReactions = QUICK_REACTIONS.filter(isAllowed);
-  // A provider with a fixed set gets that set verbatim rather than a filtered
-  // general palette: its list is short, complete, and already ordered.
-  const extendedCategories: Record<string, string[]> = allowedEmojis
-    ? { Reactions: [...allowedEmojis] }
-    : EMOJI_CATEGORIES;
 
   return (
     <div
@@ -358,11 +137,15 @@ export function EmojiReactionPicker({
             <button
               key={emoji}
               onClick={() => handleReactionClick(emoji)}
-              className="w-10 h-10 flex items-center justify-center text-2xl hover:scale-125 transition-transform duration-150 hover:bg-gray-100 dark:hover:bg-dark-tertiary rounded-full"
+              className="w-10 h-10 flex items-center justify-center hover:scale-125 transition-transform duration-150 hover:bg-gray-100 dark:hover:bg-dark-tertiary rounded-full"
               title={emoji}
               aria-label={`React with ${emoji}`}
             >
-              {emoji}
+              <Emoji
+                unified={emojiToUnified(emoji)}
+                emojiStyle={EmojiStyle.FACEBOOK}
+                size={24}
+              />
             </button>
           ))}
           <button
@@ -388,7 +171,7 @@ export function EmojiReactionPicker({
         </div>
       ) : (
         /* Extended emoji picker */
-        <div className="bg-white dark:bg-dark-elevated rounded-2xl shadow-2xl border border-gray-200 dark:border-dark-border overflow-hidden w-80">
+        <div className="bg-white dark:bg-dark-elevated rounded-2xl shadow-2xl border border-gray-200 dark:border-dark-border overflow-hidden">
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-dark-border">
             <button
@@ -437,43 +220,39 @@ export function EmojiReactionPicker({
             </button>
           </div>
 
-          {/* Category tabs */}
-          <div className="flex gap-1 px-2 py-2 border-b border-gray-200 dark:border-dark-border bg-gray-50 dark:bg-dark-secondary overflow-x-auto">
-            {Object.keys(extendedCategories).map((category) => (
-              <button
-                key={category}
-                onClick={() => setSelectedCategory(category)}
-                className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors whitespace-nowrap ${
-                  selectedCategory === category
-                    ? "bg-whatsapp-green text-white"
-                    : "text-gray-600 dark:text-dark-text-secondary hover:bg-gray-200 dark:hover:bg-dark-tertiary"
-                }`}
-              >
-                {category}
-              </button>
-            ))}
-          </div>
-
-          {/* Emoji grid */}
-          <div className="p-3 max-h-64 overflow-y-auto">
-            <div className="grid grid-cols-8 gap-1">
-              {(
-                extendedCategories[selectedCategory] ??
-                Object.values(extendedCategories)[0] ??
-                []
-              ).map((emoji) => (
-                <button
-                  key={emoji}
-                  onClick={() => handleReactionClick(emoji)}
-                  className="w-9 h-9 flex items-center justify-center text-2xl hover:bg-gray-100 dark:hover:bg-dark-tertiary rounded-lg transition-colors"
-                  title={emoji}
-                  aria-label={`React with ${emoji}`}
-                >
-                  {emoji}
-                </button>
-              ))}
+          {!allowedEmojis ? (
+            <EmojiPicker
+              onEmojiClick={(data) => handleReactionClick(data.emoji)}
+              emojiStyle={EmojiStyle.FACEBOOK}
+              theme={resolvedTheme === "dark" ? Theme.DARK : Theme.LIGHT}
+              lazyLoadEmojis={true}
+              searchPlaceHolder={t("chat.searchEmoji", "Search emoji…")}
+              previewConfig={{ showPreview: false }}
+              suggestedEmojisMode={SuggestionMode.RECENT}
+              width={320}
+              height={380}
+            />
+          ) : (
+            <div className="p-3 max-h-64 overflow-y-auto">
+              <div className="grid grid-cols-8 gap-1">
+                {allowedEmojis.map((emoji) => (
+                  <button
+                    key={emoji}
+                    onClick={() => handleReactionClick(emoji)}
+                    className="w-9 h-9 flex items-center justify-center hover:bg-gray-100 dark:hover:bg-dark-tertiary rounded-lg transition-colors"
+                    title={emoji}
+                    aria-label={`React with ${emoji}`}
+                  >
+                    <Emoji
+                      unified={emojiToUnified(emoji)}
+                      emojiStyle={EmojiStyle.FACEBOOK}
+                      size={24}
+                    />
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
         </div>
       )}
     </div>

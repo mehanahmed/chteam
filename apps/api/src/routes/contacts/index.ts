@@ -281,6 +281,21 @@ contactRoutes.get("/:id", async (c) => {
     .where("contact_tags.contact_id", "=", contactId)
     .execute();
 
+  let effectiveLastSeen = contact.last_seen;
+  if (!effectiveLastSeen && !contact.is_group) {
+    const lastIncoming = await tenantDb
+      .selectFrom("messages")
+      .select("timestamp")
+      .where("contact_id", "=", contactId)
+      .where("from_me", "=", false)
+      .orderBy("timestamp", "desc")
+      .limit(1)
+      .executeTakeFirst();
+    if (lastIncoming?.timestamp) {
+      effectiveLastSeen = lastIncoming.timestamp;
+    }
+  }
+
   return successData(c, {
     id: contact.id,
     jid: contact.jid,
@@ -299,7 +314,7 @@ contactRoutes.get("/:id", async (c) => {
     isArchived: contact.archived_at !== null,
     archivedAt: contact.archived_at,
     isOnline: contact.is_online,
-    lastSeen: contact.last_seen,
+    lastSeen: effectiveLastSeen,
     profilePictureUrl: await getAuthorizedMediaUrlOrNull(
       contact.profile_picture_url,
       companyId,
