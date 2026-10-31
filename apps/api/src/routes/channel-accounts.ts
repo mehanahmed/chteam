@@ -62,7 +62,7 @@ channelAccountRoutes.get("/", async (c) => {
   if (
     !(await getChannelSpineWorkspaceAuthority(companyId)).neutralReadsEnabled
   ) {
-    return notFound(c, "Channel accounts are not enabled for this workspace");
+    return successData(c, []);
   }
   const accounts = await tenantDb
     .selectFrom("channel_accounts")

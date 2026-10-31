@@ -40,7 +40,7 @@ conversationRoutes.get("/", async (c) => {
   const { tenantDb, companyId, user, permissions } = getRouteContext(c);
   const authority = await getChannelSpineWorkspaceAuthority(companyId);
   if (!authority.neutralReadsEnabled) {
-    return c.json({ error: "Neutral conversations are not enabled" }, 404);
+    return successData(c, []);
   }
   const requestedLimit = Number(c.req.query("limit") ?? "50");
   const limit = Number.isSafeInteger(requestedLimit)

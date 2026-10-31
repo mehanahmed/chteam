@@ -85,14 +85,24 @@ export function AudioMessagePlayer({
         if (!response.ok) return;
         const arrayBuffer = await response.arrayBuffer();
 
+        const OfflineAudioContextClass =
+          window.OfflineAudioContext ||
+          (window as unknown as { webkitOfflineAudioContext: typeof OfflineAudioContext }).webkitOfflineAudioContext;
         const AudioContextClass =
           window.AudioContext ||
           (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-        if (!AudioContextClass) return;
 
-        const audioCtx = new AudioContextClass();
-        const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
-        audioCtx.close().catch(() => {});
+        let audioBuffer: AudioBuffer;
+        if (OfflineAudioContextClass) {
+          const offlineCtx = new OfflineAudioContextClass(1, 2, 44100);
+          audioBuffer = await offlineCtx.decodeAudioData(arrayBuffer);
+        } else if (AudioContextClass) {
+          const audioCtx = new AudioContextClass();
+          audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+          audioCtx.close().catch(() => {});
+        } else {
+          return;
+        }
 
         const rawData = audioBuffer.getChannelData(0);
         const blockSize = Math.floor(rawData.length / BARS_COUNT);
