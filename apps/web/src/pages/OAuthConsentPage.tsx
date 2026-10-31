@@ -119,7 +119,7 @@ export function OAuthConsentPage() {
         <div className="mb-8 flex items-center gap-3">
           <BrandMark className="h-10 w-10 shrink-0 rounded-xl object-contain" />
           <span className="text-sm font-semibold tracking-tight">
-            OmniTeam
+            CHTeam
           </span>
         </div>
 

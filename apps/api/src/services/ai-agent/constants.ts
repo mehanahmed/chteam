@@ -1,5 +1,5 @@
 /**
- * Shared constants for the OmniTeam AI Agent
+ * Shared constants for the CHTeam AI Agent
  */
 
 // Well-known system user UUID representing the autonomous AI Agent in audit logs and sent_by_user_id

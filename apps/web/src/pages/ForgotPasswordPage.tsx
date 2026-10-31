@@ -150,7 +150,7 @@ export function ForgotPasswordPage() {
         <p className="mt-3 max-w-lg text-sm leading-6 text-slate-600 dark:text-dark-text-secondary">
           {t(
             "auth.forgotPasswordSubtitle",
-            "Enter the email you use for OmniTeam. We'll send instructions to help you choose a new password.",
+            "Enter the email you use for CHTeam. We'll send instructions to help you choose a new password.",
           )}
         </p>
 

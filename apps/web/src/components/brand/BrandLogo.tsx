@@ -4,9 +4,9 @@ type BrandLogoProps = Omit<ComponentPropsWithoutRef<"img">, "alt" | "src"> & {
   alt?: string;
 };
 
-/** Full horizontal OmniTeam brand logo with dark mode switching */
+/** Full horizontal CHTeam brand logo with dark mode switching */
 export function BrandLogo({
-  alt = "OmniTeam",
+  alt = "CHTeam",
   className = "h-10 w-auto object-contain",
   ...props
 }: BrandLogoProps) {

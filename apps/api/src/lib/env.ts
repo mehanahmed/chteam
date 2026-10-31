@@ -123,7 +123,7 @@ export const env = {
   CLOUDFLARE_ACCOUNT_ID: getEnv("CLOUDFLARE_ACCOUNT_ID", ""),
   CLOUDFLARE_EMAIL_API_TOKEN: getEnv("CLOUDFLARE_EMAIL_API_TOKEN", ""),
   EMAIL_FROM: getEnv("EMAIL_FROM", "noreply@example.com"),
-  FEEDBACK_TO_EMAIL: getEnv("FEEDBACK_TO_EMAIL", "contact@wateaminbox.com"),
+  FEEDBACK_TO_EMAIL: getEnv("FEEDBACK_TO_EMAIL", "contact@chteam.colorhutbd.xyz"),
 
   // App
   APP_URL: getEnv("APP_URL", "http://localhost:4444"),

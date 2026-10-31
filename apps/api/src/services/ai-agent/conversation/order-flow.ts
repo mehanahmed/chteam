@@ -1149,7 +1149,7 @@ export class OrderFlowManager {
           paymentMethod: session.slots.paymentMethod || "cod",
           conversationId: session.conversationId,
           customerJid: session.customerJid,
-          notes: session.slots.notes || "Booked via OmniTeam AI Agent",
+          notes: session.slots.notes || "Booked via CHTeam AI Agent",
         };
 
         logger.info(
@@ -1369,7 +1369,7 @@ export class OrderFlowManager {
         paymentMethod: session.slots.paymentMethod || "cod",
         conversationId: session.conversationId,
         customerJid: session.customerJid,
-        notes: session.slots.notes || "Booked via OmniTeam AI Agent",
+        notes: session.slots.notes || "Booked via CHTeam AI Agent",
       };
 
       const orderResult = await adapter.createOrder(payload);

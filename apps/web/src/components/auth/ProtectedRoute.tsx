@@ -85,7 +85,7 @@ export function ProtectedRoute({
         )}
         message={t(
           "auth.sessionUnverifiedMessage",
-          "OmniTeam is unreachable. Try again in a moment.",
+          "CHTeam is unreachable. Try again in a moment.",
         )}
         onRetry={() => void refreshSession().catch(() => undefined)}
         onSignOut={() => void logout()}

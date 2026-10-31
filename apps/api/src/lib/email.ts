@@ -35,13 +35,13 @@ export async function sendVerificationEmail(
   const content: BrandedEmailContent = {
     preheader: invitationToken
       ? "Confirm your email address to continue to your workspace invitation."
-      : "Confirm your email address to finish setting up OmniTeam.",
+      : "Confirm your email address to finish setting up CHTeam.",
     eyebrow: "Account security",
     title: "Verify your email address",
     paragraphs: [
       invitationToken
         ? "Confirm your email address to finish creating your account and continue to the workspace invitation."
-        : "Thanks for signing up. Confirm your email address to finish setting up your OmniTeam account.",
+        : "Thanks for signing up. Confirm your email address to finish setting up your CHTeam account.",
     ],
     action: { label: "Verify email", url: verificationUrlString },
     note: "This link expires in 24 hours. If you did not create this account, you can safely ignore this email.",
@@ -64,11 +64,11 @@ export async function sendPasswordResetEmail(
 ): Promise<EmailResult> {
   const resetUrl = `${env.APP_URL}/reset-password?token=${token}`;
   const content: BrandedEmailContent = {
-    preheader: "Use this secure link to choose a new OmniTeam password.",
+    preheader: "Use this secure link to choose a new CHTeam password.",
     eyebrow: "Account security",
     title: "Reset your password",
     paragraphs: [
-      "We received a request to reset the password for your OmniTeam account.",
+      "We received a request to reset the password for your CHTeam account.",
       "Use the secure link below to choose a new password.",
     ],
     action: { label: "Reset password", url: resetUrl },
@@ -95,11 +95,11 @@ export async function sendInvitationEmail(
   const inviteUrl = `${env.APP_URL}/invite/${token}`;
   const safeCompanyName = emailHeaderText(companyName);
   const content: BrandedEmailContent = {
-    preheader: `${inviterEmail} invited you to join ${safeCompanyName} on OmniTeam.`,
+    preheader: `${inviterEmail} invited you to join ${safeCompanyName} on CHTeam.`,
     eyebrow: "Team invitation",
     title: `Join ${safeCompanyName}`,
     paragraphs: [
-      "You have been invited to collaborate with the team on OmniTeam.",
+      "You have been invited to collaborate with the team on CHTeam.",
       "Accept the invitation to open the shared inbox and get started.",
     ],
     details: [

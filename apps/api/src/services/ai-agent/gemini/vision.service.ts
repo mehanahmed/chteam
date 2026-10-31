@@ -1036,7 +1036,7 @@ export function formatGroundedTurnPrompt(context: GroundedTurnContext): string {
     personaContext,
   } = context;
 
-  const storeName = personaContext?.storeName || "OmniTeam Store";
+  const storeName = personaContext?.storeName || "CHTeam Store";
 
   let prompt = `You are the AI Sales Executive for ${storeName} in Bangladesh.\n`;
   prompt += "A customer has sent an image in the chat.\n\n";

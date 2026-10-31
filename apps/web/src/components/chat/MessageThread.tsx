@@ -304,7 +304,7 @@ export function MessageThread({
         <div className="text-center max-w-md px-4">
           <BrandMark className="mx-auto mb-4 h-24 w-24 rounded-[1.75rem] object-contain shadow-sm" />
           <h2 className="text-xl font-semibold text-gray-600 dark:text-dark-text-secondary mb-2">
-            OmniTeam
+            CHTeam
           </h2>
           <p className="text-gray-500 dark:text-dark-text-tertiary">
             {t(

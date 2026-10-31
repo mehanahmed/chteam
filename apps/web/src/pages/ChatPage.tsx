@@ -575,7 +575,7 @@ export function ChatPage() {
   return (
     <AppLayout>
       <h1 className="sr-only">
-        {t("chat.pageTitle", "OmniTeam - Conversations")}
+        {t("chat.pageTitle", "CHTeam - Conversations")}
       </h1>
       <ResponsiveLayout
         sidebar={sidebar}

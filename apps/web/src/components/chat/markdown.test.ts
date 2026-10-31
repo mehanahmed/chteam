@@ -169,11 +169,11 @@ describe("markdown rendering", () => {
   });
 
   it("renders headings (# Heading 1)", () => {
-    const headingMd = "# Welcome to OmniTeam\n## Getting Started";
+    const headingMd = "# Welcome to CHTeam\n## Getting Started";
     const headingHtml = renderToStaticMarkup(
       createElement("div", null, renderMarkdown(headingMd, { isOwn: false })),
     );
-    expect(headingHtml).toContain("Welcome to OmniTeam");
+    expect(headingHtml).toContain("Welcome to CHTeam");
     expect(headingHtml).toContain("Getting Started");
   });
 

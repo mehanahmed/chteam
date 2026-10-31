@@ -46,7 +46,7 @@ feedbackRoutes.post("/", zValidator("json", feedbackSchema), async (c) => {
       : "New anonymous product feedback",
     eyebrow: "Product feedback",
     title: "New feedback received",
-    paragraphs: ["A visitor submitted feedback through OmniTeam."],
+    paragraphs: ["A visitor submitted feedback through CHTeam."],
     details: [{ label: "From", value: senderLabel }],
     callout: { label: "Message", text: body.message },
     note: "Submitted through the public feedback form.",
@@ -54,7 +54,7 @@ feedbackRoutes.post("/", zValidator("json", feedbackSchema), async (c) => {
 
   const result = await sendEmail({
     to: env.FEEDBACK_TO_EMAIL,
-    subject: `OmniTeam feedback${subjectSender ? ` from ${subjectSender}` : ""}`,
+    subject: `CHTeam feedback${subjectSender ? ` from ${subjectSender}` : ""}`,
     html: renderBrandedEmail(content),
     text: renderPlainTextEmail(content),
   });

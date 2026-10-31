@@ -8,7 +8,7 @@ async function main() {
   const email = (process.env.ADMIN_EMAIL || "admin@omniteam.com").toLowerCase().trim();
   const password = process.env.ADMIN_PASSWORD || "AdminPassword123!";
   const name = process.env.ADMIN_NAME || "Super Admin";
-  const companyName = process.env.COMPANY_NAME || "OmniTeam";
+  const companyName = process.env.COMPANY_NAME || "CHTeam";
 
   console.log(`Checking existing account for ${email}...`);
 

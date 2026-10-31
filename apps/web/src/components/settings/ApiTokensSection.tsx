@@ -220,7 +220,7 @@ function McpSetupGuide({
             <p>
               {t(
                 "apiTokens.setup.hostedStep2",
-                "Leave Client ID and Client Secret empty if the app asks. Continue, sign in to OmniTeam, choose the workspace, and approve.",
+                "Leave Client ID and Client Secret empty if the app asks. Continue, sign in to CHTeam, choose the workspace, and approve.",
               )}
             </p>
           </SetupStep>
@@ -252,7 +252,7 @@ function McpSetupGuide({
             <p>
               {t(
                 "apiTokens.setup.grokStep2",
-                "Continue, sign in to OmniTeam, choose the workspace, and approve.",
+                "Continue, sign in to CHTeam, choose the workspace, and approve.",
               )}
             </p>
           </SetupStep>
@@ -309,7 +309,7 @@ function McpSetupGuide({
             <p>
               {t(
                 "apiTokens.setup.claudeCodeStep2",
-                "Start a new Claude Code session — the OmniTeam tools are available right away.",
+                "Start a new Claude Code session — the CHTeam tools are available right away.",
               )}
             </p>
           </SetupStep>

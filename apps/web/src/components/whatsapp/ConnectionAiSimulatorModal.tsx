@@ -82,7 +82,7 @@ export function ConnectionAiSimulatorModal({
     {
       id: "welcome",
       role: "model",
-      content: `Hello! I am ${personaName || "Maya"}, the official AI assistant for ${connectionName || "OmniTeam Store"}. You can test my conversational responses, delivery fee calculations, and custom prompt directives by clicking the quick scenarios above or typing a message below.`,
+      content: `Hello! I am ${personaName || "Maya"}, the official AI assistant for ${connectionName || "CHTeam Store"}. You can test my conversational responses, delivery fee calculations, and custom prompt directives by clicking the quick scenarios above or typing a message below.`,
     },
   ]);
 
@@ -146,7 +146,7 @@ export function ConnectionAiSimulatorModal({
       {
         id: "welcome",
         role: "model",
-        content: `Hello! I am ${personaName || "Maya"}, the official AI assistant for ${connectionName || "OmniTeam Store"}. Test session reset. Feel free to type or pick a test scenario above.`,
+        content: `Hello! I am ${personaName || "Maya"}, the official AI assistant for ${connectionName || "CHTeam Store"}. Test session reset. Feel free to type or pick a test scenario above.`,
       },
     ]);
   };

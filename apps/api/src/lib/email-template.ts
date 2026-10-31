@@ -1,9 +1,9 @@
 import { escapeHtml } from "./security.js";
 import { env } from "./env.js";
 
-const BRAND_NAME = "OmniTeam";
+const BRAND_NAME = "CHTeam";
 const BRAND_TAGLINE = "Shared WhatsApp inbox for teams";
-const SUPPORT_EMAIL = "hello@omniteam.com";
+const SUPPORT_EMAIL = "hello@colorhutbd.xyz";
 
 export interface EmailDetail {
   label: string;
@@ -102,7 +102,7 @@ export function renderBrandedEmail(content: BrandedEmailContent): string {
               <td style="padding:22px 30px;background:#173d2c;">
                 <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
                   <tr>
-                    <td width="48" style="width:48px;vertical-align:middle;padding-right:12px;"><img src="${logoUrl}" width="40" height="40" alt="OmniTeam" style="display:block;width:40px;height:40px;border:0;border-radius:10px;"></td>
+                    <td width="48" style="width:48px;vertical-align:middle;padding-right:12px;"><img src="${logoUrl}" width="40" height="40" alt="CHTeam" style="display:block;width:40px;height:40px;border:0;border-radius:10px;"></td>
                     <td style="color:#ffffff;font-family:Arial,'Helvetica Neue',Helvetica,sans-serif;font-size:17px;font-weight:700;letter-spacing:-0.01em;vertical-align:middle;">${BRAND_NAME}</td>
                     <td align="right" style="color:#a9d6bb;font-family:Arial,'Helvetica Neue',Helvetica,sans-serif;font-size:11px;font-weight:700;letter-spacing:0.09em;text-transform:uppercase;">${escapeHtml(content.eyebrow)}</td>
                   </tr>

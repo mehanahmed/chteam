@@ -147,7 +147,7 @@ export function LoginPage() {
       {/* Centered Frosted Glass Card with WhatsApp Aesthetics */}
       <div className="w-full max-w-[420px] rounded-[2rem] bg-white/85 dark:bg-[#111b21]/90 backdrop-blur-2xl border border-white/90 dark:border-white/10 shadow-[0_24px_64px_-16px_rgba(7,94,84,0.18)] dark:shadow-[0_24px_64px_-16px_rgba(0,0,0,0.7)] p-7 sm:p-9 text-slate-800 dark:text-slate-100 relative transition-all duration-300">
         
-        {/* OmniTeam Brand Logo */}
+        {/* CHTeam Brand Logo */}
         <div className="mx-auto mb-6 flex justify-center">
           <BrandLogo className="h-14 sm:h-16 w-auto object-contain drop-shadow-sm transition-transform duration-200 hover:scale-[1.02]" />
         </div>

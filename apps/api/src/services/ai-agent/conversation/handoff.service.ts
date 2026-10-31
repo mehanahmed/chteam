@@ -811,7 +811,7 @@ export class HandoffService {
             contactId,
             senderType: "user",
             sentByUserId: SYSTEM_AI_USER_ID,
-            sentByUserName: "OmniTeam Support (AI)",
+            sentByUserName: "CHTeam Support (AI)",
             messageType: "text",
             content: handoverText,
             status: "pending",

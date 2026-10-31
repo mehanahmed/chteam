@@ -68,7 +68,7 @@ export class MerchantKnowledgeService {
       companyId,
       connectionId,
       enabled: custom?.enabled ?? true,
-      storeName: custom?.storeName ?? "OmniTeam Store",
+      storeName: custom?.storeName ?? "CHTeam Store",
       personaName: custom?.personaName ?? "Maya",
       personaTone: custom?.personaTone ?? "friendly",
       insideDhakaFee: custom?.insideDhakaFee ?? defaultInsideDhaka,
@@ -94,7 +94,7 @@ export class MerchantKnowledgeService {
   async getMerchantSettings(companyId: string): Promise<MerchantAiSettings> {
     const custom = this.customSettings.get(companyId);
 
-    let storeName = "OmniTeam Store";
+    let storeName = "CHTeam Store";
 
     try {
       const tenantDb = getTenantConnection(companyId);
@@ -144,7 +144,7 @@ export class MerchantKnowledgeService {
           companyId,
           connectionId,
           enabled: row.enabled,
-          storeName: row.store_name || "OmniTeam Store",
+          storeName: row.store_name || "CHTeam Store",
           personaName: row.persona_name || "Maya",
           personaTone:
             (row.persona_tone as "friendly" | "formal" | "enthusiastic") ||
@@ -180,7 +180,7 @@ export class MerchantKnowledgeService {
       // Fall back to connection metadata lookup
     }
 
-    let storeName = "OmniTeam Store";
+    let storeName = "CHTeam Store";
     try {
       const tenantDb = getTenantConnection(companyId);
       const conn = await tenantDb
@@ -318,7 +318,7 @@ export class MerchantKnowledgeService {
         enabled: row ? row.enabled : true,
         personaName: row?.persona_name || "Maya",
         personaTone: row?.persona_tone || "friendly",
-        storeName: row?.store_name || conn.name || "OmniTeam Store",
+        storeName: row?.store_name || conn.name || "CHTeam Store",
         customInstructions: row?.custom_instructions || "",
         insideDhakaFee: row
           ? Number(row.inside_dhaka_fee)
