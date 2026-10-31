@@ -55,6 +55,7 @@ export interface Message {
   isDeleted?: boolean;
   isStarred?: boolean;
   reactions?: MessageReaction[];
+  seq?: number | null;
   createdAt: Date;
   updatedAt: Date;
 }

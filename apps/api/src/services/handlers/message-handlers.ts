@@ -869,13 +869,18 @@ export async function handleSendConfirmationEvent(
 
   try {
     const tenantDb = getTenantConnection(companyId);
+    const confirmationDate = payload.timestamp
+      ? toDbDate(payload.timestamp)
+      : null;
 
     // Always replace the temporary WhatsApp ID, but preserve a higher status
     // if an unusually fast delivery/read receipt was processed first.
+    // Also record the server-confirmed timestamp so chronological ordering aligns with WhatsApp.
     const updatedMessage = await tenantDb
       .updateTable("messages")
       .set({
         message_id: payload.messageId,
+        ...(confirmationDate ? { timestamp: confirmationDate } : {}),
         status: sql<MessageStatus>`CASE
           WHEN status IN ('delivered', 'read') THEN status
           ELSE 'sent'::message_status
@@ -893,7 +898,7 @@ export async function handleSendConfirmationEvent(
       })
       .where("message_id", "in", [payload.pendingMessageId, payload.messageId])
       .where("whatsapp_connection_id", "=", connectionId)
-      .returning(["id", "contact_id", "status"])
+      .returning(["id", "contact_id", "status", "timestamp"])
       .executeTakeFirst();
 
     logger.debug(
@@ -907,7 +912,7 @@ export async function handleSendConfirmationEvent(
     );
 
     // Broadcast to clients with the correct payload format
-    // Frontend expects: { conversationId, messageId (internal), status }
+    // Frontend expects: { conversationId, messageId (internal), status, timestamp }
     if (updatedMessage?.id && updatedMessage?.contact_id) {
       await broadcastToContactViewers(
         companyId,
@@ -917,6 +922,7 @@ export async function handleSendConfirmationEvent(
           conversationId: updatedMessage.contact_id,
           messageId: updatedMessage.id,
           status: updatedMessage.status ?? "sent",
+          timestamp: updatedMessage.timestamp,
         },
         { connectionId },
       );

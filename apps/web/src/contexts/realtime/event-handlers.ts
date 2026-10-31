@@ -204,9 +204,13 @@ export function registerRealtimeEventHandlers({
         payload.messageId,
         (message) => {
           const status = advanceMessageStatus(message.status, payload.status);
+          const serverTimestamp = (payload as any).timestamp
+            ? new Date((payload as any).timestamp)
+            : null;
           return {
             ...message,
             status,
+            ...(serverTimestamp ? { createdAt: serverTimestamp } : {}),
             ...(payload.metadata && status === "pending"
               ? { metadata: { ...message.metadata, ...payload.metadata } }
               : {}),

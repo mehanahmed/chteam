@@ -195,6 +195,7 @@ export async function listCustomerTimeline(
           .where("conversation_id", "in", conversationIds)
           .where(keyset)
           .orderBy("timestamp", "desc")
+          .orderBy("seq", "desc")
           .orderBy("id", "desc")
           .limit(probe)
           .execute()
@@ -209,6 +210,7 @@ export async function listCustomerTimeline(
           .where("contact_id", "in", contactIds)
           .where(keyset)
           .orderBy("timestamp", "desc")
+          .orderBy("seq", "desc")
           .orderBy("id", "desc")
           .limit(probe)
           .execute()
@@ -241,5 +243,8 @@ export async function listCustomerTimeline(
 function compareNewestFirst(left: MessageDbRow, right: MessageDbRow): number {
   const difference = right.timestamp.getTime() - left.timestamp.getTime();
   if (difference !== 0) return difference;
+  const rightSeq = right.seq != null ? Number(right.seq) : 0;
+  const leftSeq = left.seq != null ? Number(left.seq) : 0;
+  if (rightSeq !== leftSeq) return rightSeq - leftSeq;
   return right.id.localeCompare(left.id);
 }

@@ -183,13 +183,14 @@ messageRoutes.get(
         qb.where("contact_id", "=", contactId),
       )
       .orderBy("timestamp", "desc")
+      .orderBy("seq", "desc")
       .orderBy("id", "desc")
       .limit(limit);
 
     if (cursor) {
       const cursorMessage = await tenantDb
         .selectFrom("messages")
-        .select(["timestamp", "id"])
+        .select(["timestamp", "seq", "id"])
         .where("id", "=", cursor)
         .$if(Boolean(historyConversationId), (qb) =>
           qb.where("conversation_id", "=", historyConversationId!),
@@ -208,7 +209,15 @@ messageRoutes.get(
           eb("timestamp", "<", cursorMessage.timestamp),
           eb.and([
             eb("timestamp", "=", cursorMessage.timestamp),
-            eb("id", "<", cursorMessage.id),
+            cursorMessage.seq != null
+              ? eb.or([
+                  eb("seq", "<", cursorMessage.seq),
+                  eb.and([
+                    eb("seq", "=", cursorMessage.seq),
+                    eb("id", "<", cursorMessage.id),
+                  ]),
+                ])
+              : eb("id", "<", cursorMessage.id),
           ]),
         ]),
       );
@@ -667,6 +676,18 @@ messageRoutes.post(
           user.id,
         );
         neutralAutoAssigned = access.autoAssigned;
+        const latestRow = await trx
+          .selectFrom("messages")
+          .select("timestamp")
+          .where("conversation_id", "=", neutralConversation.id)
+          .orderBy("timestamp", "desc")
+          .limit(1)
+          .executeTakeFirst();
+        const now = new Date();
+        const sendTimestamp =
+          latestRow?.timestamp && latestRow.timestamp.getTime() >= now.getTime()
+            ? new Date(latestRow.timestamp.getTime() + 1000)
+            : now;
         await trx
           .insertInto("messages")
           .values({
@@ -694,7 +715,7 @@ messageRoutes.post(
             sent_by_user_id: user.id,
             status: "pending",
             metadata: {},
-            timestamp: new Date(),
+            timestamp: sendTimestamp,
             case_id: access.caseId,
             channel_account_id: neutralConversation.channel_account_id,
             conversation_id: neutralConversation.id,
@@ -851,6 +872,18 @@ messageRoutes.post(
       await reserveMediaReferences(trx, companyId, [storedMediaReference]);
       const result = await requireSendAccess(trx, contactId, user.id);
       autoAssigned = result.autoAssigned;
+      const latestRow = await trx
+        .selectFrom("messages")
+        .select("timestamp")
+        .where("contact_id", "=", contactId)
+        .orderBy("timestamp", "desc")
+        .limit(1)
+        .executeTakeFirst();
+      const now = new Date();
+      const sendTimestamp =
+        latestRow?.timestamp && latestRow.timestamp.getTime() >= now.getTime()
+          ? new Date(latestRow.timestamp.getTime() + 1000)
+          : now;
       await trx
         .insertInto("messages")
         .values({
@@ -867,8 +900,8 @@ messageRoutes.post(
           quoted_message_id: quotedWaMessageId || null,
           sent_by_user_id: user.id,
           status: "pending",
-          timestamp: new Date(),
-          created_at: new Date(),
+          timestamp: sendTimestamp,
+          created_at: now,
           case_id: result.caseId,
         })
         .execute();

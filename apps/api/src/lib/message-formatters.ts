@@ -428,6 +428,7 @@ export function formatMessageForConversation(
     isDeleted: msg.deleted_by_sender || !!msg.deleted_at,
     deletedAt: msg.deleted_at,
     status: msg.status || (msg.from_me ? "sent" : "delivered"),
+    seq: msg.seq != null ? Number(msg.seq) : null,
     timestamp: msg.timestamp,
     // `created_at` is when the row reached our database. History pages may be
     // imported months after the message was sent, so the UI-facing message date
