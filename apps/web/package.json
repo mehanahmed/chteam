@@ -13,7 +13,7 @@
   },
   "dependencies": {
     "@audiowave/react": "^0.6.2",
-    "@hookform/resolvers": "^5.9.1",
+    "@hookform/resolvers": "^6.0.0",
     "@omniteam/shared": "workspace:*",
     "@radix-ui/react-avatar": "^1.1.11",
     "@radix-ui/react-checkbox": "^1.3.3",
