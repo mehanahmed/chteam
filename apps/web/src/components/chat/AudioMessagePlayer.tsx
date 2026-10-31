@@ -233,7 +233,7 @@ export function AudioMessagePlayer({
 
   return (
     <div
-      className={`relative flex items-center justify-between w-full min-w-[290px] max-w-[340px] select-none ${className}`}
+      className={`relative w-full min-w-[280px] max-w-[340px] select-none py-0.5 ${className}`}
       aria-label={ariaLabel}
     >
       {/* Hidden audio element that drives playback */}
@@ -262,160 +262,155 @@ export function AudioMessagePlayer({
         onPlaying={() => setIsLoading(false)}
       />
 
-      {/* LEFT SECTION: Play button + Waveform + Duration & Timestamp */}
-      <div className="flex-1 min-w-0 flex flex-col justify-center pr-3">
-        {/* Top relative row with context menu chevron and waveform */}
-        <div className="relative flex items-center gap-2.5">
-          {/* WhatsApp-style minimal solid black Play / Pause button */}
-          <button
-            type="button"
-            onClick={togglePlay}
-            className="flex size-7 shrink-0 items-center justify-center text-black dark:text-[#e9edef] transition-transform active:scale-95"
-            aria-label={isPlaying ? "Pause voice message" : "Play voice message"}
-          >
-            {isLoading ? (
-              <Loader2 className="size-4.5 animate-spin text-black dark:text-[#e9edef]" />
-            ) : isPlaying ? (
-              /* WhatsApp Pause SVG */
-              <svg viewBox="0 0 24 24" height="20" width="20" fill="currentColor">
-                <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" />
-              </svg>
-            ) : (
-              /* WhatsApp Play Triangle SVG */
-              <svg viewBox="0 0 24 24" height="20" width="20" fill="currentColor">
-                <path d="M9.53 18.02a.91.91 0 0 1-1.02.04.95.95 0 0 1-.51-.88V6.82c0-.4.17-.7.51-.88a.91.91 0 0 1 1.02.03l8.15 5.18c.3.2.45.48.45.85s-.15.65-.45.85l-8.15 5.17Z" />
-              </svg>
-            )}
-          </button>
+      {/* Main Row: Play button + Waveform + Avatar - all vertically centered together */}
+      <div className="flex items-center gap-2.5">
+        {/* WhatsApp-style minimal solid black Play / Pause button */}
+        <button
+          type="button"
+          onClick={togglePlay}
+          className="flex size-7 shrink-0 items-center justify-center text-black dark:text-[#e9edef] transition-transform active:scale-95"
+          aria-label={isPlaying ? "Pause voice message" : "Play voice message"}
+        >
+          {isLoading ? (
+            <Loader2 className="size-4.5 animate-spin text-black dark:text-[#e9edef]" />
+          ) : isPlaying ? (
+            /* WhatsApp Pause SVG */
+            <svg viewBox="0 0 24 24" height="20" width="20" fill="currentColor">
+              <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" />
+            </svg>
+          ) : (
+            /* WhatsApp Play Triangle SVG */
+            <svg viewBox="0 0 24 24" height="20" width="20" fill="currentColor">
+              <path d="M9.53 18.02a.91.91 0 0 1-1.02.04.95.95 0 0 1-.51-.88V6.82c0-.4.17-.7.51-.88a.91.91 0 0 1 1.02.03l8.15 5.18c.3.2.45.48.45.85s-.15.65-.45.85l-8.15 5.17Z" />
+            </svg>
+          )}
+        </button>
 
-          {/* Waveform track with Cyan Scrubber Thumb */}
-          <div
-            ref={trackRef}
-            onPointerDown={handlePointerDown}
-            onPointerMove={handlePointerMove}
-            onPointerUp={handlePointerUp}
-            className="relative flex-1 h-6 flex items-center cursor-pointer select-none group touch-none"
-            role="slider"
-            aria-valuenow={currentTime}
-            aria-valuemin={0}
-            aria-valuemax={duration}
-            tabIndex={0}
-          >
-            {/* Waveform bars container (matching WhatsApp Web pixel-by-pixel) */}
-            <div className="relative h-6 w-full flex items-center justify-between gap-[2px]">
-              {waveformData.map((heightPct, idx) => {
-                const barPercent = (idx / BARS_COUNT) * 100;
-                const isFilled = barPercent <= progressPercent;
+        {/* Waveform track with Cyan Scrubber Thumb */}
+        <div
+          ref={trackRef}
+          onPointerDown={handlePointerDown}
+          onPointerMove={handlePointerMove}
+          onPointerUp={handlePointerUp}
+          className="relative flex-1 h-6 flex items-center cursor-pointer select-none group touch-none"
+          role="slider"
+          aria-valuenow={currentTime}
+          aria-valuemin={0}
+          aria-valuemax={duration}
+          tabIndex={0}
+        >
+          {/* Waveform bars container (matching WhatsApp Web pixel-by-pixel) */}
+          <div className="relative h-6 w-full flex items-center justify-between gap-[2px]">
+            {waveformData.map((heightPct, idx) => {
+              const barPercent = (idx / BARS_COUNT) * 100;
+              const isFilled = barPercent <= progressPercent;
 
-                return (
-                  <span
-                    key={idx}
-                    className={`w-[2px] rounded-full transition-colors duration-100 ${
-                      isFilled
-                        ? "bg-[#34B7F1]"
-                        : isOwn
-                          ? "bg-[#8696a0]/50 dark:bg-white/35"
-                          : "bg-[#c5cacd] dark:bg-white/35"
-                    }`}
-                    style={{ height: `${heightPct}%` }}
-                  />
-                );
-              })}
-
-              {/* Cyan Playhead Scrubber Knob Dot */}
-              <div
-                className="pointer-events-none absolute top-1/2 -translate-y-1/2 -translate-x-1/2 transition-transform group-hover:scale-115"
-                style={{ left: `${progressPercent}%` }}
-              >
-                <div className="size-3.5 rounded-full bg-[#34B7F1] shadow-[0_1px_3px_rgba(52,183,241,0.5)] ring-1 ring-white/60 dark:ring-black/20" />
-              </div>
-            </div>
-
-            {/* Live canvas visualizer from @audiowave/react when playing */}
-            {source && isPlaying && (
-              <div className="absolute inset-0 pointer-events-none opacity-30 overflow-hidden">
-                <AudioWave
-                  source={source}
-                  width="100%"
-                  height={24}
-                  barColor="#34B7F1"
-                  secondaryBarColor="transparent"
-                  barWidth={2}
-                  gap={2}
-                  rounded={1}
-                  amplitudeMode="peak"
-                  animateCurrentPick={true}
-                  isPaused={!isPlaying}
-                  onError={() => {}}
+              return (
+                <span
+                  key={idx}
+                  className={`w-[2px] rounded-full transition-colors duration-100 ${
+                    isFilled
+                      ? "bg-[#34B7F1]"
+                      : isOwn
+                        ? "bg-[#8696a0]/50 dark:bg-white/35"
+                        : "bg-[#c5cacd] dark:bg-white/35"
+                  }`}
+                  style={{ height: `${heightPct}%` }}
                 />
-              </div>
-            )}
+              );
+            })}
+
+            {/* Cyan Playhead Scrubber Knob Dot */}
+            <div
+              className="pointer-events-none absolute top-1/2 -translate-y-1/2 -translate-x-1/2 transition-transform group-hover:scale-115"
+              style={{ left: `${progressPercent}%` }}
+            >
+              <div className="size-3.5 rounded-full bg-[#34B7F1] shadow-[0_1px_3px_rgba(52,183,241,0.5)] ring-1 ring-white/60 dark:ring-black/20" />
+            </div>
           </div>
 
-
-        </div>
-
-        {/* Lower Row: Duration on Left (0:03), Timestamp / Status on Right (3:39 PM) */}
-        <div className="flex items-center justify-between text-[11px] leading-3 text-[#667781] dark:text-[#8696a0] mt-1.5 pl-[38px] select-none tabular-nums">
-          <span>{isPlaying ? formatDuration(currentTime) : formatDuration(duration)}</span>
-          {meta ? (
-            <div className="flex items-center">{meta}</div>
-          ) : timestamp ? (
-            <span>{timestamp}</span>
-          ) : null}
-        </div>
-      </div>
-
-      {/* RIGHT SECTION: 55px Circular Avatar with Cyan Mic Badge & Speed Toggle */}
-      <div
-        className="relative shrink-0 size-[55px] select-none group/avatar"
-        onMouseEnter={() => setIsAvatarHovered(true)}
-        onMouseLeave={() => setIsAvatarHovered(false)}
-      >
-        {/* 55px Avatar circle */}
-        <div className="size-[55px] rounded-full overflow-hidden bg-gray-200 dark:bg-gray-700 shadow-xs border border-black/5 dark:border-white/10">
-          {avatarUrl ? (
-            <img
-              src={avatarUrl}
-              alt={senderName || "Sender"}
-              className="size-full object-cover"
-              onError={(e) => {
-                (e.currentTarget as HTMLElement).style.display = "none";
-              }}
-            />
-          ) : (
-            <div className="size-full flex items-center justify-center bg-[#00a884] text-white font-semibold text-xl">
-              {(senderName || "U").charAt(0).toUpperCase()}
+          {/* Live canvas visualizer from @audiowave/react when playing */}
+          {source && isPlaying && (
+            <div className="absolute inset-0 pointer-events-none opacity-30 overflow-hidden">
+              <AudioWave
+                source={source}
+                width="100%"
+                height={24}
+                barColor="#34B7F1"
+                secondaryBarColor="transparent"
+                barWidth={2}
+                gap={2}
+                rounded={1}
+                amplitudeMode="peak"
+                animateCurrentPick={true}
+                isPaused={!isPlaying}
+                onError={() => {}}
+              />
             </div>
           )}
         </div>
 
-        {/* Cyan Mic badge at bottom-left corner of avatar */}
+        {/* RIGHT SECTION: Circular Avatar with Cyan Mic Badge & Speed Toggle */}
         <div
-          className="absolute -bottom-0.5 -left-1.5 size-5 rounded-full bg-white dark:bg-[#202c33] shadow-[0_1px_2px_rgba(0,0,0,0.18)] flex items-center justify-center z-10 pointer-events-none"
-          title="Voice message"
+          className="relative shrink-0 size-[48px] select-none group/avatar ml-1"
+          onMouseEnter={() => setIsAvatarHovered(true)}
+          onMouseLeave={() => setIsAvatarHovered(false)}
         >
-          <svg viewBox="0 0 24 24" height="13" width="13" fill="#34B7F1">
-            <path d="M12 14a2.9 2.9 0 0 1-2.13-.88A2.9 2.9 0 0 1 9 11V5c0-.83.3-1.54.88-2.13A2.9 2.9 0 0 1 12 2c.83 0 1.54.3 2.13.88.58.58.87 1.29.87 2.12v6c0 .83-.3 1.54-.88 2.13A2.9 2.9 0 0 1 12 14Zm0 7a.97.97 0 0 1-.71-.29A.97.97 0 0 1 11 20v-2.1a6.86 6.86 0 0 1-5.92-5.82.84.84 0 0 1 .22-.76c.2-.21.47-.32.8-.32.23 0 .44.09.63.26.18.18.3.39.34.64a4.93 4.93 0 0 0 1.7 2.92c.92.79 2 1.18 3.23 1.18s2.3-.4 3.22-1.18a4.93 4.93 0 0 0 1.7-2.92c.05-.25.18-.46.37-.64a1 1 0 0 1 1.41.06c.2.22.28.47.23.75A6.86 6.86 0 0 1 13 17.9V20c0 .28-.1.52-.29.71A.94.94 0 0 1 12 21Z" />
-          </svg>
-        </div>
-
-        {/* Playback Speed Pill Button Overlay (displays when playing, hovered, or changed speed) */}
-        <button
-          type="button"
-          onClick={cycleSpeed}
-          className={`absolute inset-0 flex items-center justify-center rounded-full bg-black/45 backdrop-blur-[1px] transition-opacity cursor-pointer z-20 ${
-            isPlaying || isAvatarHovered || speedIndex > 0
-              ? "opacity-100"
-              : "opacity-0 group-hover/avatar:opacity-100"
-          }`}
-          title={`Playback speed: ${currentSpeed}× (click to change)`}
-          aria-label={`Change playback speed, currently ${currentSpeed}×`}
-        >
-          <div className="rounded-full bg-black/75 px-2 py-0.5 text-[12px] font-semibold text-white shadow-xs">
-            {currentSpeed}×
+          {/* 48px Avatar circle */}
+          <div className="size-[48px] rounded-full overflow-hidden bg-gray-200 dark:bg-gray-700 shadow-xs border border-black/5 dark:border-white/10">
+            {avatarUrl ? (
+              <img
+                src={avatarUrl}
+                alt={senderName || "Sender"}
+                className="size-full object-cover"
+                onError={(e) => {
+                  (e.currentTarget as HTMLElement).style.display = "none";
+                }}
+              />
+            ) : (
+              <div className="size-full flex items-center justify-center bg-[#00a884] text-white font-semibold text-xl">
+                {(senderName || "U").charAt(0).toUpperCase()}
+              </div>
+            )}
           </div>
-        </button>
+
+          {/* Cyan Mic badge at bottom-left corner of avatar */}
+          <div
+            className="absolute -bottom-0.5 -left-1 size-4.5 rounded-full bg-white dark:bg-[#202c33] shadow-[0_1px_2px_rgba(0,0,0,0.18)] flex items-center justify-center z-10 pointer-events-none"
+            title="Voice message"
+          >
+            <svg viewBox="0 0 24 24" height="11" width="11" fill="#34B7F1">
+              <path d="M12 14a2.9 2.9 0 0 1-2.13-.88A2.9 2.9 0 0 1 9 11V5c0-.83.3-1.54.88-2.13A2.9 2.9 0 0 1 12 2c.83 0 1.54.3 2.13.88.58.58.87 1.29.87 2.12v6c0 .83-.3 1.54-.88 2.13A2.9 2.9 0 0 1 12 14Zm0 7a.97.97 0 0 1-.71-.29A.97.97 0 0 1 11 20v-2.1a6.86 6.86 0 0 1-5.92-5.82.84.84 0 0 1 .22-.76c.2-.21.47-.32.8-.32.23 0 .44.09.63.26.18.18.3.39.34.64a4.93 4.93 0 0 0 1.7 2.92c.92.79 2 1.18 3.23 1.18s2.3-.4 3.22-1.18a4.93 4.93 0 0 0 1.7-2.92c.05-.25.18-.46.37-.64a1 1 0 0 1 1.41.06c.2.22.28.47.23.75A6.86 6.86 0 0 1 13 17.9V20c0 .28-.1.52-.29.71A.94.94 0 0 1 12 21Z" />
+            </svg>
+          </div>
+
+          {/* Playback Speed Pill Button Overlay */}
+          <button
+            type="button"
+            onClick={cycleSpeed}
+            className={`absolute inset-0 flex items-center justify-center rounded-full bg-black/45 backdrop-blur-[1px] transition-opacity cursor-pointer z-20 ${
+              isPlaying || isAvatarHovered || speedIndex > 0
+                ? "opacity-100"
+                : "opacity-0 group-hover/avatar:opacity-100"
+            }`}
+            title={`Playback speed: ${currentSpeed}× (click to change)`}
+            aria-label={`Change playback speed, currently ${currentSpeed}×`}
+          >
+            <div className="rounded-full bg-black/75 px-2 py-0.5 text-[11px] font-semibold text-white shadow-xs">
+              {currentSpeed}×
+            </div>
+          </button>
+        </div>
+      </div>
+
+      {/* Lower Row: Duration on Left (aligned with waveform), Timestamp on Right (before avatar) */}
+      <div className="flex items-center justify-between text-[11px] leading-3 text-[#667781] dark:text-[#8696a0] mt-1 pl-[38px] pr-[58px] select-none tabular-nums">
+        <span>{isPlaying ? formatDuration(currentTime) : formatDuration(duration)}</span>
+        {meta ? (
+          <div className="flex items-center">{meta}</div>
+        ) : timestamp ? (
+          <span>{timestamp}</span>
+        ) : null}
       </div>
     </div>
   );
