@@ -260,13 +260,13 @@ export function useGroupsAsChats(searchQuery: string = "") {
  * Hook to fetch a single chat by ID
  */
 export function useChat(chatId: string) {
-  return useQuery<Chat | undefined, Error>({
+  return useQuery<Chat | null, Error>({
     queryKey: chatKeys.detail(chatId),
     queryFn: async () => {
       const token = getAccessToken();
       const companyId = getCompanyId();
       if (!token || !companyId) {
-        return undefined;
+        return null;
       }
 
       // Fetch single contact and transform to Chat format

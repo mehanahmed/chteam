@@ -96,9 +96,13 @@ export function MessageHeader({
       if (!contactId) return null;
       try {
         const res = await api.get<{
-          data: { isPaused: boolean; tags: string[]; lastReason?: string };
-        }>(`/ai-agent/contacts/${contactId}/status`);
-        return res.data;
+          isPaused: boolean;
+          tags: string[];
+          lastReason?: string;
+        } | { data: { isPaused: boolean; tags: string[]; lastReason?: string } }>(
+          `/ai-agent/contacts/${contactId}/status`,
+        );
+        return (res as { data?: unknown })?.data ?? res ?? null;
       } catch {
         return null;
       }
