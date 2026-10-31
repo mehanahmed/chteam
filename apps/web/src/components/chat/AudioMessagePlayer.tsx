@@ -352,12 +352,7 @@ export function AudioMessagePlayer({
             )}
           </div>
 
-          {/* Context menu chevron icon at top right */}
-          <div className="absolute right-0 -top-2 opacity-60 hover:opacity-100 transition-opacity text-[#8696a0] pointer-events-none">
-            <svg viewBox="0 0 18 18" height="15" width="15" fill="currentColor">
-              <path d="M3.3 5.7L9 11.4l5.7-5.7.8.8-6.5 6.5L2.5 6.5l.8-.8z" />
-            </svg>
-          </div>
+
         </div>
 
         {/* Lower Row: Duration on Left (0:03), Timestamp / Status on Right (3:39 PM) */}
