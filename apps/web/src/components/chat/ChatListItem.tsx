@@ -14,7 +14,7 @@ import {
   ChannelAvatarBadge,
   MergedCustomerAvatarBadge,
 } from "./ChannelIdentity";
-import { ConnectionBadge } from "./ConnectionIdentity";
+import { AssignedUserBadge } from "./AssignedUserBadge";
 import { ConversationStatusBadge } from "./ConversationStatusBadge";
 import { resolveMentionNames } from "./group-mentions";
 
@@ -34,6 +34,7 @@ export const ChatListItem = memo(function ChatListItem({
   chat,
   isSelected,
   onClick,
+  assignedUser,
   onPrefetch,
   onContextMenu,
 }: ChatListItemProps) {
@@ -41,6 +42,31 @@ export const ChatListItem = memo(function ChatListItem({
 
   const { contact, lastMessage, unreadCount } = chat;
   const { user } = useAuth();
+
+  const assignedUserId =
+    chat.assignedTo ||
+    (contact as { assignment?: { assignedTo?: string } }).assignment?.assignedTo ||
+    (contact as { assignedTo?: string }).assignedTo;
+
+  const assignedName = useMemo(() => {
+    if (!assignedUserId) return null;
+    if (assignedUser?.name) return assignedUser.name;
+    if (user && assignedUserId === user.id) {
+      return user.name || user.email?.split("@")[0] || t("chat.you", "You");
+    }
+    return t("contacts.assigned", "Assigned");
+  }, [assignedUserId, assignedUser?.name, user, t]);
+
+  const assignedAvatarUrl = useMemo(() => {
+    if (!assignedUserId) return null;
+    if (assignedUser) {
+      return assignedUser.avatarUrl || assignedUser.gravatarUrl || null;
+    }
+    if (user && assignedUserId === user.id) {
+      return user.avatarUrl ?? null;
+    }
+    return null;
+  }, [assignedUserId, assignedUser, user]);
 
   // Memoize prefetch handler to prevent unnecessary re-renders
   const handlePrefetch = useCallback(() => {
@@ -268,11 +294,10 @@ export const ChatListItem = memo(function ChatListItem({
             {chat.conversationStatus !== "open" && (
               <ConversationStatusBadge status={chat.conversationStatus} />
             )}
-            {contact.connection && (
-              <ConnectionBadge
-                connection={contact.connection}
-                compact
-                className="max-w-[92px] shrink-0"
+            {assignedName && (
+              <AssignedUserBadge
+                name={assignedName}
+                avatarUrl={assignedAvatarUrl}
               />
             )}
             {/* A merged customer is one row here. This says how many threads

@@ -102,6 +102,12 @@ export interface ChatListItemProps {
   chat: Chat;
   isSelected: boolean;
   onClick: () => void;
+  assignedUser?: {
+    userId: string;
+    name: string;
+    avatarUrl: string | null;
+    gravatarUrl: string | null;
+  } | null;
   /** Optional callback to prefetch chat data on hover */
   onPrefetch?: (chatId: string) => void;
   /** Optional callback for right-click context menu */

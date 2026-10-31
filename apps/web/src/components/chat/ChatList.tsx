@@ -36,6 +36,7 @@ import {
 import { usePrefetchContact } from "../../hooks/usePrefetch";
 import { useWhatsAppConnections } from "../../hooks/useWhatsAppConnections";
 import { useArchiveContact } from "../../hooks/contact/useContactDetails";
+import { useTeamMemberIdentities } from "@/hooks/useTeam";
 import { mergeInboxChats } from "../../lib/api/transformers";
 import { workspacePath } from "../../lib/workspace-routes";
 import type { Chat, ChatListProps } from "../../types/chat";
@@ -181,6 +182,14 @@ export const ChatList = memo(function ChatList({
     100,
     EMPTY_TAG_IDS,
     true,
+  );
+
+  const { data: memberIdentities = [] } = useTeamMemberIdentities(
+    activeWorkspace?.id ?? null,
+  );
+  const memberMap = useMemo(
+    () => new Map(memberIdentities.map((m) => [m.userId, m])),
+    [memberIdentities],
   );
   const archivedCount = useMemo(
     () => mergeInboxChats(archivedChats, archivedChannelConversations).length,
@@ -1113,6 +1122,11 @@ export const ChatList = memo(function ChatList({
                 >
                   <ChatListItem
                     chat={chat}
+                    assignedUser={
+                      chat.assignedTo
+                        ? memberMap.get(chat.assignedTo)
+                        : undefined
+                    }
                     isSelected={
                       chat.id === selectedChatId ||
                       chat.contact.id === selectedChatId ||
