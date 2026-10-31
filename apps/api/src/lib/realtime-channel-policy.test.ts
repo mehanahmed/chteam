@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 import {
   COMPANY_REALTIME_EVENT_TYPES,
   CONVERSATION_REALTIME_EVENT_TYPES,
@@ -19,7 +20,7 @@ import {
  * classification itself, which the type system cannot judge.
  */
 
-const SRC = new URL("..", import.meta.url).pathname;
+const SRC = fileURLToPath(new URL("..", import.meta.url));
 
 function sourceFiles(dir: string, acc: string[] = []): string[] {
   for (const entry of readdirSync(dir)) {

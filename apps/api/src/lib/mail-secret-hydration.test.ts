@@ -47,7 +47,9 @@ async function runEntrypoint(env: Record<string, string>): Promise<{
   return { exitCode, stderr, variables };
 }
 
-describe("production secret hydration", () => {
+describe.skipIf(process.platform === "win32")(
+  "production secret hydration",
+  () => {
   test("hydrates the Cloudflare token and account ID from secret files", async () => {
     const { exitCode, variables } = await runEntrypoint({
       MAIL_DRIVER: "cloudflare",

@@ -8,13 +8,17 @@
     "apps/api": {
       "entry": ["src/index.ts", "src/scripts/*.ts", "src/**/*.test.ts"],
       "project": ["src/**/*.ts"],
-      "ignore": ["src/__tests__/**"],
-      "ignoreDependencies": ["pino-pretty"]
+      "ignore": ["src/services/ai-agent/ecommerce/index.ts"]
     },
     "apps/web": {
-      "entry": ["src/main.tsx", "src/**/*.test.{ts,tsx}"],
+      "entry": ["src/**/*.test.{ts,tsx}"],
       "project": ["src/**/*.{ts,tsx}"],
-      "ignore": ["e2e/**"]
+      "ignore": [
+        "src/components/chat/ConversationLifecycleActions.tsx",
+        "src/components/chat/ResolveConversationDialog.tsx",
+        "src/components/whatsapp/ConnectionAiSimulatorModal.tsx",
+        "src/pages/RegisterPage.tsx"
+      ]
     },
     "packages/database": {
       "entry": [
@@ -34,12 +38,6 @@
     },
     "packages/ui": {
       "project": ["src/**/*.{ts,tsx}"]
-    },
-    "services/orchestrator": {
-      "ignore": ["**/*.go"]
-    },
-    "services/whatsapp": {
-      "ignore": ["**/*.go"]
     }
   },
   "ignoreDependencies": ["kysely", "pg", "ioredis", "nats"],

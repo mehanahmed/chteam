@@ -1,4 +1,4 @@
-name: ${COMPOSE_PROJECT_NAME:-omniteam-production}
+name: ${COMPOSE_PROJECT_NAME:-wateaminbox-production}
 
 x-service-defaults: &service-defaults
   restart: unless-stopped
@@ -62,7 +62,7 @@ services:
 
   web:
     <<: *service-defaults
-    image: omniteam/web:${APP_IMAGE_TAG:?set APP_IMAGE_TAG}
+    image: wateaminbox/web:${APP_IMAGE_TAG:?set APP_IMAGE_TAG}
     build:
       context: .
       dockerfile: apps/web/Dockerfile
@@ -113,7 +113,7 @@ services:
   migration:
     <<: *service-defaults
     restart: "no"
-    image: omniteam/migration:${APP_IMAGE_TAG:?set APP_IMAGE_TAG}
+    image: wateaminbox/migration:${APP_IMAGE_TAG:?set APP_IMAGE_TAG}
     build:
       context: .
       dockerfile: apps/api/Dockerfile
@@ -134,7 +134,7 @@ services:
   worker-artifact-installer:
     <<: *service-defaults
     restart: "no"
-    image: omniteam/whatsapp-worker-artifact:${WORKER_IMAGE_TAG:-${APP_IMAGE_TAG:?set APP_IMAGE_TAG}}
+    image: wateaminbox/whatsapp-worker-artifact:${WORKER_IMAGE_TAG:-${APP_IMAGE_TAG:?set APP_IMAGE_TAG}}
     build:
       context: .
       dockerfile: services/whatsapp/Dockerfile
@@ -144,14 +144,14 @@ services:
       # safe when an existing deployment script rebuilds a mutable image tag.
       WORKER_ARTIFACT_VERSION: ${WORKER_ARTIFACT_VERSION:-}
     volumes:
-      - whatsapp_worker_artifacts:/var/lib/omniteam/worker-artifacts
+      - whatsapp_worker_artifacts:/var/lib/wateaminbox/worker-artifacts
     network_mode: none
     read_only: true
     tmpfs: [/tmp]
 
   api:
     <<: *service-defaults
-    image: omniteam/api:${APP_IMAGE_TAG:?set APP_IMAGE_TAG}
+    image: wateaminbox/api:${APP_IMAGE_TAG:?set APP_IMAGE_TAG}
     build:
       context: .
       dockerfile: apps/api/Dockerfile
@@ -264,7 +264,7 @@ services:
 
   orchestrator:
     <<: *service-defaults
-    image: omniteam/orchestrator:${APP_IMAGE_TAG:?set APP_IMAGE_TAG}
+    image: wateaminbox/orchestrator:${APP_IMAGE_TAG:?set APP_IMAGE_TAG}
     build:
       context: .
       dockerfile: services/orchestrator/Dockerfile
@@ -276,16 +276,16 @@ services:
       # Operators read it through docker exec as root; workers run under unique
       # unprivileged UIDs and cannot read this file or the manager environment.
       HTTP_ADDR: 127.0.0.1:8080
-      EPHEMERAL_HTTP_BEARER_TOKEN_FILE: /run/omniteam-control/http-bearer-token
+      EPHEMERAL_HTTP_BEARER_TOKEN_FILE: /run/wateaminbox-control/http-bearer-token
       ORCHESTRATOR_ROOT_MANAGER_APPROVED: "true"
       WORKER_POSTGRES_PASSWORD_FILE: /run/secrets/worker_postgres_password
       NATS_WORKER_PASSWORD_FILE: /run/secrets/nats_worker_password
       # Bootstrap/default is tied to the application release, not the independently
       # staged WORKER_IMAGE_TAG. A WhatsApp-only image change therefore recreates
       # only the installer; completed rollout history supplies later defaults.
-      WORKER_ARTIFACT_ROOT: /var/lib/omniteam/worker-artifacts
+      WORKER_ARTIFACT_ROOT: /var/lib/wateaminbox/worker-artifacts
       WORKER_DEFAULT_ARTIFACT_VERSION: ${WORKER_BOOTSTRAP_ARTIFACT_VERSION:-bootstrap}
-      WHATSAPP_BINARY_PATH: /var/lib/omniteam/worker-artifacts/${WORKER_BOOTSTRAP_ARTIFACT_VERSION:-bootstrap}/whatsapp-worker
+      WHATSAPP_BINARY_PATH: /var/lib/wateaminbox/worker-artifacts/${WORKER_BOOTSTRAP_ARTIFACT_VERSION:-bootstrap}/whatsapp-worker
       WORKER_ROLLOUT_READY_TIMEOUT: ${WORKER_ROLLOUT_READY_TIMEOUT:-2m}
       HEALTH_CHECK_INTERVAL: 30s
       AUTO_RESTART_ENABLED: "true"
@@ -327,11 +327,11 @@ services:
       nats:
         condition: service_healthy
     volumes:
-      - whatsapp_worker_artifacts:/var/lib/omniteam/worker-artifacts:ro
+      - whatsapp_worker_artifacts:/var/lib/wateaminbox/worker-artifacts:ro
     read_only: true
     tmpfs:
       - /tmp
-      - /run/omniteam-control:mode=0700,uid=0,gid=0
+      - /run/wateaminbox-control:mode=0700,uid=0,gid=0
     # The orchestrator allows itself 30s to shut down: it records recovery intent
     # for every worker, then stops each WhatsApp child process, allowing 5s per
     # worker before escalating to SIGKILL. Docker's 10s default would SIGKILL the
@@ -419,7 +419,7 @@ services:
     build:
       context: .
       dockerfile: infrastructure/centrifugo/Dockerfile
-    image: omniteam/centrifugo:v6.9.1-redacted
+    image: wateaminbox/centrifugo:v6.9.1-redacted
     entrypoint: ["/usr/local/bin/centrifugo-secret-entrypoint"]
     command: ["centrifugo", "--config=/centrifugo/config.json"]
     environment:

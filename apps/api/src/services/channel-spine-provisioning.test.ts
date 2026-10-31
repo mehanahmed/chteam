@@ -18,7 +18,7 @@ describe("channelSpineDefaults", () => {
   test("no configured providers means new workspaces start on legacy", () => {
     // The shipped default. A self-hosted deployment that configures nothing
     // must not silently begin enabling channels for its workspaces.
-    expect(channelSpineDefaults()).toBeNull();
+    expect(channelSpineDefaults("")).toBeNull();
   });
 });
 

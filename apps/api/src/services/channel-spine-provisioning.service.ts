@@ -22,8 +22,11 @@ export interface ChannelSpineDefaults {
  *
  * Unset means off, so self-hosted and OSS deployments are unaffected.
  */
-export function channelSpineDefaults(): ChannelSpineDefaults | null {
-  const providers = env.CHANNEL_SPINE_DEFAULT_PROVIDERS.split(",")
+export function channelSpineDefaults(
+  configuredProviders = env.CHANNEL_SPINE_DEFAULT_PROVIDERS,
+): ChannelSpineDefaults | null {
+  const providers = (configuredProviders || "")
+    .split(",")
     .map((provider) => provider.trim())
     .filter(Boolean);
   if (providers.length === 0) return null;

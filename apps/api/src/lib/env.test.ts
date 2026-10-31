@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+import { fileURLToPath } from "node:url";
 import {
   type Env,
   env,
@@ -356,7 +357,7 @@ describe("signing secrets are validated in every environment", () => {
     const child = Bun.spawn(
       [process.execPath, "-e", 'await import("./src/lib/env.ts")'],
       {
-        cwd: new URL("../..", import.meta.url).pathname,
+        cwd: fileURLToPath(new URL("../..", import.meta.url)),
         env: {
           ...process.env,
           NODE_ENV: "development",
@@ -381,7 +382,7 @@ describe("signing secrets are validated in every environment", () => {
     const child = Bun.spawn(
       [process.execPath, "-e", 'await import("./src/lib/env.ts")'],
       {
-        cwd: new URL("../..", import.meta.url).pathname,
+        cwd: fileURLToPath(new URL("../..", import.meta.url)),
         env: {
           ...process.env,
           NODE_ENV: "development",
@@ -546,7 +547,7 @@ describe("refresh token reuse grace window", () => {
         'const { env } = await import("./src/lib/env.ts"); console.log(env.JWT_REFRESH_REUSE_GRACE_SECONDS)',
       ],
       {
-        cwd: new URL("../..", import.meta.url).pathname,
+        cwd: fileURLToPath(new URL("../..", import.meta.url)),
         env,
         stderr: "pipe",
         stdout: "pipe",

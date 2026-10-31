@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 import {
   getTenantSchemaName,
   TENANT_INDEX_TARGETS,
@@ -35,10 +36,9 @@ import {
 
 const PG_IDENTIFIER_LIMIT = 63;
 
-const DATABASE_SRC = new URL(
-  "../../../../packages/database/src",
-  import.meta.url,
-).pathname;
+const DATABASE_SRC = fileURLToPath(
+  new URL("../../../../packages/database/src", import.meta.url),
+);
 
 /** A representative schema name - every tenant schema is exactly this long. */
 const SCHEMA = getTenantSchemaName("3f2504e0-4f89-41d3-9a0c-0305e82c3301");
