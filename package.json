@@ -29,9 +29,9 @@
     "seed:admin": "bun run --cwd apps/api src/scripts/seed-admin.ts"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.5.12",
-    "knip": "6.34.0",
-    "turbo": "^2.10.12",
+    "@biomejs/biome": "2.6.3",
+    "knip": "6.43.0",
+    "turbo": "^2.11.10",
     "typescript": "^5.7.2"
   },
   "overrides": {
