@@ -45,17 +45,18 @@ const EXPIRY_OPTIONS = [
 function CopyField({ value, label }: { value: string; label: string }) {
   const [copied, setCopied] = useState(false);
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex w-full min-w-0 items-center gap-2">
       <Input
         readOnly
         value={value}
         aria-label={label}
-        className="font-mono text-xs"
+        className="flex-1 min-w-0 font-mono text-xs"
       />
       <Button
         type="button"
         variant="outline"
         size="sm"
+        className="shrink-0"
         onClick={async () => {
           await navigator.clipboard.writeText(value);
           setCopied(true);
@@ -80,16 +81,16 @@ function CopyBlock({
   const { t } = useTranslation();
   const [copied, setCopied] = useState(false);
   return (
-    <div className="overflow-hidden rounded-lg border bg-muted/40">
+    <div className="w-full min-w-0 overflow-hidden rounded-lg border bg-muted/40">
       <div className="flex items-center justify-between border-b bg-muted/60 px-3 py-1.5">
-        <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+        <span className="truncate text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
           {caption ?? label}
         </span>
         <Button
           type="button"
           variant="ghost"
           size="sm"
-          className="h-6 gap-1 px-2 text-xs"
+          className="h-6 shrink-0 gap-1 px-2 text-xs"
           aria-label={label}
           onClick={async () => {
             await navigator.clipboard.writeText(value);
@@ -110,8 +111,8 @@ function CopyBlock({
           )}
         </Button>
       </div>
-      <pre className="overflow-x-auto p-3 text-xs leading-relaxed">
-        <code>{value}</code>
+      <pre className="max-w-full overflow-x-auto p-3 text-xs leading-relaxed">
+        <code className="font-mono">{value}</code>
       </pre>
     </div>
   );
@@ -125,7 +126,7 @@ function SetupStep({
   children: React.ReactNode;
 }) {
   return (
-    <li className="flex gap-3">
+    <li className="flex w-full min-w-0 gap-3">
       <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[11px] font-semibold text-primary">
         {index}
       </span>
@@ -183,19 +184,35 @@ function McpSetupGuide({
       );
 
   return (
-    <Tabs defaultValue="hosted">
-      <TabsList className="mb-3">
-        <TabsTrigger value="hosted">
+    <Tabs defaultValue="hosted" className="w-full min-w-0">
+      <TabsList className="mb-3 w-full justify-start overflow-x-auto flex-nowrap">
+        <TabsTrigger
+          value="hosted"
+          className="shrink-0 px-4 py-2.5 text-xs sm:px-5 sm:py-3 sm:text-sm"
+        >
           {t("apiTokens.setup.tabHosted", "ChatGPT & Claude")}
         </TabsTrigger>
-        <TabsTrigger value="grok">
+        <TabsTrigger
+          value="grok"
+          className="shrink-0 px-4 py-2.5 text-xs sm:px-5 sm:py-3 sm:text-sm"
+        >
           {t("apiTokens.setup.tabGrok", "Grok")}
         </TabsTrigger>
-        <TabsTrigger value="claude-code">Claude Code</TabsTrigger>
-        <TabsTrigger value="cursor">Cursor</TabsTrigger>
+        <TabsTrigger
+          value="claude-code"
+          className="shrink-0 px-4 py-2.5 text-xs sm:px-5 sm:py-3 sm:text-sm"
+        >
+          Claude Code
+        </TabsTrigger>
+        <TabsTrigger
+          value="cursor"
+          className="shrink-0 px-4 py-2.5 text-xs sm:px-5 sm:py-3 sm:text-sm"
+        >
+          Cursor
+        </TabsTrigger>
       </TabsList>
 
-      <TabsContent value="hosted">
+      <TabsContent value="hosted" className="w-full min-w-0 focus:outline-none">
         <p className="mb-3 rounded-lg bg-primary/5 px-3 py-2 text-sm">
           {t(
             "apiTokens.setup.noTokenNeeded",
@@ -227,7 +244,7 @@ function McpSetupGuide({
         </ol>
       </TabsContent>
 
-      <TabsContent value="grok">
+      <TabsContent value="grok" className="w-full min-w-0 focus:outline-none">
         <p className="mb-3 rounded-lg bg-primary/5 px-3 py-2 text-sm">
           {t(
             "apiTokens.setup.noTokenNeeded",
@@ -281,7 +298,7 @@ function McpSetupGuide({
         </details>
       </TabsContent>
 
-      <TabsContent value="claude-code">
+      <TabsContent value="claude-code" className="w-full min-w-0 focus:outline-none">
         <p className="mb-3 rounded-lg bg-muted px-3 py-2 text-sm">
           {t(
             "apiTokens.setup.tokenNeeded",
@@ -316,7 +333,7 @@ function McpSetupGuide({
         </ol>
       </TabsContent>
 
-      <TabsContent value="cursor">
+      <TabsContent value="cursor" className="w-full min-w-0 focus:outline-none">
         <p className="mb-3 rounded-lg bg-muted px-3 py-2 text-sm">
           {t(
             "apiTokens.setup.tokenNeeded",
@@ -601,7 +618,7 @@ export function ApiTokensSection() {
           if (!open) setCreatedToken(null);
         }}
       >
-        <DialogContent>
+        <DialogContent className="mx-4 max-h-[90vh] w-[calc(100vw-2rem)] max-w-2xl overflow-y-auto rounded-2xl p-6 sm:w-full">
           <DialogHeader>
             <DialogTitle>
               {t("apiTokens.secretTitle", "Copy your token now")}
@@ -614,12 +631,12 @@ export function ApiTokensSection() {
             </DialogDescription>
           </DialogHeader>
           {createdToken && (
-            <div className="space-y-4">
+            <div className="space-y-4 min-w-0">
               <CopyField
                 value={createdToken.token}
                 label={t("apiTokens.secretTitle", "Copy your token now")}
               />
-              <div className="space-y-1">
+              <div className="space-y-1 min-w-0">
                 <Label>
                   {t("apiTokens.setup.title", "Setup instructions")}
                 </Label>
@@ -631,7 +648,7 @@ export function ApiTokensSection() {
               </div>
             </div>
           )}
-          <DialogFooter>
+          <DialogFooter className="mt-2">
             <Button onClick={() => setCreatedToken(null)}>
               {t("apiTokens.secretDone", "I've copied it")}
             </Button>
