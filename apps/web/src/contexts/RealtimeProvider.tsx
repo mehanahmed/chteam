@@ -378,16 +378,19 @@ export function RealtimeProvider({
     };
   }, [autoConnect, connect, currentCompanyId, fetchSyncStatus]);
 
+  const prevStatusRef = useRef<RealtimeConnectionStatus>("disconnected");
+
   // Realtime is an update signal rather than the source of truth. Reconcile all
   // active chat state after a reconnect in case events arrived while offline.
   useEffect(() => {
-    if (status === "connected") {
+    if (status === "connected" && prevStatusRef.current !== "connected") {
       fetchSyncStatus();
       reconcileRealtimeState(
         queryClientRef.current,
         useChatStore.getState().selectedConversationId,
       );
     }
+    prevStatusRef.current = status;
   }, [status, fetchSyncStatus]);
 
   // Centrifugo is intentionally an update signal without message history.

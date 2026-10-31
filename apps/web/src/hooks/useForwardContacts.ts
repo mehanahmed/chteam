@@ -26,7 +26,10 @@ import { chatKeys } from "./useChats";
  *
  * @param searchQuery - Optional search query to filter contacts
  */
-export function useForwardContacts(searchQuery: string = "") {
+export function useForwardContacts(
+  searchQuery: string = "",
+  enabled: boolean = true,
+) {
   // Memoize the query key
   const queryKey = useMemo(
     () =>
@@ -40,6 +43,7 @@ export function useForwardContacts(searchQuery: string = "") {
 
   return useQuery<Chat[], Error>({
     queryKey,
+    enabled,
     queryFn: async () => {
       const token = getAccessToken();
       const companyId = getCompanyId();

@@ -101,7 +101,10 @@ export const ChatList = memo(function ChatList({
   const [accountFilter, setAccountFilter] = useState("all");
   const [selectedTags, setSelectedTags] = useState<Tag[]>([]);
   const selectedTagIds = useMemo(
-    () => selectedTags.map((tag) => tag.id),
+    () =>
+      selectedTags.length === 0
+        ? EMPTY_TAG_IDS
+        : selectedTags.map((tag) => tag.id),
     [selectedTags],
   );
   const [tagSearch, setTagSearch] = useState("");
