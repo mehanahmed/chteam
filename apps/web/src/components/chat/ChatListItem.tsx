@@ -59,13 +59,12 @@ export const ChatListItem = memo(function ChatListItem({
 
   const assignedAvatarUrl = useMemo(() => {
     if (!assignedUserId) return null;
-    if (assignedUser) {
-      return assignedUser.avatarUrl || assignedUser.gravatarUrl || null;
-    }
-    if (user && assignedUserId === user.id) {
-      return user.avatarUrl ?? null;
-    }
-    return null;
+    return (
+      assignedUser?.avatarUrl ||
+      assignedUser?.gravatarUrl ||
+      (user && assignedUserId === user.id ? user.avatarUrl : null) ||
+      null
+    );
   }, [assignedUserId, assignedUser, user]);
 
   // Memoize prefetch handler to prevent unnecessary re-renders

@@ -68,7 +68,8 @@ export async function getUserAvatarSources(
 ): Promise<Map<string, UserAvatarSources>> {
   if (userIds.length === 0) return new Map();
 
-  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  const uuidRegex =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
   const validIds = Array.from(new Set(userIds)).filter((id) =>
     uuidRegex.test(id),
   );
