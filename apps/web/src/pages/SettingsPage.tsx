@@ -1,13 +1,7 @@
-import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-  EMPTY_SELECT_VALUE,
-} from "@/components/ui/select";
+import type { TFunction } from "i18next";
 import {
   Bell,
+  Bot,
   Building2,
   CircleAlert,
   Clock,
@@ -31,23 +25,33 @@ import {
   X,
 } from "lucide-react";
 import { type ComponentType, type ReactNode, useRef, useState } from "react";
+import { Trans, useTranslation } from "react-i18next";
 import { Navigate, NavLink, useNavigate, useParams } from "react-router";
 import { toast } from "sonner";
+import {
+  EMPTY_SELECT_VALUE,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { AnalyticsPreferences } from "../components/analytics";
 import { ThemeToggle } from "../components/chat/ThemeToggle";
 import { ContactImport } from "../components/contacts";
 import { FeedbackSettings } from "../components/feedback";
 import {
   AccountSettings,
+  AiAgentSettings,
   ApiTokensSection,
-  ConnectedAppsSection,
   CatalogManager,
+  ConnectedAppsSection,
+  InboxAppearanceSettings,
   LabelSyncManager,
   LanguageSwitcher,
   NotificationSettings,
   QuickRepliesManager,
   SlaPolicySettings,
-  InboxAppearanceSettings,
 } from "../components/settings";
 import { Button, Input } from "../components/ui";
 import {
@@ -63,7 +67,6 @@ import { WorkspaceAvatar } from "../components/workspace/WorkspaceAvatar";
 import { useAuth } from "../contexts/auth-context";
 import { useKeyboardShortcutsContext } from "../contexts/KeyboardShortcutsContext";
 import { useWorkspace } from "../contexts/workspace-context";
-import { productAnalytics } from "../lib/product-analytics";
 import {
   useCompanyMembers,
   useDeleteCompany,
@@ -71,6 +74,7 @@ import {
   useTransferOwnership,
   useUpdateCompany,
 } from "../hooks/useTeam";
+import { productAnalytics } from "../lib/product-analytics";
 import { cn } from "../lib/utils";
 import {
   prepareWorkspaceLogo,
@@ -79,12 +83,11 @@ import {
   WORKSPACE_LOGO_SIZE,
 } from "../lib/workspace-logo";
 import { workspacePath } from "../lib/workspace-routes";
-import type { TFunction } from "i18next";
-import { Trans, useTranslation } from "react-i18next";
 
 type SettingsSection =
   | "general"
   | "connections"
+  | "ai-agent"
   | "sla"
   | "quick-replies"
   | "labels"
@@ -154,6 +157,14 @@ export function SettingsPage() {
       group: "Workspace",
       icon: Clock,
       visible: true,
+    },
+    {
+      id: "ai-agent",
+      labelKey: "settings.sections.aiAgent",
+      label: "AI Agent & Q&A",
+      group: "Inbox tools",
+      icon: Bot,
+      visible: can("can_manage_connections"),
     },
     {
       id: "quick-replies",
@@ -306,7 +317,7 @@ export function SettingsPage() {
       </aside>
 
       <main className="min-w-0 flex-1 overflow-y-auto">
-        <div className="mx-auto max-w-3xl px-4 py-6 sm:px-8 sm:py-10">
+        <div className="w-full px-4 py-6 sm:px-8 sm:py-8">
           <div className="mb-6 md:hidden">
             <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#0b7a55]">
               {t("settings.title", "Settings")}
@@ -405,6 +416,8 @@ function SettingsSectionContent({
       );
     case "sla":
       return <SlaPolicySettings />;
+    case "ai-agent":
+      return <AiAgentSettings />;
     case "quick-replies":
       return (
         <Panel

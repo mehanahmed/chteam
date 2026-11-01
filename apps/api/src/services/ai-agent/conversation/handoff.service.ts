@@ -14,6 +14,7 @@ import { broadcastToCompany } from "../../../lib/realtime.js";
 import { enqueueCommand } from "../../command-outbox.service.js";
 import { broadcastToContactViewers } from "../../message-broadcast.service.js";
 import { getTenantConnection } from "../../tenant.service.js";
+import { getActiveSessionId } from "../../whatsapp/session.js";
 import { AI_TAGS, SYSTEM_AI_USER_ID } from "../constants.js";
 import {
   detectCustomerLanguage,
@@ -542,7 +543,7 @@ export class HandoffService {
           isDomainConfusionTurn1: true,
           sentiment: "neutral",
           domainClarificationText:
-            "দুঃখিত ভাইয়া! আমরা একটি অনলাইন পোশাক ও ফ্যাশন ব্র্যান্ড (পোশাক ও ফ্যাশন আইটেম বিক্রি করি)। আমরা পাসপোর্ট বা সরকারি সেবা প্রদান করি না। আপনি আমাদের পোশাক কালেকশন দেখতে চাইলে জানাতে পারেন!",
+            "দুঃখিত ভাইয়া! আমরা সরকারি সেবা বা ইউটিলিটি বিল সেবা প্রদান করি না। আমাদের সেবা সম্পর্কে কোনো তথ্য জানতে চাইলে জানাতে পারেন!",
         };
       }
       this.domainConfusionMap.delete(targetContactId);
@@ -756,6 +757,11 @@ export class HandoffService {
         customerHandoverText || getCustomerHandoverMessage(reason, language);
 
       try {
+        const activeSessionId = await getActiveSessionId(
+          tenantDb,
+          connectionId,
+        );
+
         const replyMessageId = crypto.randomUUID();
         const waMessageId = `ai_handoff_${replyMessageId}`;
         const createdAt = toDbDate();
@@ -768,7 +774,7 @@ export class HandoffService {
 
         const sendCommand = await buildSendMessageCommand(
           companyId,
-          connectionId,
+          activeSessionId,
           contactJid,
           handoverText,
           "text",
@@ -798,7 +804,7 @@ export class HandoffService {
 
           await enqueueCommand(
             trx,
-            buildCommandSubject(companyId, connectionId),
+            buildCommandSubject(companyId, activeSessionId),
             sendCommand,
           );
         });

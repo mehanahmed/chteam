@@ -2,6 +2,7 @@
 node_modules
 .pnp
 .pnp.js
+skills-lock.json
 
 # Build outputs
 dist

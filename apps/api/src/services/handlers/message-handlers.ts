@@ -3,15 +3,11 @@
  */
 
 import { type MessageStatus, type MessageType } from "@omniteam/database";
-import {
-  extractPhoneFromJid,
-  normalizeJid,
-  toDbDate,
-} from "@omniteam/shared";
+import { extractPhoneFromJid, normalizeJid, toDbDate } from "@omniteam/shared";
 import { sql } from "kysely";
 import { normalizeLinkedDeviceMessageEvent } from "../../channel-spine/providers/whatsapp-linked-device/normalize.js";
-import { compareLinkedDeviceMessageShadow } from "../../channel-spine/providers/whatsapp-linked-device/shadow-compare.js";
 import { shadowLinkedDeviceLegacyMutation } from "../../channel-spine/providers/whatsapp-linked-device/shadow.js";
+import { compareLinkedDeviceMessageShadow } from "../../channel-spine/providers/whatsapp-linked-device/shadow-compare.js";
 import { formatError } from "../../lib/logger.js";
 import { buildInboundMessageMetadata } from "../../lib/message-formatters.js";
 import {
@@ -25,11 +21,11 @@ import {
   type SendFailedEvent,
 } from "../../lib/nats/index.js";
 import { broadcastToCompany } from "../../lib/realtime.js";
+import { dispatchInboundMessageToAi } from "../ai-agent/ai-orchestrator.service.js";
 import {
   getAutoReplyCandidate,
   scheduleFirstContactAutoReply,
 } from "../auto-reply.service.js";
-import { dispatchInboundMessageToAi } from "../ai-agent/ai-orchestrator.service.js";
 import { getChannelSpineWorkspaceAuthority } from "../channel-spine-authority.service.js";
 import {
   openOrReopenCaseForInboundMessage,
@@ -67,11 +63,35 @@ async function requestProfilePicture(
   } as NatsCommand & { jid: string });
 }
 
+function cleanNullBytes<T>(value: T): T {
+  if (typeof value === "string") {
+    return value.replace(/\0/g, "") as unknown as T;
+  }
+  if (Array.isArray(value)) {
+    return value.map(cleanNullBytes) as unknown as T;
+  }
+  if (
+    value !== null &&
+    typeof value === "object" &&
+    !(value instanceof Date) &&
+    !(value instanceof Buffer) &&
+    !(value instanceof Uint8Array)
+  ) {
+    const res: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(value)) {
+      res[k.replace(/\0/g, "")] = cleanNullBytes(v);
+    }
+    return res as unknown as T;
+  }
+  return value;
+}
+
 /**
  * Handles incoming WhatsApp messages
  */
 export async function handleMessageEvent(event: MessageEvent): Promise<void> {
-  const { companyId, connectionId, sessionId, payload } = event;
+  const { companyId, connectionId, sessionId } = event;
+  const payload = cleanNullBytes(event.payload);
 
   logger.debug(
     { companyId, connectionId, from: payload.from },
@@ -136,7 +156,10 @@ export async function handleMessageEvent(event: MessageEvent): Promise<void> {
         `Message ${payload.messageId} has invalid contact JID ${rawContactJid}`,
       );
     }
-    if (contactJid === "status@broadcast" || contactJid.endsWith("@broadcast")) {
+    if (
+      contactJid === "status@broadcast" ||
+      contactJid.endsWith("@broadcast")
+    ) {
       logger.info(
         { companyId, contactJid, messageId: payload.messageId },
         "Ignoring status broadcast message in chat inbox handler",
@@ -144,7 +167,8 @@ export async function handleMessageEvent(event: MessageEvent): Promise<void> {
       return;
     }
     const isChannel = contactJid.endsWith("@newsletter");
-    const initialPushName = payload.senderName?.trim() || (isChannel ? "WhatsApp Channel" : null);
+    const initialPushName =
+      payload.senderName?.trim() || (isChannel ? "WhatsApp Channel" : null);
 
     let contact = await tenantDb
       .selectFrom("contacts")
@@ -383,7 +407,7 @@ export async function handleMessageEvent(event: MessageEvent): Promise<void> {
           search_vector: sql`to_tsvector('english', ${payload.content ?? ""})`,
           metadata: incomingMetadata,
           media_url: payload.mediaUrl || null,
-          media_mime_type: payload.mediaType || null,
+          media_mime_type: payload.mediaMimeType || payload.mediaType || null,
           media_size: payload.mediaSize || null,
           // Deferred media download fields
           media_direct_path: payload.mediaDirectPath || null,
@@ -693,7 +717,7 @@ export async function handleMessageEvent(event: MessageEvent): Promise<void> {
         content: payload.content,
         messageType: payload.messageType ?? "text",
         mediaUrl: payload.mediaUrl ?? null,
-        mediaMimeType: payload.mediaType ?? null,
+        mediaMimeType: payload.mediaMimeType ?? payload.mediaType ?? null,
         isGroup: isGroupMessage,
         receivedAt: messageReceivedAt,
         channel: "whatsapp",

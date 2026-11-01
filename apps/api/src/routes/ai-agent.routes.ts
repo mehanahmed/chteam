@@ -21,6 +21,7 @@ import {
   buildSystemPrompt,
   detectCustomerLanguage,
 } from "../services/ai-agent/gemini/prompts.js";
+import { detectClientHonorific } from "../services/ai-agent/conversation/honorific-detector.js";
 import { authMiddleware } from "../middleware/auth.js";
 import { getRouteContext } from "../middleware/context.js";
 import { requireContactVisibility } from "../middleware/resource-visibility.js";
@@ -174,6 +175,7 @@ aiAgentRoutes.post(
     "json",
     z.object({
       message: z.string().min(1).max(1000),
+      clientName: z.string().optional(),
       history: z
         .array(
           z.object({
@@ -190,12 +192,16 @@ aiAgentRoutes.post(
     if (!connectionId) {
       return notFound(c, "WhatsApp connection");
     }
-    const { message, history } = c.req.valid("json");
+    const { message, clientName, history } = c.req.valid("json");
 
     const promptContext = await merchantKnowledgeService.buildPromptContext(
       companyId,
       connectionId,
     );
+    const honorificProfile = detectClientHonorific(clientName);
+    promptContext.customerName = honorificProfile.detectedFirstName || clientName;
+    promptContext.customerHonorificProfile = honorificProfile;
+
     const detectedLang = detectCustomerLanguage(message);
     const systemInstruction = buildSystemPrompt(promptContext);
 
@@ -203,10 +209,10 @@ aiAgentRoutes.post(
     if (!apiKey) {
       const sampleReply =
         detectedLang === "bangla"
-          ? `জি ভাইয়া, আমাদের ${promptContext.storeName} এ আপনাকে স্বাগতম! আপনার মেসেজটি পেয়েছি। ঢাকার মধ্যে ডেলিভারি চার্জ ৳${promptContext.insideDhakaFee} এবং ঢাকার বাইরে ৳${promptContext.outsideDhakaFee}। ${promptContext.customInstructions ? `(বিশেষ নির্দেশিকা কার্যকর: ${promptContext.customInstructions})` : ""}`
+          ? `জি ${honorificProfile.salutationBangla}, ${promptContext.storeName}-এ আপনাকে স্বাগতম! কীভাবে সাহায্য করতে পারি বলুন?`
           : detectedLang === "english"
-            ? `Hello! Welcome to ${promptContext.storeName}. Delivery fee is ৳${promptContext.insideDhakaFee} inside Dhaka and ৳${promptContext.outsideDhakaFee} outside Dhaka. How can I help you today?`
-            : `Ji bhaiya! ${promptContext.storeName} e apnake shagotom. Delivery charge Dhaka-te ৳${promptContext.insideDhakaFee} and outside Dhaka ৳${promptContext.outsideDhakaFee}. Apnar kon product ta lagbe bolun?`;
+            ? `Hello ${honorificProfile.salutationEnglish}! Welcome to ${promptContext.storeName}. How can I assist you today?`
+            : `Ji ${honorificProfile.salutationBanglish}, ${promptContext.storeName}-e apnake shagotom. Apnake kivabe sahajjo korte pari bolun?`;
 
       return successData(c, {
         replyText: sampleReply,

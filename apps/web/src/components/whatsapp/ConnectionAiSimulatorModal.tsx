@@ -49,24 +49,23 @@ interface ChatEntry {
 
 const PRESET_QUERIES = [
   {
-    label: "📦 Shipping Fee Inquiry",
-    query:
-      "Do you have this in stock? What is the delivery charge to Chittagong?",
+    label: "💬 General Inquiry",
+    query: "Hi, can you tell me more about your services?",
   },
   {
-    label: "🔥 Discount & Promotions",
+    label: "🕒 Office & Contact",
     query:
-      "If I order 3 items together, do I get any bundle discount or free shipping?",
+      "Where is your office located and what are your operating hours?",
   },
   {
-    label: "📝 Full Order Booking",
+    label: "❓ Common Question",
     query:
-      "Name: Karim Ahmed, Phone: 01712345678, Address: House 12, Road 5, Banani, Dhaka. Please book 1 Black Shirt size L.",
+      "Kemon achen? Apnader sathe contact korar process ki?",
   },
   {
-    label: "⚠️ Return & Escalation",
+    label: "⚠️ Human Support",
     query:
-      "My parcel arrived damaged! I want an immediate exchange or to speak with a human support agent!",
+      "I have a specific query, can I speak with a human support agent?",
   },
 ];
 
@@ -82,10 +81,11 @@ export function ConnectionAiSimulatorModal({
     {
       id: "welcome",
       role: "model",
-      content: `Hello! I am ${personaName || "Maya"}, the official AI assistant for ${connectionName || "CHTeam Store"}. You can test my conversational responses, delivery fee calculations, and custom prompt directives by clicking the quick scenarios above or typing a message below.`,
+      content: `Hello! I am ${personaName || "Assistant"}, the official AI assistant for ${connectionName || "our store"}. You can test conversational responses and prompt directives by clicking the quick scenarios above or typing a message below.`,
     },
   ]);
 
+  const [clientName, setClientName] = useState("Mehan Ahmed");
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -115,6 +115,7 @@ export function ConnectionAiSimulatorModal({
         connectionId,
         text,
         history,
+        clientName || undefined,
       );
 
       const botEntry: ChatEntry = {
@@ -146,7 +147,7 @@ export function ConnectionAiSimulatorModal({
       {
         id: "welcome",
         role: "model",
-        content: `Hello! I am ${personaName || "Maya"}, the official AI assistant for ${connectionName || "CHTeam Store"}. Test session reset. Feel free to type or pick a test scenario above.`,
+        content: `Hello! I am ${personaName || "Assistant"}, the official AI assistant for ${connectionName || "our store"}. Test session reset. Feel free to type or pick a test scenario above.`,
       },
     ]);
   };
@@ -186,23 +187,38 @@ export function ConnectionAiSimulatorModal({
           </Button>
         </div>
 
-        {/* Quick Test Scenario Chips */}
-        <div className="px-6 py-2.5 border-b border-[#e2e8e3] dark:border-dark-border bg-white dark:bg-dark-secondary flex items-center gap-2 overflow-x-auto text-xs">
-          <span className="text-[11px] font-semibold text-[#65736d] dark:text-dark-text-secondary flex items-center gap-1 shrink-0">
-            <Zap className="h-3 w-3 text-amber-500" />
-            Quick Scenarios:
-          </span>
-          {PRESET_QUERIES.map((preset, idx) => (
-            <button
-              key={idx}
-              type="button"
-              onClick={() => handleSend(preset.query)}
-              disabled={loading}
-              className="shrink-0 text-[11px] font-medium bg-[#f8faf8] hover:bg-[#e7f7ef] hover:text-[#0b7a55] dark:bg-dark-elevated dark:hover:bg-dark-tertiary text-slate-700 dark:text-dark-text-secondary px-3 py-1 rounded-xl border border-[#dce3de] dark:border-dark-border transition-all"
-            >
-              {preset.label}
-            </button>
-          ))}
+        {/* Quick Test Scenario Chips & Client Name */}
+        <div className="px-6 py-2 border-b border-[#e2e8e3] dark:border-dark-border bg-white dark:bg-dark-secondary flex items-center justify-between gap-3 text-xs">
+          <div className="flex items-center gap-2 overflow-x-auto">
+            <span className="text-[11px] font-semibold text-[#65736d] dark:text-dark-text-secondary flex items-center gap-1 shrink-0">
+              <Zap className="h-3 w-3 text-amber-500" />
+              Scenarios:
+            </span>
+            {PRESET_QUERIES.map((preset, idx) => (
+              <button
+                key={idx}
+                type="button"
+                onClick={() => handleSend(preset.query)}
+                disabled={loading}
+                className="shrink-0 text-[11px] font-medium bg-[#f8faf8] hover:bg-[#e7f7ef] hover:text-[#0b7a55] dark:bg-dark-elevated dark:hover:bg-dark-tertiary text-slate-700 dark:text-dark-text-secondary px-2.5 py-0.5 rounded-lg border border-[#dce3de] dark:border-dark-border transition-all"
+              >
+                {preset.label}
+              </button>
+            ))}
+          </div>
+
+          <div className="flex items-center gap-1.5 shrink-0">
+            <User className="h-3.5 w-3.5 text-[#0b7a55]" />
+            <span className="text-[11px] font-medium text-slate-600 dark:text-dark-text-secondary">
+              Client Name:
+            </span>
+            <Input
+              value={clientName}
+              onChange={(e) => setClientName(e.target.value)}
+              placeholder="e.g. Mehan Ahmed, Nusrat"
+              className="h-7 w-32 text-xs rounded-lg px-2"
+            />
+          </div>
         </div>
 
         {/* Conversational Chat Feed */}

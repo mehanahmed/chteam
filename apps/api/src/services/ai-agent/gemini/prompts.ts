@@ -3,6 +3,11 @@
  * Languages: Bangla (বাংলা), Banglish (Latin script phonetics), English
  */
 
+import {
+  type ClientHonorificProfile,
+  detectClientHonorific,
+} from "../conversation/honorific-detector.js";
+
 export type SupportedLanguage = "bangla" | "banglish" | "english" | "mixed";
 
 export interface MerchantPromptContext {
@@ -19,6 +24,8 @@ export interface MerchantPromptContext {
   paymentMethods: string[];
   faqs?: Array<{ question: string; answer: string }>;
   customInstructions?: string;
+  customerName?: string | null;
+  customerHonorificProfile?: ClientHonorificProfile;
 }
 
 /**
@@ -208,76 +215,181 @@ export function detectCustomerLanguage(text: string): SupportedLanguage {
 }
 
 /**
+ * Post-generation sanitizer that strips accidental foreign scripts (e.g. Devanagari/Hindi)
+ * and eliminates cross-script contamination (Bengali script leaking into Banglish/English).
+ */
+export function sanitizeAiReply(
+  text: string,
+  targetLanguage: SupportedLanguage | string = "banglish",
+): string {
+  if (!text) return "";
+  let cleaned = text;
+
+  // 1. Strictly strip any Devanagari / Hindi Unicode range (U+0900 to U+097F)
+  cleaned = cleaned.replace(/[\u0900-\u097F]+/g, "").trim();
+
+  // 2. Eliminate slash dual-honorifics (never allow "bhaiya/apu", "sir/ma'am", etc.)
+  cleaned = cleaned
+    .replace(/\b(?:bhaiya\s*\/\s*apu|apu\s*\/\s*bhaiya)\b/gi, "bhaiya")
+    .replace(/\b(?:vaiya\s*\/\s*apu|apu\s*\/\s*vaiya)\b/gi, "vaiya")
+    .replace(/\b(?:vai\s*\/\s*apu|apu\s*\/\s*vai)\b/gi, "bhaiya")
+    .replace(/\b(?:sir\s*\/\s*ma'?am|ma'?am\s*\/\s*sir)\b/gi, "sir")
+    .replace(/(?:ভাইয়া\s*\/\s*আপু|আপু\s*\/\s*ভাইয়া)/g, "ভাইয়া")
+    .replace(/(?:ভাই\s*\/\s*আপু|আপু\s*\/\s*ভাই)/g, "ভাইয়া");
+
+  // 3. If targetLanguage is Banglish or English, eliminate leaked Bengali script phrases or parenthetical translations
+  if (targetLanguage === "banglish" || targetLanguage === "english") {
+    // Remove parenthetical Bengali translations like "(বাংলা টেক্সট)"
+    cleaned = cleaned.replace(/\s*\([\u0980-\u09FF\s\/,.\-–]+\)\s*/g, " ");
+    // Remove isolated Bengali script words leaking into Banglish
+    cleaned = cleaned.replace(/[\u0980-\u09FF]+/g, "").trim();
+  } else if (targetLanguage === "bangla") {
+    // If target is pure Bangla, remove parenthetical Latin duplicates if any
+    cleaned = cleaned.replace(/\s*\([a-zA-Z\s\/,.\-–]+\)\s*/g, " ");
+  }
+
+  // 4. Clean up doubled spaces and punctuation artifacts
+  cleaned = cleaned
+    .replace(/\s{2,}/g, " ")
+    .replace(/\s+([.,!?])/g, "$1")
+    .trim();
+
+  return cleaned;
+}
+
+/**
  * Builds trilingual system prompt with strict Language Mirroring protocol
  */
 export function buildSystemPrompt(context: MerchantPromptContext): string {
+  let positiveDirectives = "";
+  let negativeGuardrails = "";
+
+  if (context.customInstructions) {
+    const raw = context.customInstructions;
+    const negativeMarkerRegex =
+      /###\s*(?:NEGATIVE GUARDRAILS|STRICT AVOID LIST|DO NOT DO|WHAT NOT TO DO)[^\n]*\n([\s\S]*)/i;
+    const positiveMarkerRegex =
+      /###\s*(?:POSITIVE DIRECTIVES|WHAT TO DO|GUIDELINES)[^\n]*\n([\s\S]*?)(?=###\s*(?:NEGATIVE GUARDRAILS|STRICT AVOID LIST|DO NOT DO|WHAT NOT TO DO)|$)/i;
+
+    const negMatch = raw.match(negativeMarkerRegex);
+    const posMatch = raw.match(positiveMarkerRegex);
+
+    if (posMatch || negMatch) {
+      positiveDirectives = (
+        posMatch ? posMatch[1] : raw.replace(negativeMarkerRegex, "")
+      ).trim();
+      negativeGuardrails = (negMatch ? negMatch[1] : "").trim();
+    } else {
+      positiveDirectives = raw.trim();
+    }
+  }
+
+  // Format Sales Team Q&A Knowledge & Conversational Style (Primary Ground Truth & Style Blueprint)
   const faqSection =
     context.faqs && context.faqs.length > 0
-      ? `\n### Verified Store FAQs & Policies:\n` +
-        context.faqs
-          .map(
-            (faq, index) =>
-              `${index + 1}. Q: ${faq.question}\n   A: ${faq.answer}`,
-          )
-          .join("\n")
+      ? `### 📚 SALES TEAM Q&A KNOWLEDGE BASE & REAL CONVERSATIONAL EXAMPLES:
+These Q&A pairs represent the EXACT way our real human sales team talks with customers. They contain our verified business knowledge AND demonstrate our conversational tone, wording, warmth, and sales etiquette:
+${context.faqs
+  .map(
+    (faq, index) =>
+      `[Example ${index + 1}]\n- Customer Question: "${faq.question}"\n- Our Sales Team Replied: "${faq.answer}"`,
+  )
+  .join("\n\n")}
+
+### 🎯 CONVERSATIONAL EMULATION RULES (HOW TO TALK LIKE OUR SALES TEAM):
+1. **Verified Business Facts (Ground Truth)**: Always answer customer questions using the verified facts provided in these Q&A examples. Never contradict them or invent facts outside these answers.
+2. **Emulate Sales Team Tone & Manner**: Learn from how our sales team talks in these answers — their welcoming phrases, respectful honorifics, polite and confident demeanor, natural brevity, and helpful sales follow-ups. Talk with customers in that EXACT same human, friendly, and authentic sales manner!
+3. **Conversational Adaptation**: When a customer asks a question that relates to an entry above, adapt the verified answer naturally into your reply in the customer's mirrored language (Banglish, Bangla, or English). Keep your answer concise (1 to 2 short sentences), warm, and helpful just like our sales team!\n\n`
       : "";
 
-  return `You are ${context.personaName}, the official AI Sales Executive of "${context.storeName}" in Bangladesh.
-Your goal is to warmly assist customers, answer product/policy questions, provide friendly sales guidance, and help complete order bookings.
+  const positiveSection = positiveDirectives
+    ? `### 🎯 POSITIVE PROMPT & MERCHANT DIRECTIVES (WHAT AI MUST DO):\n${positiveDirectives}\n\n`
+    : "";
 
-### Core Persona & Tone of Voice:
-- Tone: ${context.personaTone}, respectful, courteous, helpful, and energetic retail sales executive.
-- Greeting: Warmly greet with "Assalamu Alaikum" or polite "Hello", followed by kinship honorifics ("bhaiya" / "apu") or respectful "apni" (NEVER use "tui" or "tumi").
-- Politeness & Affirmation: Frequently use natural affirmations like "Ji bhaiya", "Ji apu", "Oboshshoi", "Ekdom bhaiya", "Dhonnobad".
-- Never argue, be defensive, or sound mechanical. Always prioritize customer satisfaction.
+  const negativeSection = negativeGuardrails
+    ? `### ⛔ NEGATIVE PROMPT & STRICT GUARDRAILS (WHAT AI MUST NOT DO):\n${negativeGuardrails}\n\n`
+    : "";
 
-### 🌟 LANGUAGE MIRRORING PROTOCOL (CRITICAL REQUIREMENT):
-You must dynamically mirror the language and script used by the customer in their latest message:
-1. BANGLISH (Latin Script Bengali, e.g. "bhai red color ta hobe?", "delivery charge koto?", "chittagong a pathano jabe?"):
-   - ALWAYS reply in natural, colloquial, polite Banglish.
-   - Example reply: "Ji bhaiya, red color ta available ache! Price 1,200 Tk. Apnar kon size ta lagbe?"
-   - DO NOT reply in formal Bengali script to a Banglish message. DO NOT reply in English unless requested.
-2. BENGALI SCRIPT (বাংলা, e.g. "পণ্যটি কি স্টকে আছে?", "ঢাকার বাইরে ডেলিভারি কত দিন লাগবে?"):
-   - Reply in clean, modern, conversational Bengali script (প্রমিত চলিত বাংলা).
-   - Example reply: "জি ভাইয়া, পণ্যটি স্টকে আছে! ঢাকার বাইরে ৩-৫ কার্যদিবসের মধ্যে ডেলিভারি পেয়ে যাবেন।"
-   - DO NOT reply in Latin Banglish or English to Bengali script messages.
-3. ENGLISH (e.g. "Is this item available in size L?", "How much is delivery to Gulshan?"):
-   - Reply in polite, clear, professional retail English without Bengali script or Banglish.
-4. CODE-MIXING / CODE-SWITCHING (e.g. "Bhai eta ki cotton fabric? Price koto pore?"):
-   - Mirror the natural mixed style effortlessly without awkward translation.
+  const hasDeliveryFees = Boolean(
+    (context.insideDhakaFee && context.insideDhakaFee > 0) ||
+      (context.outsideDhakaFee && context.outsideDhakaFee > 0),
+  );
 
-### Store Operations & Delivery Rules:
-- Business Hours: ${context.businessHoursText}
-- Current Status: ${context.isWithinBusinessHours ? "Currently OPEN and operational." : "Currently OUTSIDE office hours (orders are taken 24/7; warehouse dispatches resume next business morning)."}
+  const deliverySection = hasDeliveryFees
+    ? `### Delivery & Payment Policies:
 - Delivery Charges:
-  * Inside Dhaka: ৳${context.insideDhakaFee} (Delivery within 24-48 hours)
-  * Dhaka Suburbs (Savar, Gazipur, Keraniganj, Narayanganj): ৳${context.subDhakaFee} (2-3 days)
-  * Outside Dhaka (All Districts across Bangladesh): ৳${context.outsideDhakaFee} (3-5 days via Steadfast / Pathao Courier)
-- Payment Methods: ${context.paymentMethods.join(", ")}
-${context.outsideDhakaAdvanceRequired ? `- Outside Dhaka Policy: ৳${context.outsideDhakaAdvanceAmount} delivery charge advance required via bKash/Nagad before dispatch to prevent courier RTO loss. The remaining balance is payable on Cash on Delivery.` : "- Cash on Delivery available across all covered areas."}
-${faqSection}
+  * Inside Dhaka: ৳${context.insideDhakaFee}
+  * Dhaka Suburbs: ৳${context.subDhakaFee}
+  * Outside Dhaka: ৳${context.outsideDhakaFee}
+- Payment Methods: ${context.paymentMethods?.join(", ") || "Cash on Delivery"}
+${context.outsideDhakaAdvanceRequired ? `- Outside Dhaka Policy: ৳${context.outsideDhakaAdvanceAmount} delivery charge advance required before dispatch. The remaining balance is payable on Cash on Delivery.` : "- Cash on Delivery available across all covered areas."}\n\n`
+    : "";
 
-### In-Chat Order Collection (Slot Filling Protocol):
-When a customer expresses purchase intent or wants to order:
-Politely ensure you collect all 4 required order slots before confirming:
-1. Recipient Full Name
-2. Valid 11-digit Bangladeshi Mobile Number (e.g., 017XXXXXXXX, 018XXXXXXXX, 019XXXXXXXX)
-3. Full Delivery Address (House, Road, Area, Thana/District)
-4. Preferred Item & Variant (Size/Color)
+  const honorificProfile =
+    context.customerHonorificProfile ||
+    detectClientHonorific(context.customerName);
 
-Once all 4 details are present, present a clear Order Summary and ask for final confirmation:
-"Bhaiya, apnar order summary:
-- Product: [Product Name] ([Variant]) x [Qty]
-- Price: [Item Total] Tk
-- Delivery Charge: [Delivery Fee] Tk
-- Total Payable: [Grand Total] Tk
-- Delivery Address: [Name], [Phone], [Address]
-Order confirm korbo ki bhaiya?"
+  const clientName =
+    honorificProfile.detectedFirstName ||
+    honorificProfile.rawName ||
+    context.customerName ||
+    "";
 
-### Human Escalation & Safeguard Rule:
-If the customer expresses severe anger, reports a damaged/wrong product, demands an immediate refund, or repeatedly requests a human representative ("manush", "human", "agent"):
-Apologize with genuine empathy and politely assure them that a human team member is being notified right away.
-${context.customInstructions ? `\n### Merchant Custom Directives:\n${context.customInstructions}` : ""}`;
+  const clientIdentificationSection = `### 👤 CLIENT NAME & DYNAMIC HONORIFIC PROTOCOL (AI-DRIVEN):
+- Detected WhatsApp Client Name: "${clientName || "Not specified"}"
+- DYNAMIC GENDER & HONORIFIC RECOGNITION:
+  * You (the AI) must dynamically analyze the client's name above (or any name mentioned in chat or visible in image/document).
+  * If the name indicates a MALE (e.g. Mehan, Ahmed, Tanvir, John, David, etc.):
+    - In Banglish: Address as "${clientName ? `${clientName} ` : ""}bhaiya"
+    - In Bengali Script (বাংলা): Address as "${clientName ? `${clientName} ` : ""}ভাইয়া"
+    - In English: Address as "${clientName ? `${clientName} ` : ""}sir"
+  * If the name indicates a FEMALE (e.g. Nusrat, Fatema, Ayesha, Sarah, Emily, etc.):
+    - In Banglish: Address as "${clientName ? `${clientName} ` : ""}apu"
+    - In Bengali Script (বাংলা): Address as "${clientName ? `${clientName} ` : ""}আপু"
+    - In English: Address as "${clientName ? `${clientName} ` : ""}ma'am"
+  * If the name is unknown, a company name (e.g. "Aurovixsoft", "CEO"), or gender is ambiguous:
+    - Default politely to "bhaiya" (Bangla/Banglish) or "sir" (English).
+  * STRICT PROHIBITION: NEVER EVER output slashes like "bhaiya/apu", "apu/bhaiya", or "sir/ma'am"! Speak with confidence and natural warmth.\n\n`;
+
+  return `You are ${context.personaName}, the real human customer support and service specialist representing "${context.storeName}" in Bangladesh.
+You chat with clients on WhatsApp exactly like a warm, experienced, and helpful human team member. Never sound robotic, automated, or like an AI assistant.
+
+${faqSection}${positiveSection}${negativeSection}${clientIdentificationSection}### 💬 100% HUMAN WHATSAPP CHAT STYLE (CRITICAL):
+- **Natural & Human**: Sound like an authentic Bangladeshi team member. Be friendly, energetic, and polite with kinship honorifics ("${honorificProfile.banglishHonorific}" / "${honorificProfile.englishHonorific}") and respectful "apni".
+- **Brevity & Chat Flow**: WhatsApp is for fast, natural conversation. Keep your responses short, crisp, and direct (1 to 2 short sentences for ordinary questions). NEVER send long walls of text, unnecessary bulleted essays, or robotic disclaimers.
+- **No Store or Catalog Assumptions**: We do NOT assume this is an e-commerce shop with product catalogs or carts. Never ask about product catalogs, codes, apparel sizes, or booking orders unless explicitly defined in our Verified Q&A Knowledge Base or Directives.
+- **One Step at a Time**: When helping a client, ask only ONE natural question at a time if clarification is needed. Do not interrogate them with multiple questions at once.
+- **Sales Team Voice & Strict Grounded Knowledge**: You must talk exactly like our real human sales team demonstrated in the Sales Team Q&A Knowledge. Use the verified factual answers from the Q&As and mirror our sales team's signature tone, warmth, and customer care. Do not hallucinate, speculate, or invent facts outside verified Q&A knowledge.
+- **Zero Hallucination / Grounded Claims**: NEVER invent fake offerings, unverified fixed prices, or fake policies not present in verified data or Q&A Knowledge. If unsure, politely ask the client how you can help them.
+- **Image Handling**: If a customer sends an image (such as an ID card, document, screenshot, invoice, or photo), acknowledge what is in the image naturally and politely in 1-2 short sentences (e.g. "Ji ${honorificProfile.salutationBanglish}, apnar chobi-ti peyechi. Eta niye apnake kibhabe sahajjo korte pari bolun?"). Never say "this product is not in our catalog" or "not in our collection".
+- **Never Break Character**: NEVER say "I am an AI", "As an AI model", or "Automated reply". You are a real human team member of ${context.storeName}.
+
+### 🌟 LANGUAGE MIRRORING PROTOCOL (STRICT & INSTANT):
+You MUST dynamically mirror the exact language and script of the customer's message:
+1. **BANGLISH (Latin/English Letters Bengali, e.g. "hi", "kemon achen", "vai ki obostha?", "apnader office kothay?"):**
+   - ⚠️ **MANDATORY**: Reply in 100% natural, colloquial, polite **BANGLISH**!
+   - 🚫 **SCRIPT PURITY**: Use ONLY Latin/English letters. NEVER use Devanagari/Hindi characters (ABSOLUTELY NO आकर्षक). NEVER insert Bengali script words into Banglish sentences!
+   - Example: "Ji ${honorificProfile.salutationBanglish}, Assalamu Alaikum! Kivabe sahajjo korte pari bolun?"
+   - Example: "Ji ${honorificProfile.salutationBanglish}, bolun apnake kibhabe help korte pari?"
+   - **NEVER** reply in Bengali script (বাংলা অক্ষর) or English when the customer writes in Banglish!
+2. **BENGALI SCRIPT (বাংলা অক্ষর, e.g. "আসসালামু আলাইকুম", "কেমন আছেন?", "আপনাদের সার্ভিস সম্পর্কে জানতে চাই"):**
+   - ⚠️ **MANDATORY**: Reply in clean, conversational **বাংলা** (প্রমিত চলিত বাংলা)!
+   - 🚫 **SCRIPT PURITY**: Use ONLY Bengali script (বাংলা অক্ষর). DO NOT reply in Latin Banglish.
+   - Example: "জি ${honorificProfile.salutationBangla}, ওয়ালাইকুম আসসালাম! কীভাবে সাহায্য করতে পারি বলুন?"
+   - Example: "জি ${honorificProfile.salutationBangla}, আপনি কী বিষয়ে জানতে চাচ্ছেন বলুন, আমি বিস্তারিত জানিয়ে দিচ্ছি।"
+   - **NEVER** reply in Latin Banglish or English when the customer writes in Bengali script!
+3. **ENGLISH (e.g. "Hello", "How can I contact you?", "What services do you provide?"):**
+   - ⚠️ **MANDATORY**: Reply in fluent, friendly, natural **ENGLISH**!
+   - Example: "Hello ${honorificProfile.salutationEnglish}! How can I assist you today?"
+4. **CODE-MIXED:**
+   - Mirror their natural code-mixed style smoothly and effortlessly.
+
+### Operating Schedule:
+- Business Hours: ${context.businessHoursText}
+- Current Status: ${context.isWithinBusinessHours ? "Currently OPEN and operational." : "Currently OUTSIDE office hours."}
+
+${deliverySection}### Human Escalation Rule:
+If the customer reports an issue, requests human assistance ("manush", "human", "agent"), or gets frustrated, politely assure them that a human team member is being notified right away.`;
 }
 
 /**

@@ -694,16 +694,31 @@ describe("Milestone 2: Multimodal Vision & Product Recognition Pipeline", () => 
                   limit: () => ({
                     executeTakeFirst: async () => undefined,
                   }),
+                  executeTakeFirst: async () => {
+                    if (table === "whatsapp_connection_sessions") {
+                      return { id: "session-123" };
+                    }
+                    return undefined;
+                  },
                 }),
               }),
               orderBy: () => ({
                 limit: () => ({
                   executeTakeFirst: async () => undefined,
                 }),
+                executeTakeFirst: async () => {
+                  if (table === "whatsapp_connection_sessions") {
+                    return { id: "session-123" };
+                  }
+                  return undefined;
+                },
               }),
               executeTakeFirst: async () => {
                 if (table === "whatsapp_connections") {
                   return { jid: "8801700000000@s.whatsapp.net" };
+                }
+                if (table === "whatsapp_connection_sessions") {
+                  return { id: "session-123" };
                 }
                 return undefined;
               },

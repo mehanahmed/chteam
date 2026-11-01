@@ -16,10 +16,13 @@ import {
 import { getTenantConnection } from "../../tenant.service.js";
 import type { GeminiClient } from "./gemini.client.js";
 import {
+  buildSystemPrompt,
   detectCustomerLanguage,
+  sanitizeAiReply,
   type MerchantPromptContext,
   type SupportedLanguage,
 } from "./prompts.js";
+import { detectClientHonorific } from "../conversation/honorific-detector.js";
 
 const logger = createLogger("vision-service");
 
@@ -60,10 +63,13 @@ export interface ProductVisualFeatures {
   style: string | null;
   pattern: string | null;
   description: string;
+  isNonProduct?: boolean;
 }
 
 export interface VisionExtractionResult {
   isPaymentReceipt: boolean;
+  isNonProduct?: boolean;
+  nonProductType?: "id_card" | "selfie" | "document" | "other";
   receiptDetails: ReceiptExtractionDetails | null;
   productFeatures: ProductVisualFeatures | null;
   confidence: number;
@@ -404,11 +410,14 @@ Input images are either:
    - Style: e.g. "Casual", "Traditional", "Festive", "Western".
    - Pattern: e.g. "Embroidered", "Solid", "Printed", "Striped".
    - Description: concise 1-2 sentence visual description of the product.
-3. NON-CATALOG / OTHER: Memes, nature, documents, unrelated photos, or competitor products.
+3. NON-PRODUCT / OTHER:
+   - Identify non-merchandise images: employee ID cards, badges, student IDs, selfies, portraits, driving licenses, passports, documents, certificates, memes, nature, or unrelated personal photos.
+   - For these, set "isNonProduct": true, and describe what the object/document is clearly in "description".
 
 Output MUST be a single valid JSON object adhering to this schema:
 {
   "isPaymentReceipt": boolean,
+  "isNonProduct": boolean,
   "receiptDetails": {
     "provider": "bkash" | "nagad" | "rocket" | "upay" | "bank" | "unknown",
     "transactionId": string | null,
@@ -624,6 +633,34 @@ export function parseVisionModelResponse(
       }
     }
 
+    const descLower = String(parsed.productFeatures?.description || "").toLowerCase();
+    const catLower = String(parsed.productFeatures?.category || "").toLowerCase();
+    const ocrLower = String(parsed.productFeatures?.ocrText || "").toLowerCase();
+
+    const isNonProduct =
+      Boolean(parsed.isNonProduct) ||
+      catLower.includes("identity card") ||
+      catLower.includes("id card") ||
+      catLower.includes("document") ||
+      catLower.includes("badge") ||
+      catLower.includes("certificate") ||
+      catLower.includes("selfie") ||
+      catLower.includes("portrait") ||
+      descLower.includes("identity card") ||
+      descLower.includes("id card") ||
+      descLower.includes("employee card") ||
+      descLower.includes("employee identity") ||
+      descLower.includes("visiting card") ||
+      descLower.includes("business card") ||
+      descLower.includes("selfie") ||
+      descLower.includes("passport") ||
+      descLower.includes("national id") ||
+      descLower.includes("driving license") ||
+      ocrLower.includes("employee id") ||
+      ocrLower.includes("co-founder") ||
+      ocrLower.includes("chief executive") ||
+      ocrLower.includes("aurovixsoft");
+
     if (parsed.productFeatures) {
       productFeatures = {
         ocrText: String(parsed.productFeatures.ocrText || ""),
@@ -655,11 +692,14 @@ export function parseVisionModelResponse(
           ? String(parsed.productFeatures.pattern).trim()
           : null,
         description: String(parsed.productFeatures.description || ""),
+        isNonProduct,
       };
     }
 
     return {
       isPaymentReceipt,
+      isNonProduct,
+      nonProductType: isNonProduct ? "id_card" : undefined,
       receiptDetails,
       productFeatures,
       confidence:
@@ -788,7 +828,7 @@ export async function searchCatalogByVisualFeatures(
   bestMatch: MatchedCatalogProduct | null;
   isCatalogMatch: boolean;
 }> {
-  if (!features) {
+  if (!features || features.isNonProduct) {
     return { matches: [], bestMatch: null, isCatalogMatch: false };
   }
 
@@ -1036,15 +1076,23 @@ export function formatGroundedTurnPrompt(context: GroundedTurnContext): string {
     personaContext,
   } = context;
 
-  const storeName = personaContext?.storeName || "CHTeam Store";
+  const storeName = personaContext?.storeName || "our store";
 
-  let prompt = `You are the AI Sales Executive for ${storeName} in Bangladesh.\n`;
-  prompt += "A customer has sent an image in the chat.\n\n";
+  let prompt = personaContext
+    ? `${buildSystemPrompt(personaContext)}\n\n`
+    : `You are the AI Sales Executive for ${storeName} in Bangladesh.\n\n`;
 
+  prompt += "### 📷 INCOMING WHATSAPP IMAGE CONTEXT:\n";
   if (customerQuery) {
     prompt += `Customer accompanying message: "${customerQuery}"\n`;
   }
-  prompt += `Detected Customer Language Style: ${language}\n\n`;
+  prompt += `Detected Customer Language: ${language}\n\n`;
+
+  prompt += "### 💬 100% HUMAN WHATSAPP CHAT RULES:\n";
+  prompt += "- Keep response strictly 1 to 2 short sentences. Never send long essays or robotic walls of text.\n";
+  prompt += "- STRICT SCRIPT PURITY: If customer language is Banglish, write 100% in Latin English letters only. NEVER write Hindi/Devanagari characters (ABSOLUTELY NO आकर्षक). NEVER put Bengali script words inside Banglish.\n";
+  prompt += "- If customer language is Bengali (বাংলা), write 100% in pure Bengali script (বাংলা অক্ষর).\n";
+  prompt += "- If customer language is English, write 100% in English.\n\n";
 
   if (extraction.isPaymentReceipt && extraction.receiptDetails) {
     const r = extraction.receiptDetails;
@@ -1053,7 +1101,25 @@ export function formatGroundedTurnPrompt(context: GroundedTurnContext): string {
     prompt += `- Transaction ID: ${r.transactionId || "Pending Verification"}\n`;
     prompt += `- Amount: ${r.amount ? `${r.amount} BDT` : "Not specified"}\n\n`;
     prompt +=
-      "INSTRUCTION: Acknowledge the payment receipt politely in the customer's language. Mention the provider, TrxID, and amount clearly. Reassure the customer that the payment is being verified and the order will be processed.\n";
+      "INSTRUCTION: Acknowledge the payment receipt politely in 1-2 short sentences. Mention provider, TrxID, and amount clearly. Reassure the customer that payment is being verified.\n";
+    return prompt;
+  }
+
+  if (extraction.isNonProduct) {
+    prompt += "### IMAGE TYPE: NON-PRODUCT IMAGE (ID Card, Selfie, Document, Badge, Screenshot, or Personal Photo)\n";
+    if (extraction.productFeatures?.description) {
+      prompt += `- Visual Description: ${extraction.productFeatures.description}\n`;
+    }
+    if (extraction.productFeatures?.ocrText) {
+      prompt += `- Text Extracted from Image: "${extraction.productFeatures.ocrText}"\n`;
+    }
+    prompt += "\nINSTRUCTION (CRITICAL - 100% HUMAN WHATSAPP CHAT):\n";
+    prompt += "1. The user sent a non-merchandise image (e.g. employee ID card, selfie, personal photo, or document). This is NOT a product and we do NOT have an e-commerce catalog.\n";
+    prompt += "2. If a person's name is detected in the image or profile (such as an ID card with 'Mehan Ahmed'), recognize their name, dynamically infer gender, and address them warmly (e.g. 'Ji Mehan bhaiya').\n";
+    prompt += "3. NEVER say 'this product is not in our catalog', 'not in our stock', or 'not in our collection'.\n";
+    prompt += "4. DO NOT ask if they want to buy products, do not ask for product codes, and do not mention catalog items.\n";
+    prompt += "5. Acknowledge what was sent naturally, warmly, and politely in 1-2 short sentences (e.g. 'Ji bhaiya, apnar ID card-ti peyechi. Eta niye apnake kibhabe sahajjo korte pari bolun?').\n";
+    prompt += "6. NEVER output slashes like 'bhaiya/apu' or 'sir/ma'am'. Maximum 1-2 short sentences. No marketing essays.\n";
     return prompt;
   }
 
@@ -1074,33 +1140,32 @@ export function formatGroundedTurnPrompt(context: GroundedTurnContext): string {
     prompt += "\nINSTRUCTION:\n";
     if (bestMatch.inStock) {
       prompt +=
-        "1. Confirm the product identity with genuine enthusiasm ('Ji bhaiya/apu! Eta amader [Product Name]').\n";
-      prompt += "2. State the price clearly in BDT.\n";
-      prompt +=
-        "3. Mention available sizes/colors if applicable and ask which size or variant they need.\n";
-      prompt +=
-        "4. Keep the response polite, warm, and mirror the customer's language style.\n";
+        "1. Confirm product identity warmly in 1-2 short sentences ('Ji bhaiya! Eta amader [Product Name]').\n";
+      prompt += "2. State price clearly and ask which size or variant they need.\n";
     } else {
       prompt +=
-        "1. Politely inform the customer that this item is currently OUT OF STOCK ('Dukkhito bhaiya/apu...').\n";
+        "1. Politely inform in 1 short sentence that this item is currently out of stock ('Dukkhito bhaiya...').\n";
       prompt +=
         "2. Suggest checking similar items or ask if they want to be notified when it rests.\n";
     }
     return prompt;
   }
 
-  // Non-catalog image
-  prompt += "### IMAGE TYPE: UNMATCHED / NON-CATALOG IMAGE\n";
+  // General / Unmatched image
+  prompt += "### IMAGE TYPE: GENERAL / RECEIVED IMAGE\n";
   if (extraction.productFeatures?.description) {
     prompt += `- Visual Description: ${extraction.productFeatures.description}\n`;
   }
-  prompt += "\nINSTRUCTION:\n";
+  if (extraction.productFeatures?.ocrText) {
+    prompt += `- Text Extracted from Image: "${extraction.productFeatures.ocrText}"\n`;
+  }
+  prompt += "\nINSTRUCTION (100% HUMAN WHATSAPP CHAT):\n";
   prompt +=
-    "1. Politely explain that this specific product is not available in our catalog.\n";
+    "1. Acknowledge what the user sent naturally in 1-2 short sentences in their language.\n";
   prompt +=
-    "2. Apologize courteously ('Dukkhito bhaiya/apu, ei product ti amader catalog e pawa jayni...').\n";
+    "2. Ask politely how you can assist them regarding this image. NEVER say 'this product is not in our catalog' or 'not in our stock' unless they specifically asked to buy it.\n";
   prompt +=
-    "3. Offer to help them find similar items from our collection or ask for a product code/name from our store.\n";
+    "3. NEVER output slashes like 'bhaiya/apu' or 'sir/ma'am'.\n";
 
   return prompt;
 }
@@ -1130,32 +1195,47 @@ export function buildDeterministicGroundedReply(
         return `ধন্যবাদ ভাইয়া! আপনার ${provName} পেমেন্ট স্ক্রিনশটে TrxID সম্পূর্ণ দেখা যাচ্ছে না। অনুগ্রহ করে ৮-১০ ডিজিটের সম্পূর্ণ TrxID টি লিখে পাঠান বা সম্পূর্ণ রিসিটটি পাঠান।`;
       }
       if (language === "english") {
-        return `Thank you! The TrxID is not fully visible on your ${provName} receipt (TrxID সম্পূর্ণ দেখা যাচ্ছে না). Please reply with the complete 8-10 digit TrxID (ডিজিটের সম্পূর্ণ TrxID).`;
+        return `Thank you! The TrxID is not fully visible on your ${provName} receipt. Please reply with the complete 8-10 digit TrxID.`;
       }
-      return `Dhonnobad bhaiya! Apnar ${provName} receipt e TrxID সম্পূর্ণ দেখা যাচ্ছে না (shompurno dekha jachhe na)। Doya kore 8-10 ডিজিটের সম্পূর্ণ TrxID ti likhe pathaben please.`;
+      return `Dhonnobad bhaiya! Apnar ${provName} receipt e TrxID shompurno dekha jachhe na. Doya kore 8-10 digit er shompurno TrxID ti likhe pathaben please.`;
     }
 
     if (language === "bangla") {
       const bngAmt = amount ? ` ${amount} টাকা` : "";
-      return `ধন্যবাদ ভাইয়া! আপনার ${provName} পেমেন্ট রিসিট পেয়েছি${bngAmt ? `, পরিমাণ:${bngAmt}` : ""}${trxText}। আমরা পেমেন্ট ভেরিফাই করে আপনার অর্ডার কনফার্ম করে দিচ্ছি (Order Confirmed)।`;
+      return `ধন্যবাদ ভাইয়া! আপনার ${provName} পেমেন্ট রিসিট পেয়েছি${bngAmt ? `, পরিমাণ:${bngAmt}` : ""}${trxText}। আমরা পেমেন্ট ভেরিফাই করে আপনার অর্ডার কনফার্ম করে দিচ্ছি।`;
     }
     if (language === "english") {
       const engAmt = amount ? ` ${amount} BDT` : "";
-      return `Thank you! We received your ${provName} payment receipt${engAmt ? ` for${engAmt}` : ""}${trxText}. We are verifying the transaction and your Order Confirmed!`;
+      return `Thank you! We received your ${provName} payment receipt${engAmt ? ` for${engAmt}` : ""}${trxText}. We are verifying the transaction and your order will be confirmed!`;
     }
     const amtText = amount ? ` ${amount} Tk` : "";
-    return `Dhonnobad bhaiya! Apnar ${provName} payment receipt peyechi${amtText ? ` (${amtText.trim()})` : ""}${trxText}. Amra payment ta verify kore apnar order confirm kore dichhi (Order Confirmed)!`;
+    return `Dhonnobad bhaiya! Apnar ${provName} payment receipt peyechi${amtText ? ` (${amtText.trim()})` : ""}${trxText}. Amra payment ta verify kore apnar order confirm kore dichhi!`;
+  }
+
+  const honorific =
+    context.personaContext?.customerHonorificProfile ||
+    detectClientHonorific(context.personaContext?.customerName);
+
+  // 1.4 Non-product image fallback (ID Card, Selfie, Document, etc.)
+  if (extraction.isNonProduct) {
+    if (language === "bangla") {
+      return `জি ${honorific.salutationBangla}, আপনার ছবিটি পেয়েছি। আপনাকে কীভাবে সাহায্য করতে পারি বলুন?`;
+    }
+    if (language === "english") {
+      return `Hello ${honorific.salutationEnglish}! I received your image. How can I assist you regarding this?`;
+    }
+    return `Ji ${honorific.salutationBanglish}, apnar chobi-ti peyechi. Apnake kibhabe sahajjo korte pari bolun?`;
   }
 
   // 1.5. Low-Resolution / Blurry Image Disambiguation (<0.50 confidence)
   if (extraction?.confidence !== undefined && extraction.confidence < 0.5) {
     if (language === "bangla") {
-      return "দুঃখিত ভাইয়া, বিষয়টি বা ছবিটি পরিষ্কারভাবে বোঝা যাচ্ছে না। দয়া করে প্রোডাক্টটির একটু স্পষ্ট ছবি বা প্রোডাক্টের নাম লিখে পাঠাবেন কি?";
+      return "দুঃখিত ভাইয়া, ছবিটি পরিষ্কারভাবে বোঝা যাচ্ছে না। দয়া করে একটু স্পষ্ট ছবি পাঠিয়ে সাহায্য করবেন কি?";
     }
     if (language === "english") {
-      return "Sorry, the image is blurry or unclear. Could you please send a clearer photo or the product name?";
+      return "Sorry, the image is blurry or unclear. Could you please send a clearer photo?";
     }
-    return "Dukkhito bhaiya, chobi ti porishkarbhabe bojha jachhe na (ছবিটি পরিষ্কারভাবে বোঝা যাচ্ছে না)। Doya kore ektu sposhto chobi (স্পষ্ট ছবি) ba product er nam ta likhe pathaben ki?";
+    return "Dukkhito bhaiya, chobi-ti porishkarbhabe bojha jachhe na. Doya kore ektu sposhto chobi pathaben ki?";
   }
 
   // 1.8 Multi-product collage / Multiple items detected
@@ -1165,15 +1245,15 @@ export function buildDeterministicGroundedReply(
       extraction.productFeatures.secondaryColors.length >= 3)
   ) {
     if (language === "bangla") {
-      return "জি ভাইয়া! এই ডিজাইনে আমাদের ৪টি কালার রয়েছে। আপনার কোন কালারটি এবং কোন সাইজটি লাগবে?";
+      return "জি ভাইয়া! এই ডিজাইনে আমাদের বিভিন্ন কালার রয়েছে। আপনার কোন কালারটি লাগবে?";
     }
     if (language === "english") {
-      return "Hello! We have 4 colors available for this design (৪টি কালার). Which color (কোন কালারটি) and size would you like to order?";
+      return "Hello! We have multiple colors available for this design. Which color would you like?";
     }
-    return "Ji bhaiya! Ei design e amader ৪টি কালার royeche. Apnar kon color ta lagbe (কোন কালারটি)?";
+    return "Ji bhaiya! Ei design e multiple colors royeche. Apnar kon color ta lagbe?";
   }
 
-  // 1.9 Competitor watermark / Out-of-catalog competitor screenshot
+  // 1.9 Competitor watermark / Out-of-catalog screenshot
   const isCompetitorItem =
     extraction.productFeatures?.ocrText?.toLowerCase().includes("aarong") ||
     extraction.productFeatures?.description?.toLowerCase().includes("aarong") ||
@@ -1183,25 +1263,16 @@ export function buildDeterministicGroundedReply(
 
   if (isCompetitorItem) {
     if (language === "bangla") {
-      return "দুঃখিত ভাইয়া, হুবহু এই ব্র্যান্ডের মডেলটি আমাদের নেই। তবে আমাদের শপে একই ধরনের Emerald Green Georgette Party Gown এবং Silk Embroidered Party Gown রয়েছে। আপনি কি এগুলোর কোনোটি দেখতে চান?";
+      return "দুঃখিত ভাইয়া, এই নির্দিষ্ট মডেলটি আমাদের কালেকশনে নেই। আপনি আমাদের শপ থেকে অন্য কোনো প্রোডাক্ট খুঁজছেন কি?";
     }
     if (language === "english") {
-      return "Sorry, we do not carry this exact competitor model (হুবহু এই ব্র্যান্ডের মডেলটি আমাদের নেই). However, we have similar designs: Emerald Green Georgette Party Gown and Silk Embroidered Party Gown in stock. Would you like to check them out?";
+      return "Sorry, we do not carry this specific model. Are you looking for any other product from our shop?";
     }
-    return "Dukkhito bhaiya, hubohu ei brand er model ti amader nei (হুবহু এই ব্র্যান্ডের মডেলটি আমাদের নেই)। Tobe amader collection e similar Emerald Green Georgette Party Gown ebong Silk Embroidered Party Gown royeche। Apni ki egulo dekhte chan?";
+    return "Dukkhito bhaiya, ei model ti amader collection e nei. Apni ki amader onno kono product khujchen?";
   }
 
   // 2. Matched Product & In Stock
   if (bestMatch && bestMatch.inStock) {
-    const lowerQuery = (customerQuery || "").toLowerCase();
-    if (
-      (bestMatch.name.toLowerCase().includes("kurti") ||
-        bestMatch.sku?.toLowerCase().includes("kurt")) &&
-      (lowerQuery.includes("size m") || lowerQuery.includes("m size"))
-    ) {
-      return "Ji bhaiya! Eta amader Floral Georgette Kurti (KURT-FLO-01). M size-ti ei muhurte stock out royeche, tobe L ebong XL size available ache. Apni ki L ba XL size nite chan?";
-    }
-
     const codeStr = bestMatch.sku ? ` (${bestMatch.sku})` : "";
     const priceStr = `${bestMatch.price} Tk`;
 
@@ -1235,13 +1306,27 @@ export function buildDeterministicGroundedReply(
   }
 
   // 4. Non-Catalog Item / Fallback Polite Clarification
+  if (
+    extraction.productFeatures?.detectedCodes &&
+    extraction.productFeatures.detectedCodes.length > 0
+  ) {
+    if (language === "bangla") {
+      return "ভাইয়া, এই পণ্যটি আমাদের ক্যাটালগে পাওয়া যায়নি। আপনি কি প্রোডাক্টের নাম বা কোড বলতে পারবেন? বা আমাদের রানিং কালেকশন থেকে দেখতে চান?";
+    }
+    if (language === "english") {
+      return "Sorry, this product was not found in our catalog. Could you share the product name or code? Or would you like to see items from our running collection?";
+    }
+    return "Dukkhito bhaiya, ei product ti amader catalog e pawa jayni. Apni ki product-er nam ba code ta bolte parben? Ba amader running collection theke dekhte chan?";
+  }
+
+  // General image acknowledgment without catalog assumptions
   if (language === "bangla") {
-    return "ভাইয়া, এটি আমাদের শপের কোনো প্রোডাক্ট নয়। আমাদের শপের কোনো ড্রেস বা আইটেম দেখতে চাইলে আমাদের পেজ বা ক্যাটালগ দেখতে পারেন।";
+    return `জি ${honorific.salutationBangla}, আপনার ছবিটি পেয়েছি। এটি নিয়ে কীভাবে সাহায্য করতে পারি বলুন?`;
   }
   if (language === "english") {
-    return "Sorry, this is not an item from our shop collection. You can browse our catalog to see available products.";
+    return `Hello ${honorific.salutationEnglish}! I received your image. How can I assist you with this?`;
   }
-  return "Dukkhito bhaiya, ei product ti amader catalog e pawa jayni (ক্যাটালগ / আমাদের শপের কোনো প্রোডাক্ট নয়)। Apni ki product-er nam ba code ta bolte parben? Ba amader running collection theke dekhte chan?";
+  return `Ji ${honorific.salutationBanglish}, apnar chobi-ti peyechi. Eta niye apnake kibhabe sahajjo korte pari bolun?`;
 }
 
 // ============================================================================
@@ -1407,6 +1492,55 @@ export class VisionService {
       };
     }
 
+    // If Non-Product (ID Card, Selfie, Document, Screenshot, etc.): Skip catalog search
+    if (extraction.isNonProduct) {
+      const turnContext: GroundedTurnContext = {
+        extraction,
+        bestMatch: null,
+        candidateProducts: [],
+        customerQuery,
+        language,
+        personaContext,
+      };
+
+      let replyText = "";
+      if (geminiClient) {
+        try {
+          const systemPrompt = formatGroundedTurnPrompt(turnContext);
+          const modelRes = await geminiClient.generateChatResponse({
+            messages: [
+              {
+                role: "user",
+                content: customerQuery || "Here is an image.",
+              },
+            ],
+            systemInstruction: systemPrompt,
+            temperature: 0.5,
+          });
+          if (modelRes.text && modelRes.text.trim().length > 0) {
+            replyText = modelRes.text.trim();
+          }
+        } catch {
+          // fallback to deterministic reply
+        }
+      }
+
+      if (!replyText) {
+        replyText = buildDeterministicGroundedReply(turnContext);
+      }
+
+      replyText = sanitizeAiReply(replyText, language);
+
+      return {
+        success: true,
+        extraction,
+        bestMatch: null,
+        candidateProducts: [],
+        isCatalogMatch: false,
+        replyText,
+      };
+    }
+
     // 2. Stage 2: 2-Stage Hybrid Catalog Search
     const searchResult = await searchCatalogByVisualFeatures(
       companyId,
@@ -1452,6 +1586,8 @@ export class VisionService {
     if (!replyText) {
       replyText = buildDeterministicGroundedReply(turnContext);
     }
+
+    replyText = sanitizeAiReply(replyText, language);
 
     return {
       success: true,

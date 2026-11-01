@@ -123,7 +123,10 @@ export const env = {
   CLOUDFLARE_ACCOUNT_ID: getEnv("CLOUDFLARE_ACCOUNT_ID", ""),
   CLOUDFLARE_EMAIL_API_TOKEN: getEnv("CLOUDFLARE_EMAIL_API_TOKEN", ""),
   EMAIL_FROM: getEnv("EMAIL_FROM", "noreply@example.com"),
-  FEEDBACK_TO_EMAIL: getEnv("FEEDBACK_TO_EMAIL", "contact@chteam.colorhutbd.xyz"),
+  FEEDBACK_TO_EMAIL: getEnv(
+    "FEEDBACK_TO_EMAIL",
+    "contact@chteam.colorhutbd.xyz",
+  ),
 
   // App
   APP_URL: getEnv("APP_URL", "http://localhost:4444"),
@@ -212,9 +215,17 @@ export const env = {
   // Feature flags
   DEBUG: getEnvBoolean("DEBUG", false),
   AI_AGENT_ENABLED: getEnvBoolean("AI_AGENT_ENABLED", true),
+  AI_AGENT_24X7: getEnvBoolean("AI_AGENT_24X7", true),
+  AI_AGENT_AUTO_RESPOND_EVERY_MESSAGE: getEnvBoolean(
+    "AI_AGENT_AUTO_RESPOND_EVERY_MESSAGE",
+    false,
+  ),
   GEMINI_API_KEY: getEnv("GEMINI_API_KEY", ""),
-  GEMINI_PRIMARY_MODEL: getEnv("GEMINI_PRIMARY_MODEL", "gemini-2.0-flash"),
-  GEMINI_FALLBACK_MODEL: getEnv("GEMINI_FALLBACK_MODEL", "gemini-1.5-flash"),
+  GEMINI_PRIMARY_MODEL: getEnv("GEMINI_PRIMARY_MODEL", "gemini-3.5-flash"),
+  GEMINI_FALLBACK_MODEL: getEnv(
+    "GEMINI_FALLBACK_MODEL",
+    "gemini-3.5-flash-lite",
+  ),
 
   // Logging
   LOG_LEVEL: getEnv("LOG_LEVEL", "info"),

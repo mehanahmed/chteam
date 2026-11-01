@@ -164,11 +164,7 @@ export class MerchantKnowledgeService {
             row.outside_dhaka_advance_amount ??
               DEFAULT_OUTSIDE_DHAKA_ADVANCE_AMOUNT,
           ),
-          paymentMethods: [
-            "Cash on Delivery (COD)",
-            "bKash Merchant",
-            "Nagad",
-          ],
+          paymentMethods: ["Cash on Delivery (COD)", "bKash Merchant", "Nagad"],
           customInstructions: row.custom_instructions || undefined,
           faqs:
             Array.isArray(row.faqs) && row.faqs.length > 0
@@ -391,7 +387,7 @@ export class MerchantKnowledgeService {
   }
 
   /**
-   * Default authentic Bangladeshi social commerce retail FAQs
+   * Default authentic Bangladeshi social commerce retail FAQs template
    */
   async getStoreFaqs(_companyId: string): Promise<MerchantFaq[]> {
     return [
@@ -407,19 +403,17 @@ export class MerchantKnowledgeService {
       {
         question: "Cash on delivery ache ki? (Is Cash on Delivery available?)",
         answer:
-          "Ji bhaiya, Cash on Delivery available ache. Outside Dhaka orders-er jonno delivery charge ৳120 advance korte hoy, remaining product price Cash on Delivery-te dite parben.",
+          "Ji bhaiya, Cash on Delivery available ache. Outside Dhaka orders-er jonno delivery charge advance korte hoy, remaining product price Cash on Delivery-te dite parben.",
       },
       {
-        question:
-          "Product size fit na hole exchange kora jabe? (Can I exchange if size doesn't fit?)",
+        question: "Product exchange kora jabe? (Can I exchange a product?)",
         answer:
-          "Ji oboshshoi, parcel receive korar 7 diner moddhe unwashed and intact tag-shoho exchange facility paben.",
+          "Ji oboshshoi, amader exchange policy onujayi exchange facility paben.",
       },
       {
-        question:
-          "bKash / Nagad payment number koto? (What is the payment number?)",
+        question: "Payment kivabe kora jabe? (How can I pay?)",
         answer:
-          "Amader official bKash Merchant number 01XXXXXXXXX (Make Payment option). Reference-e apnar phone number use korben.",
+          "Apni Cash on Delivery, bKash athoba Nagad-er maddhome payment korte parben.",
       },
     ];
   }
@@ -437,10 +431,9 @@ export class MerchantKnowledgeService {
       : await this.getMerchantSettings(companyId);
 
     const hours = await this.getBusinessHoursStatus(companyId);
-    const faqs =
-      settings.faqs && settings.faqs.length > 0
-        ? settings.faqs
-        : await this.getStoreFaqs(companyId);
+    const faqs = Array.isArray(settings.faqs)
+      ? settings.faqs
+      : await this.getStoreFaqs(companyId);
 
     return {
       storeName: settings.storeName,

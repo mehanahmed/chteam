@@ -107,12 +107,13 @@ export async function simulateConnectionAiResponse(
   connectionId: string,
   message: string,
   history?: Array<{ role: "user" | "model"; content: string }>,
+  clientName?: string,
 ): Promise<AiSimulationResult> {
   return fetchWithAuth<AiSimulationResult>(
     `/ai-agent/connections/${connectionId}/test-simulate`,
     {
       method: "POST",
-      body: JSON.stringify({ message, history }),
+      body: JSON.stringify({ message, history, clientName }),
     },
   );
 }

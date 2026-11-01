@@ -1,8 +1,9 @@
 export { AccountSettings } from "./AccountSettings";
+export { AiAgentSettings } from "./AiAgentSettings";
 export { ApiTokensSection } from "./ApiTokensSection";
-export { ConnectedAppsSection } from "./ConnectedAppsSection";
 export { CatalogManager } from "./CatalogManager";
-
+export { ConnectedAppsSection } from "./ConnectedAppsSection";
+export { InboxAppearanceSettings } from "./InboxAppearanceSettings";
 export {
   type default as KeyboardShortcutsModalDefault,
   KeyboardShortcutsModal,
@@ -16,4 +17,3 @@ export {
 export { NotificationSettings } from "./NotificationSettings";
 export { QuickRepliesManager } from "./QuickRepliesManager";
 export { SlaPolicySettings } from "./SlaPolicySettings";
-export { InboxAppearanceSettings } from "./InboxAppearanceSettings";

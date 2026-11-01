@@ -8,15 +8,18 @@ import { createLogger, formatError } from "../../lib/logger.js";
 import {
   buildCommandSubject,
   buildSendMessageCommand,
+  publishTypingCommand,
 } from "../../lib/nats/index.js";
 import { enqueueCommand } from "../command-outbox.service.js";
 import { broadcastToContactViewers } from "../message-broadcast.service.js";
 import { getTenantConnection } from "../tenant.service.js";
+import { getActiveSessionId } from "../whatsapp/session.js";
 import { AI_TAGS, SYSTEM_AI_USER_ID } from "./constants.js";
 import {
   HandoffService,
   handoffService,
 } from "./conversation/handoff.service.js";
+import { detectClientHonorific } from "./conversation/honorific-detector.js";
 import { orderFlowManager } from "./conversation/order-flow.js";
 import { extractSlotsFromText } from "./conversation/slot-filler.js";
 import type { OrderPricingResult } from "./ecommerce/delivery-rules.js";
@@ -24,8 +27,9 @@ import type {
   ECommercePlatformAdapter,
   OrderBookingResult,
 } from "./ecommerce/ecommerce.interface.js";
+import { AudioService, audioService } from "./gemini/audio.service.js";
 import { type ChatMessage, GeminiClient } from "./gemini/gemini.client.js";
-import { buildSystemPrompt, detectCustomerLanguage } from "./gemini/prompts.js";
+import { buildSystemPrompt, detectCustomerLanguage, sanitizeAiReply } from "./gemini/prompts.js";
 import { VisionService, visionService } from "./gemini/vision.service.js";
 import { merchantKnowledgeService } from "./merchant-knowledge.service.js";
 import { executeAgentTool, GEMINI_AGENT_TOOLS } from "./tools/agent-tools.js";
@@ -72,6 +76,7 @@ export interface SuppressionDecision {
 export class AiOrchestratorService {
   private geminiClient: GeminiClient | null = null;
   private visionService: VisionService = visionService;
+  private audioService: AudioService = audioService;
   private processingContacts: Set<string> = new Set();
   // biome-ignore lint/suspicious/noExplicitAny: mock database for testing
   private mockDb: any = null;
@@ -88,6 +93,14 @@ export class AiOrchestratorService {
 
   public getVisionService(): VisionService {
     return this.visionService;
+  }
+
+  public setAudioService(service: AudioService): void {
+    this.audioService = service;
+  }
+
+  public getAudioService(): AudioService {
+    return this.audioService;
   }
 
   public setEcommerceAdapter(adapter: ECommercePlatformAdapter | null): void {
@@ -131,6 +144,58 @@ export class AiOrchestratorService {
         env.GEMINI_FALLBACK_MODEL || process.env.GEMINI_FALLBACK_MODEL,
     });
     return this.geminiClient;
+  }
+
+  /**
+   * Broadcasts typing status to both WhatsApp and the web inbox
+   */
+  async setTypingPresence(
+    companyId: string,
+    contactId: string,
+    targetConnectionId: string | null,
+    destinationJid: string | null,
+    isTyping: boolean,
+    // biome-ignore lint/suspicious/noExplicitAny: optional DB override
+    tenantDb?: any,
+  ): Promise<void> {
+    try {
+      if (targetConnectionId && destinationJid) {
+        try {
+          const resolvedDb =
+            tenantDb || this.mockDb || getTenantConnection(companyId);
+          const activeSessionId = await getActiveSessionId(
+            resolvedDb,
+            targetConnectionId,
+          );
+          if (activeSessionId) {
+            await publishTypingCommand(
+              companyId,
+              activeSessionId,
+              destinationJid,
+              isTyping,
+            ).catch(() => {});
+          }
+        } catch {
+          // WhatsApp typing indicator is best-effort
+        }
+      }
+
+      await broadcastToContactViewers(
+        companyId,
+        contactId,
+        isTyping ? "typing:start" : "typing:stop",
+        {
+          conversationId: contactId,
+          userId: SYSTEM_AI_USER_ID,
+          userName: "Maya (AI)",
+        },
+      ).catch(() => {});
+    } catch (err) {
+      logger.debug(
+        { err: formatError(err), contactId },
+        "Failed to update AI typing presence",
+      );
+    }
   }
 
   /**
@@ -203,6 +268,14 @@ export class AiOrchestratorService {
     try {
       const tenantDb = this.mockDb || getTenantConnection(companyId);
 
+      const isTestEnv =
+        process.env.NODE_ENV === "test" ||
+        process.env.VITEST === "true" ||
+        (typeof Bun !== "undefined" &&
+          Bun.argv.some((arg) => arg.includes("test")));
+      const allowAutoRespondEveryMessage =
+        !isTestEnv && Boolean(env.AI_AGENT_AUTO_RESPOND_EVERY_MESSAGE);
+
       // 4. Verify contact is not blocked
       const contact = await tenantDb
         .selectFrom("contacts")
@@ -218,22 +291,24 @@ export class AiOrchestratorService {
         };
       }
 
-      // 5. Verify no active human assignment
-      const activeAssignment = await tenantDb
-        .selectFrom("contact_assignments")
-        .select(["assigned_to"])
-        .where("contact_id", "=", contactId)
-        .where("unassigned_at", "is", null)
-        .orderBy("assigned_at", "desc")
-        .limit(1)
-        .executeTakeFirst();
+      // 5. Verify no active human assignment (bypassed when allowAutoRespondEveryMessage is enabled)
+      if (!allowAutoRespondEveryMessage) {
+        const activeAssignment = await tenantDb
+          .selectFrom("contact_assignments")
+          .select(["assigned_to"])
+          .where("contact_id", "=", contactId)
+          .where("unassigned_at", "is", null)
+          .orderBy("assigned_at", "desc")
+          .limit(1)
+          .executeTakeFirst();
 
-      if (activeAssignment?.assigned_to) {
-        return {
-          isSuppressed: true,
-          shouldSuppress: true,
-          reason: "contact_assigned_to_human",
-        };
+        if (activeAssignment?.assigned_to) {
+          return {
+            isSuppressed: true,
+            shouldSuppress: true,
+            reason: "contact_assigned_to_human",
+          };
+        }
       }
 
       // 6. Verify contact does NOT have the 'ai-paused' tag (case-insensitive)
@@ -261,7 +336,7 @@ export class AiOrchestratorService {
       // Suppress if sent by user via Web UI or directly from merchant's WhatsApp mobile device
       const lastOutbound = await tenantDb
         .selectFrom("messages")
-        .select(["sent_by_user_id", "from_me"])
+        .select(["sent_by_user_id", "from_me", "timestamp"])
         .where("contact_id", "=", contactId)
         .where("from_me", "=", true)
         .orderBy("timestamp", "desc")
@@ -273,11 +348,23 @@ export class AiOrchestratorService {
         lastOutbound.from_me &&
         lastOutbound.sent_by_user_id !== SYSTEM_AI_USER_ID
       ) {
-        return {
-          isSuppressed: true,
-          shouldSuppress: true,
-          reason: "last_message_from_human_agent",
-        };
+        if (allowAutoRespondEveryMessage) {
+          const msgTime = new Date(lastOutbound.timestamp).getTime();
+          const fiveMinutesAgo = Date.now() - 5 * 60 * 1000;
+          if (msgTime > fiveMinutesAgo) {
+            return {
+              isSuppressed: true,
+              shouldSuppress: true,
+              reason: "active_human_intervention_in_progress",
+            };
+          }
+        } else {
+          return {
+            isSuppressed: true,
+            shouldSuppress: true,
+            reason: "last_message_from_human_agent",
+          };
+        }
       }
     } catch (error) {
       logger.warn(
@@ -300,7 +387,6 @@ export class AiOrchestratorService {
   async dispatchInboundMessage(ctx: InboundAiMessageContext): Promise<void> {
     const {
       companyId,
-      connectionId,
       contactId,
       isGroup,
       content,
@@ -318,10 +404,33 @@ export class AiOrchestratorService {
       return;
     }
 
+    const isAudioMessage =
+      messageType === "audio" ||
+      messageType === "voice" ||
+      messageType === "ptt" ||
+      Boolean(mediaMimeType?.startsWith("audio/")) ||
+      Boolean(mediaMimeType?.includes("ogg")) ||
+      Boolean(mediaMimeType?.includes("opus")) ||
+      Boolean(
+        mediaUrl &&
+          /\.(ogg|oga|opus|mp3|wav|m4a|aac|flac|webm|amr)(\?.*)?$/i.test(
+            mediaUrl,
+          ),
+      ) ||
+      Boolean(mediaUrl?.startsWith("data:audio/"));
+
     const isImageMessage =
-      Boolean(mediaUrl) ||
-      messageType === "image" ||
-      Boolean(mediaMimeType?.startsWith("image/"));
+      !isAudioMessage &&
+      (messageType === "image" ||
+        Boolean(mediaMimeType?.startsWith("image/")) ||
+        Boolean(
+          mediaUrl &&
+            (/\.(jpe?g|png|webp|gif)(\?.*)?$/i.test(mediaUrl) ||
+              mediaUrl.startsWith("data:image/")),
+        ) ||
+        (Boolean(mediaUrl) && !mediaMimeType));
+
+    const hasMedia = Boolean(isImageMessage || isAudioMessage || mediaUrl);
 
     // Contact-level debounce / lock: avoid processing overlapping events concurrently
     const lockKey = `${companyId}:${contactId}`;
@@ -333,8 +442,38 @@ export class AiOrchestratorService {
       return;
     }
 
+    let targetConnectionId: string | null =
+      ctx.connectionId ?? ctx.channelAccountId ?? null;
+    let destinationJid: string | null = ctx.contactJid || ctx.senderJid || null;
+    // biome-ignore lint/suspicious/noExplicitAny: optional DB override
+    let tenantDb: any = null;
+
     try {
       this.processingContacts.add(lockKey);
+
+      tenantDb = this.mockDb || getTenantConnection(companyId);
+
+      // Resolve targetConnectionId & destinationJid: fallback to contact record if not present on context
+      if (!targetConnectionId || !destinationJid) {
+        try {
+          const contact = await tenantDb
+            .selectFrom("contacts")
+            .select(["whatsapp_connection_id", "jid"])
+            .where("id", "=", contactId)
+            .executeTakeFirst();
+          if (!targetConnectionId && contact?.whatsapp_connection_id) {
+            targetConnectionId = contact.whatsapp_connection_id;
+          }
+          if (!destinationJid && contact?.jid) {
+            destinationJid = contact.jid;
+          }
+        } catch (err) {
+          logger.debug(
+            { err: formatError(err), contactId },
+            "Could not resolve contact fallback",
+          );
+        }
+      }
 
       // 1. Evaluate Circuit Breakers
       const suppression = await this.evaluateSuppression(
@@ -342,8 +481,8 @@ export class AiOrchestratorService {
         contactId,
         isGroup,
         content,
-        isImageMessage,
-        connectionId,
+        hasMedia,
+        targetConnectionId,
       );
 
       if (suppression.isSuppressed || suppression.shouldSuppress) {
@@ -356,7 +495,6 @@ export class AiOrchestratorService {
 
       // 1.5 Evaluate Complaint Detection, Human Request & Domain Confusion
       const detectedLang = detectCustomerLanguage(content || "");
-      const destinationJid = ctx.contactJid || ctx.senderJid;
       let replyContent = "";
 
       const handoffEval = this.handoffService.evaluateHandoff(content || "", {
@@ -383,7 +521,7 @@ export class AiOrchestratorService {
           sentiment: handoffEval.sentiment,
           customerHandoverText: handoffEval.customerHandoverText,
           language: detectedLang,
-          connectionId,
+          connectionId: targetConnectionId,
           contactJid: destinationJid,
           senderName: ctx.senderName,
           providedDb: this.mockDb,
@@ -402,15 +540,37 @@ export class AiOrchestratorService {
         return;
       }
 
-      const tenantDb = this.mockDb || getTenantConnection(companyId);
-      const promptContext =
-        await merchantKnowledgeService.buildPromptContext(
-          companyId,
-          connectionId || undefined,
-        );
+      const promptContext = await merchantKnowledgeService.buildPromptContext(
+        companyId,
+        targetConnectionId || undefined,
+      );
 
-      // 1.8 Business Hours & Off-Hours Auto-Acknowledgement
-      if (ctx.receivedAt) {
+      // Resolve client name and infer gender honorific profile
+      let clientName = ctx.senderName?.trim() || "";
+      if (!clientName || clientName === "Unknown" || /^\d+$/.test(clientName)) {
+        try {
+          const contact = await tenantDb
+            .selectFrom("contacts")
+            .select(["custom_name", "push_name", "display_name"])
+            .where("id", "=", contactId)
+            .executeTakeFirst();
+          clientName =
+            contact?.custom_name?.trim() ||
+            contact?.display_name?.trim() ||
+            contact?.push_name?.trim() ||
+            "";
+        } catch {
+          // ignore
+        }
+      }
+
+      const clientHonorificProfile = detectClientHonorific(clientName);
+      promptContext.customerName =
+        clientHonorificProfile.detectedFirstName || clientName || undefined;
+      promptContext.customerHonorificProfile = clientHonorificProfile;
+
+      // 1.8 Business Hours & Off-Hours Auto-Acknowledgement (only when 24/7 mode is explicitly disabled)
+      if (env.AI_AGENT_24X7 === false && ctx.receivedAt) {
         const formatter = new Intl.DateTimeFormat("en-US", {
           timeZone: "Asia/Dhaka",
           hour: "numeric",
@@ -422,18 +582,104 @@ export class AiOrchestratorService {
           10,
         );
         if (hour < 9 || hour >= 22) {
+          const offHoursGreeting = `Assalamu Alaikum ${clientHonorificProfile.salutationBanglish}!`;
+
           replyContent =
             detectedLang === "bangla"
-              ? "আসসালামু আলাইকুম! আমাদের শপ এর অফিসিয়াল কাজের সময় (business hours) সকাল ৯:০০ AM থেকে রাত ১০:০০ PM পর্যন্ত। সকালের অফিস শুরু হওয়ার সাথে সাথেই আমাদের টিম আপনার সাথে যোগাযোগ করবে।"
+              ? `আসসালামু আলাইকুম ${clientHonorificProfile.salutationBangla}! আমাদের অফিসিয়াল কাজের সময় (business hours) সকাল ৯:০০ AM থেকে রাত ১০:০০ PM পর্যন্ত। সকালের অফিস শুরু হওয়ার সাথে সাথেই আমাদের টিম আপনার সাথে যোগাযোগ করবে।`
               : detectedLang === "english"
-                ? "Hello! Our official business hours are 9:00 AM to 10:00 PM BST. We will attend to your request first thing in the morning."
-                : "Assalamu Alaikum bhaiya! Amader shop er official business hours sokal 9:00 AM theke raat 10:00 PM porjonto. Apnar message-ti record kora hoyeche, sokale office shuru houar sathe sathei amader team apnar sathe jogajog korbe. Dhonnobad!";
+                ? `Hello ${clientHonorificProfile.salutationEnglish}! Our official business hours are 9:00 AM to 10:00 PM BST. We will attend to your request first thing in the morning.`
+                : `${offHoursGreeting} Amader official business hours sokal 9:00 AM theke raat 10:00 PM porjonto. Apnar message-ti record kora hoyeche, sokale office shuru houar sathe sathei amader team apnar sathe jogajog korbe. Dhonnobad!`;
         }
       }
 
       if (!replyContent) {
-        // 3. Vision Branch vs Conversational Branch
-        if (isImageMessage && (mediaUrl || content)) {
+        // Indicate typing status to WhatsApp contact & web dashboard while generating reply
+        await this.setTypingPresence(
+          companyId,
+          contactId,
+          targetConnectionId,
+          destinationJid,
+          true,
+          tenantDb,
+        );
+
+        // 3. Audio Branch vs Vision Branch vs Conversational Branch
+        if (isAudioMessage) {
+          logger.info(
+            { contactId, mediaUrl, messageType },
+            "Processing inbound audio attachment via Multimodal Audio Service",
+          );
+
+          const audioSource = mediaUrl || content || "";
+          const audioResult = await this.audioService.processIncomingAudio({
+            companyId,
+            audioSource,
+            hintMimeType: mediaMimeType,
+            customerQuery: content && mediaUrl ? content : "",
+            language: detectedLang,
+            tenantDb,
+            geminiClient,
+            personaContext: promptContext,
+            contactId,
+          });
+
+          if (audioResult.transcription) {
+            const audioHandoff = this.handoffService.evaluateHandoff(
+              audioResult.transcription,
+              {
+                contactId,
+                detectedLang: audioResult.detectedLanguage || detectedLang,
+              },
+            );
+
+            if (audioHandoff.shouldHandoff) {
+              logger.info(
+                {
+                  contactId,
+                  reason: audioHandoff.reason,
+                  sentiment: audioHandoff.sentiment,
+                },
+                "Handoff triggered from audio voice note; executing escalation",
+              );
+
+              await this.handoffService.executeEscalation({
+                companyId,
+                contactId,
+                reason: audioHandoff.reason || "complaint",
+                sentiment: audioHandoff.sentiment,
+                customerHandoverText: audioHandoff.customerHandoverText,
+                language: audioResult.detectedLanguage || detectedLang,
+                connectionId: targetConnectionId,
+                contactJid: destinationJid,
+                senderName: ctx.senderName,
+                providedDb: this.mockDb,
+              });
+
+              return; // Halt autonomous replies
+            }
+
+            // Seed customer details if detected from audio transcription
+            const preExtracted = extractSlotsFromText(
+              audioResult.transcription,
+            );
+            if (
+              preExtracted.customerName ||
+              preExtracted.phoneNumber ||
+              preExtracted.deliveryAddress ||
+              preExtracted.deliveryZone
+            ) {
+              const session = orderFlowManager.getOrCreateSession(
+                companyId,
+                contactId,
+                audioResult.detectedLanguage || detectedLang,
+              );
+              orderFlowManager.updateSlots(session, preExtracted);
+            }
+          }
+
+          replyContent = audioResult.replyText;
+        } else if (isImageMessage && (mediaUrl || content)) {
           logger.info(
             { contactId, mediaUrl, messageType },
             "Processing inbound image attachment via Multimodal Vision Service",
@@ -463,7 +709,7 @@ export class AiOrchestratorService {
             }
           }
 
-          if (visionResult.bestMatch) {
+          if (visionResult.bestMatch && this.ecommerceAdapter) {
             const match = visionResult.bestMatch;
             const orderSession = orderFlowManager.getOrCreateSession(
               companyId,
@@ -485,16 +731,18 @@ export class AiOrchestratorService {
           replyContent = visionResult.replyText;
         } else {
           // Conversational Branch
-          // If content contains items, seed them into the contact's order session for multi-turn flow
-          const preExtracted = extractSlotsFromText(content || "");
-          if (preExtracted.items && preExtracted.items.length > 0) {
-            const session = orderFlowManager.getOrCreateSession(
-              companyId,
-              contactId,
-              detectedLang,
-            );
-            for (const itm of preExtracted.items) {
-              orderFlowManager.addItem(session, itm);
+          // If ecommerce adapter is active and content contains items, seed them into the contact's order session
+          if (this.ecommerceAdapter) {
+            const preExtracted = extractSlotsFromText(content || "");
+            if (preExtracted.items && preExtracted.items.length > 0) {
+              const session = orderFlowManager.getOrCreateSession(
+                companyId,
+                contactId,
+                detectedLang,
+              );
+              for (const itm of preExtracted.items) {
+                orderFlowManager.addItem(session, itm);
+              }
             }
           }
 
@@ -642,6 +890,10 @@ export class AiOrchestratorService {
         }
       }
 
+      if (replyContent) {
+        replyContent = sanitizeAiReply(replyContent, detectedLang);
+      }
+
       if (!replyContent || replyContent.trim().length === 0) {
         logger.warn({ contactId }, "Empty response received from AI pipeline");
         return;
@@ -653,7 +905,8 @@ export class AiOrchestratorService {
         contactId,
         isGroup,
         content,
-        isImageMessage,
+        hasMedia,
+        targetConnectionId,
       );
 
       if (
@@ -672,13 +925,25 @@ export class AiOrchestratorService {
       const waMessageId = `ai_${replyMessageId}`;
       const createdAt = toDbDate();
 
-      if (connectionId && destinationJid) {
-        const activeSessionId = connectionId;
+      if (targetConnectionId && destinationJid) {
+        let activeSessionId: string;
+        try {
+          activeSessionId = await getActiveSessionId(
+            tenantDb,
+            targetConnectionId,
+          );
+        } catch (err) {
+          logger.warn(
+            { err: formatError(err), targetConnectionId, contactId },
+            "Cannot deliver AI reply: active WhatsApp session not found or connection disconnected",
+          );
+          return;
+        }
 
         const connection = await tenantDb
           .selectFrom("whatsapp_connections")
           .select(["jid"])
-          .where("id", "=", connectionId)
+          .where("id", "=", targetConnectionId)
           .executeTakeFirst();
 
         const sendCommand = await buildSendMessageCommand(
@@ -697,7 +962,7 @@ export class AiOrchestratorService {
             .insertInto("messages")
             .values({
               id: replyMessageId,
-              whatsapp_connection_id: connectionId,
+              whatsapp_connection_id: targetConnectionId,
               contact_id: contactId,
               message_id: waMessageId,
               from_me: true,
@@ -752,6 +1017,14 @@ export class AiOrchestratorService {
         "Error in AI Orchestrator dispatch loop",
       );
     } finally {
+      await this.setTypingPresence(
+        companyId,
+        contactId,
+        targetConnectionId,
+        destinationJid,
+        false,
+        tenantDb,
+      ).catch(() => {});
       this.processingContacts.delete(lockKey);
     }
   }

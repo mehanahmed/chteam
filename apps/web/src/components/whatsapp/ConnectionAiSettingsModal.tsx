@@ -4,7 +4,6 @@ import {
   Plus,
   Save,
   Trash2,
-  Zap,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -40,39 +39,6 @@ interface ConnectionAiSettingsModalProps {
 interface EditableFaq extends ConnectionAiFaq {
   id: string;
 }
-
-const COMMON_QA_TEMPLATES = [
-  {
-    label: "Delivery Charges & Time",
-    question: "What are your delivery charges and how long does it take?",
-    answer:
-      "Delivery charges are ৳80 inside Dhaka (24–48 hours) and ৳150 outside Dhaka (3–5 business days).",
-  },
-  {
-    label: "Store Address & Working Hours",
-    question: "Where is your store located and what are your opening hours?",
-    answer:
-      "Our showroom is located at Level 3, Shop #42, Bashundhara City, Panthapath, Dhaka. We are open daily from 10:00 AM to 8:00 PM.",
-  },
-  {
-    label: "Cash on Delivery",
-    question: "Do you have Cash on Delivery (COD)?",
-    answer:
-      "Yes, Cash on Delivery is available nationwide across Bangladesh. For orders outside Dhaka, only the shipping fee is prepaid.",
-  },
-  {
-    label: "Return & Exchange Policy",
-    question: "Can I exchange or return a product if it doesn't fit?",
-    answer:
-      "Yes! We offer a free 3-day exchange guarantee if the size or color doesn't fit, provided tags remain intact and items are unworn.",
-  },
-  {
-    label: "Payment Methods",
-    question: "How can I pay for my order?",
-    answer:
-      "You can pay via Cash on Delivery (COD), bKash Merchant Payment, or Nagad.",
-  },
-];
 
 export function ConnectionAiSettingsModal({
   connectionId,
@@ -200,16 +166,17 @@ export function ConnectionAiSettingsModal({
               </div>
               <div>
                 <DialogTitle className="text-base sm:text-lg font-semibold text-slate-900 dark:text-dark-text-primary flex items-center gap-2">
-                  Q&A Knowledge Base
+                  Q&A Knowledge & Sales Conversation Base
                   <Badge className="bg-[#e7f7ef] text-[#0b7a55] dark:bg-emerald-500/10 dark:text-emerald-300 border-0 text-[10px] font-semibold px-2 py-0.5">
                     {faqs.length} {faqs.length === 1 ? "Pair" : "Pairs"}
                   </Badge>
                 </DialogTitle>
                 <DialogDescription className="text-xs text-[#65736d] dark:text-dark-text-secondary mt-0.5">
-                  Configure questions and answers for{" "}
+                  Configure real sales conversation examples (Customer Q & Sales Team A) for{" "}
                   <span className="font-semibold text-slate-900 dark:text-dark-text-primary">
                     {connectionName || "WhatsApp"} {phoneNumber ? `(${phoneNumber})` : ""}
                   </span>
+                  . The AI adopts both the knowledge and your team's communication style.
                 </DialogDescription>
               </div>
             </div>
@@ -226,8 +193,8 @@ export function ConnectionAiSettingsModal({
           </div>
         </div>
 
-        {/* Top Controls: Switch & Quick Templates */}
-        <div className="px-6 py-3 border-b border-[#e2e8e3] dark:border-dark-border bg-white dark:bg-dark-elevated space-y-3 shrink-0">
+        {/* Top Controls: Switch */}
+        <div className="px-6 py-3 border-b border-[#e2e8e3] dark:border-dark-border bg-white dark:bg-dark-elevated shrink-0">
           {/* Activation Checkbox */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2.5">
@@ -252,24 +219,6 @@ export function ConnectionAiSettingsModal({
               )}
             </span>
           </div>
-
-          {/* Quick-Add Templates */}
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
-            <span className="text-[11px] font-semibold text-[#65736d] dark:text-dark-text-secondary mr-1 flex items-center gap-1 shrink-0">
-              <Zap className="h-3 w-3 text-amber-500" />
-              Quick Templates:
-            </span>
-            {COMMON_QA_TEMPLATES.map((tmpl, idx) => (
-              <button
-                key={idx}
-                type="button"
-                onClick={() => handleAddFaq(tmpl)}
-                className="shrink-0 text-[11px] font-medium bg-[#f8faf8] hover:bg-[#e7f7ef] hover:text-[#0b7a55] dark:bg-dark-secondary dark:hover:bg-dark-tertiary text-slate-700 dark:text-dark-text-secondary px-2.5 py-1 rounded-lg border border-[#dce3de] dark:border-dark-border transition-all"
-              >
-                + {tmpl.label}
-              </button>
-            ))}
-          </div>
         </div>
 
         {/* Q&A List Feed */}
@@ -283,10 +232,10 @@ export function ConnectionAiSettingsModal({
             <div className="p-12 text-center rounded-2xl border border-dashed border-[#d6dfd9] bg-white dark:border-dark-border dark:bg-dark-secondary">
               <BookOpen className="h-10 w-10 mx-auto mb-3 text-[#829089] dark:text-dark-text-tertiary" />
               <h3 className="text-sm font-semibold text-slate-900 dark:text-dark-text-primary">
-                No Questions & Answers Added Yet
+                No Sales Conversations or Q&As Added Yet
               </h3>
-              <p className="text-xs text-[#65736d] dark:text-dark-text-secondary max-w-sm mx-auto mt-1 mb-5">
-                Add common customer questions (like delivery fees, outlet location, refund terms) and the answers you want your AI assistant to provide.
+              <p className="text-xs text-[#65736d] dark:text-dark-text-secondary max-w-md mx-auto mt-1 mb-5 leading-relaxed">
+                Add real examples of how your sales team talks with customers (Customer Question & Sales Team Answer). The AI will learn your team's tone, wording, and exact knowledge to talk with customers in that exact same way.
               </p>
               <Button
                 type="button"
@@ -294,7 +243,7 @@ export function ConnectionAiSettingsModal({
                 className="gap-1.5 text-xs rounded-xl bg-[#0b7a55] hover:bg-[#096747] text-white font-semibold shadow-sm"
               >
                 <Plus className="h-4 w-4" />
-                Add First Q&A Pair
+                Add First Q&A Conversation
               </Button>
             </div>
           ) : (
@@ -310,7 +259,7 @@ export function ConnectionAiSettingsModal({
                         Q{index + 1}
                       </span>
                       <span className="text-xs font-semibold text-slate-900 dark:text-dark-text-primary">
-                        Customer Question
+                        Customer Question (কাস্টমার যেভাবে প্রশ্ন করে)
                       </span>
                     </div>
 
@@ -328,19 +277,19 @@ export function ConnectionAiSettingsModal({
                   <Input
                     value={faq.question}
                     onChange={(e) => handleUpdateFaq(faq.id, "question", e.target.value)}
-                    placeholder="e.g. What is your return or exchange policy?"
+                    placeholder='যেমন: "apnader service charge koto?" বা "আপনাদের সাথে যোগাযোগ করার উপায় কী?"'
                     className="h-10 text-xs font-medium rounded-xl border-[#dce3de] dark:border-dark-border bg-[#f8faf8] dark:bg-dark-elevated text-slate-900 dark:text-dark-text-primary focus:bg-white focus:border-[#0b7a55]"
                   />
 
                   {/* Answer Field */}
                   <div className="space-y-1">
                     <Label className="text-[11px] font-semibold text-slate-700 dark:text-dark-text-secondary">
-                      AI Answer to Customer
+                      Sales Team Answer & Style (আমাদের সেলস টিমের উত্তর ও কথা বলার ধরন)
                     </Label>
                     <Textarea
                       value={faq.answer}
                       onChange={(e) => handleUpdateFaq(faq.id, "answer", e.target.value)}
-                      placeholder="e.g. We offer free exchange within 3 days if the size or color doesn't fit, provided tags remain intact."
+                      placeholder='যেমন: "Ji bhaiya, amader basic package start hoy... Apnar kon service ti dorkar bolle ami shob details bole dicchi!"'
                       rows={2}
                       className="text-xs rounded-xl border-[#dce3de] dark:border-dark-border bg-[#f8faf8] dark:bg-dark-elevated text-slate-900 dark:text-dark-text-primary focus:bg-white focus:border-[#0b7a55] leading-relaxed"
                     />
