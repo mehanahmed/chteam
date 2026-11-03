@@ -218,7 +218,7 @@ export const env = {
   AI_AGENT_24X7: getEnvBoolean("AI_AGENT_24X7", true),
   AI_AGENT_AUTO_RESPOND_EVERY_MESSAGE: getEnvBoolean(
     "AI_AGENT_AUTO_RESPOND_EVERY_MESSAGE",
-    false,
+    true,
   ),
   GEMINI_API_KEY: getEnv("GEMINI_API_KEY", ""),
   GEMINI_PRIMARY_MODEL: getEnv("GEMINI_PRIMARY_MODEL", "gemini-2.0-flash"),

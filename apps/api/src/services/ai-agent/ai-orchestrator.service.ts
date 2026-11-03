@@ -383,17 +383,23 @@ export class AiOrchestratorService {
         lastOutbound.from_me &&
         lastOutbound.sent_by_user_id !== SYSTEM_AI_USER_ID
       ) {
-        if (allowAutoRespondEveryMessage) {
-          const msgTime = new Date(lastOutbound.timestamp).getTime();
-          const fiveMinutesAgo = Date.now() - 5 * 60 * 1000;
-          if (msgTime > fiveMinutesAgo) {
-            return {
-              isSuppressed: true,
-              shouldSuppress: true,
-              reason: "active_human_intervention_in_progress",
-            };
-          }
-        } else {
+        const msgTime = lastOutbound.timestamp
+          ? new Date(lastOutbound.timestamp).getTime()
+          : 0;
+        const cooldownMs = allowAutoRespondEveryMessage
+          ? 5 * 60 * 1000
+          : 30 * 60 * 1000;
+        if (msgTime > 0 && Date.now() - msgTime < cooldownMs) {
+          return {
+            isSuppressed: true,
+            shouldSuppress: true,
+            reason: "active_human_intervention_in_progress",
+          };
+        }
+        if (
+          !allowAutoRespondEveryMessage &&
+          (!lastOutbound.timestamp || isTestEnv)
+        ) {
           return {
             isSuppressed: true,
             shouldSuppress: true,
@@ -521,7 +527,7 @@ export class AiOrchestratorService {
       );
 
       if (suppression.isSuppressed || suppression.shouldSuppress) {
-        logger.debug(
+        logger.info(
           { contactId, reason: suppression.reason },
           "AI reply suppressed by circuit breaker",
         );
@@ -568,9 +574,9 @@ export class AiOrchestratorService {
       // 2. Ensure Gemini client is available
       const geminiClient = await this.getGeminiClient(companyId);
       if (!geminiClient) {
-        logger.debug(
+        logger.warn(
           { companyId },
-          "GEMINI_API_KEY is not configured; AI autonomous responses inactive",
+          "GEMINI_API_KEY is not configured for this workspace or server; AI autonomous responses inactive",
         );
         return;
       }

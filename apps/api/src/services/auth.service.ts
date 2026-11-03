@@ -1091,6 +1091,7 @@ export async function refreshSession(
       .execute();
 
     return {
+      userId: session.user_id,
       tokens: {
         accessToken,
         refreshToken: newRefreshToken,
@@ -1100,16 +1101,18 @@ export async function refreshSession(
 
   if (!result) throw emailNotVerifiedError();
 
-  try {
-    await claimPendingInvitationsForUser(result.user.id);
-  } catch (err) {
-    logger.warn(
-      { error: err, userId: result.user.id },
-      "Failed to auto-claim invitations on login",
-    );
+  if (result.userId) {
+    try {
+      await claimPendingInvitationsForUser(result.userId);
+    } catch (err) {
+      logger.warn(
+        { error: err, userId: result.userId },
+        "Failed to auto-claim invitations on refresh",
+      );
+    }
   }
 
-  return result;
+  return { tokens: result.tokens };
 }
 
 /**

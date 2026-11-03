@@ -222,6 +222,12 @@ services:
       # earlier hops whose verified address chain HAProxy appends to.
       TRUSTED_PROXY_IPS: ${API_ROUTER_IP:-10.254.0.254}
       TRUSTED_PROXY_IP_HEADER: x-forwarded-for
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      GEMINI_PRIMARY_MODEL: ${GEMINI_PRIMARY_MODEL:-gemini-2.0-flash}
+      GEMINI_FALLBACK_MODEL: ${GEMINI_FALLBACK_MODEL:-gemini-1.5-flash}
+      AI_AGENT_ENABLED: ${AI_AGENT_ENABLED:-true}
+      AI_AGENT_AUTO_RESPOND_EVERY_MESSAGE: ${AI_AGENT_AUTO_RESPOND_EVERY_MESSAGE:-true}
+      AI_AGENT_24X7: ${AI_AGENT_24X7:-true}
     secrets:
       - postgres_password
       - nats_service_password

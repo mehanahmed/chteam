@@ -189,6 +189,26 @@ export function AuthProvider({ children }: AuthProviderProps) {
     });
   }, [loadIdentity]);
 
+  // Proactive token refresh timer (every 10 minutes) & window focus refresh
+  React.useEffect(() => {
+    if (!state.isAuthenticated) return;
+
+    // Refresh every 10 minutes (well before the 15-minute access token expiry)
+    const interval = setInterval(() => {
+      void attemptTokenRefresh();
+    }, 10 * 60 * 1000);
+
+    const onFocus = () => {
+      void attemptTokenRefresh();
+    };
+
+    window.addEventListener("focus", onFocus);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener("focus", onFocus);
+    };
+  }, [state.isAuthenticated]);
+
   const login = React.useCallback(async (email: string, password: string) => {
     setState((previous) => ({ ...previous, isLoading: true, error: null }));
     try {

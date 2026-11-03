@@ -88,7 +88,12 @@ loginRoutes.post("/logout", authMiddleware, async (c) => {
 
     return successMessage(c, "Logged out successfully");
   } catch (error) {
-    clearRefreshTokenCookie(c);
+    if (
+      error instanceof AuthError &&
+      (error.statusCode === 401 || error.statusCode === 403)
+    ) {
+      clearRefreshTokenCookie(c);
+    }
     return handleAuthError(c, error, logger, formatError, "Logout error");
   }
 });
@@ -114,7 +119,12 @@ loginRoutes.post("/refresh", refreshRateLimiter, async (c) => {
       },
     });
   } catch (error) {
-    clearRefreshTokenCookie(c);
+    if (
+      error instanceof AuthError &&
+      (error.statusCode === 401 || error.statusCode === 403)
+    ) {
+      clearRefreshTokenCookie(c);
+    }
     return handleAuthError(
       c,
       error,
