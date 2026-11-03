@@ -182,15 +182,43 @@ aiAgentRoutes.post(
   zValidator("json", testApiKeySchema),
   async (c) => {
     const { apiKey, model } = c.req.valid("json");
-    const targetModel = model || DEFAULT_PRIMARY_GEMINI_MODEL;
+    const trimmedKey = apiKey.trim();
+
+    // 1. Validate key and discover real available models from Google's ModelService
+    let models: GeminiModelDescriptor[];
+    try {
+      models = await fetchAvailableGeminiModels(trimmedKey, true);
+    } catch (err: any) {
+      return successData(c, {
+        valid: false,
+        error: `API key validation failed: ${err.message || "Could not query Gemini models"}`,
+      });
+    }
+
+    if (!models || models.length === 0) {
+      return successData(c, {
+        valid: false,
+        error: "No compatible Gemini text generation models are enabled for this API key/project.",
+      });
+    }
+
+    // 2. Select target model from the verified live model list
+    let targetModel = model?.trim();
+    if (!targetModel || !models.some((m) => m.id === targetModel)) {
+      const preferred =
+        models.find((m) => m.id === "gemini-2.0-flash") ||
+        models.find((m) => m.isRecommended) ||
+        models[0];
+      targetModel = preferred.id;
+    }
+
+    // 3. Select fallback model that actually exists in this key's available models
     const fallbackModel =
-      targetModel === DEFAULT_FALLBACK_GEMINI_MODEL
-        ? DEFAULT_PRIMARY_GEMINI_MODEL
-        : DEFAULT_FALLBACK_GEMINI_MODEL;
+      models.find((m) => m.id !== targetModel)?.id || targetModel;
 
     try {
       const client = new GeminiClient({
-        apiKey: apiKey.trim(),
+        apiKey: trimmedKey,
         primaryModel: targetModel,
         fallbackModel,
       });
@@ -207,12 +235,14 @@ aiAgentRoutes.post(
         valid: true,
         message: "Gemini API key is verified and operational!",
         modelUsed: res.modelUsed,
+        models,
         latencyMs: res.latencyMs,
       });
     } catch (err: any) {
       return successData(c, {
         valid: false,
         error: err.message || "Failed to validate Gemini API key",
+        models,
       });
     }
   },

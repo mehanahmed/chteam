@@ -173,6 +173,7 @@ export class GeminiClient {
 
     let lastError: unknown = null;
     let lastModelAttempted = modelSequence[0];
+    const errorsAttempted: Array<{ model: string; error: string }> = [];
 
     for (let i = 0; i < modelSequence.length; i++) {
       const currentModel = modelSequence[i];
@@ -252,6 +253,10 @@ export class GeminiClient {
       } catch (error: unknown) {
         lastError = error;
         const errorMessage = formatError(error);
+        errorsAttempted.push({
+          model: currentModel,
+          error: errorMessage.message,
+        });
         logger.warn(
           {
             model: currentModel,
@@ -279,8 +284,12 @@ export class GeminiClient {
           (lastError as { status?: number; statusCode?: number }).statusCode
         : undefined;
 
+    const errorDetails = errorsAttempted
+      .map((e) => `[${e.model}]: ${e.error}`)
+      .join(" | ");
+
     throw new GeminiServiceError(
-      `Gemini service unavailable after attempting fallback (${modelSequence.join(" -> ")}). Last error: ${formatError(lastError).message}`,
+      `Gemini service unavailable after attempting fallback (${modelSequence.join(" -> ")}). Last error: ${formatError(lastError).message}${errorDetails ? ` (Attempts: ${errorDetails})` : ""}`,
       lastModelAttempted,
       {
         statusCode: errorStatus,
@@ -295,6 +304,7 @@ export class GeminiClient {
  */
 export async function fetchAvailableGeminiModels(
   apiKey?: string,
+  throwOnError: boolean = false,
 ): Promise<GeminiModelDescriptor[]> {
   const key = apiKey?.trim();
   if (!key) {
@@ -315,15 +325,32 @@ export async function fetchAvailableGeminiModels(
     clearTimeout(timeout);
 
     if (!res.ok) {
+      let detailMsg = `Google Gemini API returned HTTP ${res.status}`;
+      try {
+        const errorData = (await res.json()) as { error?: { message?: string; status?: string } };
+        if (errorData?.error?.message) {
+          detailMsg = errorData.error.message;
+        }
+      } catch {
+        // ignore json parse errors
+      }
+
       logger.warn(
-        { status: res.status },
+        { status: res.status, detail: detailMsg },
         "Failed to fetch models from Google Gemini API",
       );
+
+      if (throwOnError) {
+        throw new Error(detailMsg);
+      }
       return DEFAULT_GEMINI_MODELS;
     }
 
     const data = (await res.json()) as { models?: Array<any> };
     if (!data.models || !Array.isArray(data.models)) {
+      if (throwOnError) {
+        throw new Error("Invalid response format from Gemini ModelService");
+      }
       return DEFAULT_GEMINI_MODELS;
     }
 
@@ -335,8 +362,7 @@ export async function fetchAvailableGeminiModels(
           methods.includes("generateContent") &&
           name.includes("gemini") &&
           !name.includes("embedding") &&
-          !name.includes("aqa") &&
-          !name.includes("vision")
+          !name.includes("aqa")
         );
       })
       .map((m: any) => {
@@ -350,11 +376,18 @@ export async function fetchAvailableGeminiModels(
         };
       });
 
-    if (filtered.length === 0) return DEFAULT_GEMINI_MODELS;
+    if (filtered.length === 0) {
+      if (throwOnError) {
+        throw new Error("No generateContent models found for this API key");
+      }
+      return DEFAULT_GEMINI_MODELS;
+    }
 
     return filtered.sort((a, b) => {
       if (a.id === "gemini-2.0-flash") return -1;
       if (b.id === "gemini-2.0-flash") return 1;
+      if (a.id === "gemini-2.5-flash") return -1;
+      if (b.id === "gemini-2.5-flash") return 1;
       if (a.id === "gemini-1.5-flash") return -1;
       if (b.id === "gemini-1.5-flash") return 1;
       if (a.id === "gemini-1.5-pro") return -1;
@@ -366,6 +399,9 @@ export async function fetchAvailableGeminiModels(
       { error: err.message },
       "Error fetching Gemini models from Google API",
     );
+    if (throwOnError) {
+      throw err;
+    }
     return DEFAULT_GEMINI_MODELS;
   }
 }

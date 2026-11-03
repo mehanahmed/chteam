@@ -376,10 +376,17 @@ export function AiAgentSettings() {
       setTestKeyResult(res);
       if (res.valid) {
         toast.success(res.message || "Gemini API key is verified and working!");
-        // Dynamically fetch available models using this verified key
-        handleRefreshModels(keyToTest);
+        if (res.models && res.models.length > 0) {
+          setAvailableModels(res.models);
+        }
+        if (res.modelUsed && res.modelUsed !== primaryModel) {
+          setPrimaryModel(res.modelUsed);
+        }
       } else {
         toast.error(res.error || "Gemini API key validation failed.");
+        if (res.models && res.models.length > 0) {
+          setAvailableModels(res.models);
+        }
       }
     } catch (err: any) {
       setTestKeyResult({ valid: false, error: err.message || "Network test error" });

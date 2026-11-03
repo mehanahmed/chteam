@@ -75,6 +75,7 @@ export interface TestApiKeyResult {
   message?: string;
   error?: string;
   modelUsed?: string;
+  models?: GeminiModelOption[];
   latencyMs?: number;
 }
 

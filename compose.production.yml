@@ -194,8 +194,10 @@ services:
       # mail_api_key mount, and only the provider whose host key file is
       # configured names it. The unused provider therefore needs no placeholder
       # secret, and no provider's key is ever mounted under another's name.
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
       RESEND_API_KEY_FILE: ${RESEND_API_KEY_FILE:+/run/secrets/mail_api_key}
       CLOUDFLARE_ACCOUNT_ID: ${CLOUDFLARE_ACCOUNT_ID:-}
+      CLOUDFLARE_EMAIL_API_TOKEN: ${CLOUDFLARE_EMAIL_API_TOKEN:-}
       CLOUDFLARE_EMAIL_API_TOKEN_FILE: ${CLOUDFLARE_EMAIL_API_TOKEN_FILE:+/run/secrets/mail_api_key}
       EMAIL_FROM: ${EMAIL_FROM:?set EMAIL_FROM}
       FEEDBACK_TO_EMAIL: ${FEEDBACK_TO_EMAIL:?set FEEDBACK_TO_EMAIL}
