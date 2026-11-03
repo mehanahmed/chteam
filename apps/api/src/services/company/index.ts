@@ -25,6 +25,7 @@ export {
 export {
   acceptInvitation,
   cancelInvitation,
+  claimPendingInvitationsForUser,
   getInvitationByToken,
   getPendingInvitations,
   inviteMember,

@@ -13,6 +13,7 @@ import {
 } from "../../lib/errors.js";
 import { getEffectivePermissions } from "../permission.service.js";
 import { getCompany, toCompanyResponse } from "./core.js";
+import { claimPendingInvitationsForUser } from "./invitations.js";
 import type { Company, CompanyMember, CompanyWithRole } from "./types.js";
 import { invalidateCompanyMembership } from "../company-membership.service.js";
 
@@ -346,6 +347,12 @@ export async function transferOwnership(
 export async function getUserCompanies(
   userId: string,
 ): Promise<CompanyWithRole[]> {
+  try {
+    await claimPendingInvitationsForUser(userId);
+  } catch {
+    // Non-blocking
+  }
+
   const companies = await db
     .selectFrom("company_members as cm")
     .innerJoin("companies as c", "c.id", "cm.company_id")

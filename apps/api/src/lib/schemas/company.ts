@@ -112,6 +112,7 @@ export const updateMemberPermissionsSchema = z.object({
 export const inviteMemberSchema = z.object({
   email: z.string().email("Invalid email address"),
   role: z.enum(["admin", "member"]).default("member"),
+  password: z.string().min(6).optional(),
   permissions: updateMemberPermissionsSchema.optional(),
 });
 

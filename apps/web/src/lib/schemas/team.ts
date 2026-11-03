@@ -11,6 +11,11 @@ export const inviteTeamMemberSchema = z.object({
   role: z.enum(["admin", "member"], {
     errorMap: () => ({ message: "Please select a valid role" }),
   }),
+  password: z
+    .string()
+    .min(6, "Password must be at least 6 characters")
+    .optional()
+    .or(z.literal("")),
 });
 
 export type InviteTeamMemberFormData = z.infer<typeof inviteTeamMemberSchema>;

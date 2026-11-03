@@ -160,20 +160,23 @@ export function useInviteMember() {
       email,
       role = "member",
       permissions,
+      password,
     }: {
       companyId: string;
       email: string;
       role?: "admin" | "member";
       permissions?: Partial<MemberPermissions>;
+      password?: string;
     }) => {
       const response = await api.post<{ invitation: Invitation }>(
         `/companies/${companyId}/invitations`,
-        { email, role, permissions },
+        { email, role, permissions, password: password || undefined },
       );
       return response.invitation;
     },
     onSuccess: (_, variables) => {
       invalidate(queryKeys.team.invitations(variables.companyId));
+      invalidate(queryKeys.team.members(variables.companyId));
     },
   });
 }

@@ -14,6 +14,7 @@ import {
 import { randomBytes } from "crypto";
 import { sql, type Transaction } from "kysely";
 import { sendInvitationEmail } from "../../lib/email.js";
+import { hashPassword } from "../../lib/password.js";
 import {
   CompanyNotFoundError,
   InsufficientPermissionsError,
@@ -148,6 +149,24 @@ export async function inviteMember(
     .executeTakeFirst();
   if (existingUser) throw new UserAlreadyMemberError(email);
 
+  const existingAccount = await db
+    .selectFrom("users")
+    .select(["id", "email"])
+    .where(sql`lower(email)`, "=", email)
+    .executeTakeFirst();
+
+  let temporaryPassword: string | undefined;
+  const isNewUser = !existingAccount;
+
+  if (isNewUser) {
+    temporaryPassword =
+      input.password && input.password.length >= 6
+        ? input.password
+        : `CHTeam#${Math.floor(100000 + Math.random() * 900000)}`;
+  } else if (input.password && input.password.length >= 6) {
+    temporaryPassword = input.password;
+  }
+
   // Keep an existing valid invitation until replacement delivery succeeds.
   const existingInvitation = await db
     .selectFrom("invitations")
@@ -193,6 +212,10 @@ export async function inviteMember(
       token,
       company.name,
       inviterEmail,
+      {
+        temporaryPassword,
+        isExistingAccount: !isNewUser && !temporaryPassword,
+      },
     );
     if (!delivery.success) deliveryError = delivery.error || "Unknown error";
   } catch (error) {
@@ -209,6 +232,31 @@ export async function inviteMember(
       "Invitation was rolled back because email delivery failed",
     );
     throw new InvitationDeliveryError(email);
+  }
+
+  if (isNewUser) {
+    const passwordHash = await hashPassword(temporaryPassword!);
+    await db
+      .insertInto("users")
+      .values({
+        email,
+        password_hash: passwordHash,
+        email_verified_at: toDbDate(),
+        created_at: toDbDate(),
+        updated_at: toDbDate(),
+      })
+      .execute();
+  } else if (temporaryPassword) {
+    const passwordHash = await hashPassword(temporaryPassword);
+    await db
+      .updateTable("users")
+      .set({
+        password_hash: passwordHash,
+        email_verified_at: toDbDate(),
+        updated_at: toDbDate(),
+      })
+      .where("id", "=", existingAccount!.id)
+      .execute();
   }
 
   if (existingInvitation) {
@@ -404,14 +452,6 @@ export async function acceptInvitationInTransaction(
     throw new InvitationEmailMismatchError();
   }
 
-  const existingMembership = await trx
-    .selectFrom("company_members")
-    .select("id")
-    .where("company_id", "=", invitation.company_id)
-    .where("user_id", "=", userId)
-    .executeTakeFirst();
-  if (existingMembership) throw new UserAlreadyMemberError(recipient.email);
-
   const company = await trx
     .selectFrom("companies")
     .select([
@@ -428,6 +468,34 @@ export async function acceptInvitationInTransaction(
     .where("status", "!=", "deleted")
     .executeTakeFirst();
   if (!company) throw new CompanyNotFoundError(invitation.company_id);
+
+  const existingMembership = await trx
+    .selectFrom("company_members")
+    .select([
+      "id",
+      "user_id",
+      "company_id",
+      "role",
+      "permissions",
+      "invited_by",
+      "joined_at",
+    ])
+    .where("company_id", "=", invitation.company_id)
+    .where("user_id", "=", userId)
+    .executeTakeFirst();
+  if (existingMembership) {
+    await trx
+      .updateTable("invitations")
+      .set({ accepted_at: toDbDate() })
+      .where("id", "=", invitation.id)
+      .where("accepted_at", "is", null)
+      .execute();
+
+    return {
+      company: company as unknown as AcceptInvitationResult["company"],
+      member: existingMembership as unknown as CompanyMember,
+    };
+  }
 
   // Atomically claim the invitation so concurrent acceptance cannot add
   // duplicate memberships or increment company statistics twice.
@@ -512,6 +580,40 @@ export async function acceptInvitation(
     .execute((trx) => acceptInvitationInTransaction(trx, token, userId));
   await completeInvitationAcceptance(result, userId, context);
   return result;
+}
+
+/**
+ * Automatically claim any active pending invitations matching the user's email address.
+ */
+export async function claimPendingInvitationsForUser(
+  userId: string,
+): Promise<void> {
+  const user = await db
+    .selectFrom("users")
+    .select(["id", "email"])
+    .where("id", "=", userId)
+    .executeTakeFirst();
+  if (!user?.email) return;
+
+  const normalizedEmail = normalizeInvitationEmail(user.email);
+  const pendingInvitations = await db
+    .selectFrom("invitations")
+    .select(["token"])
+    .where(sql`lower(email)`, "=", normalizedEmail)
+    .where("accepted_at", "is", null)
+    .where("expires_at", ">", toDbDate())
+    .execute();
+
+  for (const inv of pendingInvitations) {
+    try {
+      await acceptInvitation(inv.token, userId);
+    } catch (err) {
+      logger.warn(
+        { error: err, token: inv.token, userId },
+        "Could not auto-accept invitation for user",
+      );
+    }
+  }
 }
 
 /**

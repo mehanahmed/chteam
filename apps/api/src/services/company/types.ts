@@ -77,6 +77,7 @@ export interface UpdateCompanyInput {
 export interface InviteMemberInput {
   email: string;
   role?: "admin" | "member";
+  password?: string;
   permissions?: Partial<import("@omniteam/shared").MemberPermissions>;
 }
 

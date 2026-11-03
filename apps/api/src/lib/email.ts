@@ -83,36 +83,73 @@ export async function sendPasswordResetEmail(
   });
 }
 
+export interface SendInvitationEmailOptions {
+  temporaryPassword?: string;
+  isExistingAccount?: boolean;
+}
+
 /**
- * Send company invitation email
+ * Send company invitation email with direct login link & credentials
  */
 export async function sendInvitationEmail(
   email: string,
   token: string,
   companyName: string,
   inviterEmail: string,
+  options?: SendInvitationEmailOptions | string,
 ): Promise<EmailResult> {
+  const loginUrl = `${env.APP_URL}/login`;
   const inviteUrl = `${env.APP_URL}/invite/${token}`;
   const safeCompanyName = emailHeaderText(companyName);
+
+  const temporaryPassword =
+    typeof options === "string" ? options : options?.temporaryPassword;
+  const isExistingAccount =
+    typeof options === "object" ? options?.isExistingAccount : false;
+
+  const details: Array<{ label: string; value: string }> = [
+    { label: "Workspace", value: companyName },
+    { label: "Invited by", value: inviterEmail },
+    { label: "Email / Username", value: email },
+  ];
+
+  if (temporaryPassword) {
+    details.push({ label: "Temporary Password", value: temporaryPassword });
+  } else if (isExistingAccount) {
+    details.push({
+      label: "Password",
+      value: "Use your existing account password",
+    });
+  }
+
+  const calloutText = temporaryPassword
+    ? `Login Link: ${loginUrl}\nEmail: ${email}\nPassword: ${temporaryPassword}`
+    : `Login Link: ${loginUrl}\nEmail: ${email}`;
+
   const content: BrandedEmailContent = {
-    preheader: `${inviterEmail} invited you to join ${safeCompanyName} on CHTeam.`,
-    eyebrow: "Team invitation",
-    title: `Join ${safeCompanyName}`,
+    preheader: `Your login credentials for ${safeCompanyName} on CHTeam.`,
+    eyebrow: "Team Invitation & Login Credentials",
+    title: `Welcome to ${safeCompanyName}`,
     paragraphs: [
-      "You have been invited to collaborate with the team on CHTeam.",
-      "Accept the invitation to open the shared inbox and get started.",
+      `You have been invited by ${inviterEmail} to join the ${safeCompanyName} workspace on CHTeam.`,
+      temporaryPassword
+        ? "Your account has been created. You can log in immediately with the credentials below:"
+        : "Your account has access. You can log in directly using the link below:",
     ],
-    details: [
-      { label: "Workspace", value: companyName },
-      { label: "Invited by", value: inviterEmail },
-    ],
-    action: { label: "Accept invitation", url: inviteUrl },
-    note: "This invitation expires in 7 days. If you were not expecting it, you can safely ignore this email.",
+    details,
+    callout: {
+      label: "LOGIN CREDENTIALS",
+      text: calloutText,
+    },
+    action: { label: "Log In to Workspace", url: loginUrl },
+    note: temporaryPassword
+      ? "You can log in directly using the credentials above. For security, we recommend changing your password from your Profile settings after your first login."
+      : "If you do not remember your password, you can use the 'Forgot password?' option on the login page.",
   };
 
   return sendEmail({
     to: email,
-    subject: `You've been invited to join ${safeCompanyName}`,
+    subject: `Login Credentials & Invitation to ${safeCompanyName}`,
     html: renderBrandedEmail(content),
     text: renderPlainTextEmail(content),
   });

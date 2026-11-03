@@ -36,6 +36,7 @@ import { hashToken } from "../lib/security.js";
 import { deleteMedia, getPresignedUrl, uploadMedia } from "../lib/storage.js";
 import {
   acceptInvitationInTransaction,
+  claimPendingInvitationsForUser,
   completeInvitationAcceptance,
   getInvitationByToken,
   type InvitationAcceptanceContext,
@@ -504,6 +505,16 @@ export async function login(
   });
 
   if (!result) throw emailNotVerifiedError();
+
+  try {
+    await claimPendingInvitationsForUser(result.user.id);
+  } catch (err) {
+    logger.warn(
+      { error: err, userId: result.user.id },
+      "Failed to auto-claim invitations on login",
+    );
+  }
+
   return result;
 }
 
@@ -1088,6 +1099,16 @@ export async function refreshSession(
   });
 
   if (!result) throw emailNotVerifiedError();
+
+  try {
+    await claimPendingInvitationsForUser(result.user.id);
+  } catch (err) {
+    logger.warn(
+      { error: err, userId: result.user.id },
+      "Failed to auto-claim invitations on login",
+    );
+  }
+
   return result;
 }
 
