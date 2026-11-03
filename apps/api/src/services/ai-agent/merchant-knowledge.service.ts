@@ -11,7 +11,9 @@ import { getCurrentSlaPolicy } from "../sla-policy/policy.service.js";
 import { getTenantConnection } from "../tenant.service.js";
 import {
   DEFAULT_DELIVERY_FEES,
+  DEFAULT_FALLBACK_GEMINI_MODEL,
   DEFAULT_OUTSIDE_DHAKA_ADVANCE_AMOUNT,
+  DEFAULT_PRIMARY_GEMINI_MODEL,
 } from "./constants.js";
 import type { MerchantPromptContext } from "./gemini/prompts.js";
 
@@ -47,6 +49,23 @@ export interface CompanyAiSettings {
   updatedAt?: Date | null;
 }
 
+function sanitizeModelName(
+  model: string | null | undefined,
+  fallback: string,
+): string {
+  if (!model) return fallback;
+  const trimmed = model.trim();
+  if (
+    trimmed === "gemini-2.5-flash" ||
+    trimmed === "gemini-2.5-flash-lite" ||
+    trimmed === "gemini-3.5-flash" ||
+    trimmed === "gemini-3.5-flash-lite"
+  ) {
+    return fallback;
+  }
+  return trimmed;
+}
+
 export class MerchantKnowledgeService {
   private customSettings = new Map<string, Partial<MerchantAiSettings>>();
   private companyAiSettingsCache = new Map<string, Partial<CompanyAiSettings>>();
@@ -65,8 +84,14 @@ export class MerchantKnowledgeService {
         companyId,
         isMuted: cached.isMuted ?? false,
         geminiApiKey: cached.geminiApiKey ?? null,
-        primaryModel: cached.primaryModel || "gemini-2.5-flash",
-        fallbackModel: cached.fallbackModel || "gemini-2.5-flash-lite",
+        primaryModel: sanitizeModelName(
+          cached.primaryModel,
+          DEFAULT_PRIMARY_GEMINI_MODEL,
+        ),
+        fallbackModel: sanitizeModelName(
+          cached.fallbackModel,
+          DEFAULT_FALLBACK_GEMINI_MODEL,
+        ),
         updatedBy: cached.updatedBy ?? null,
         updatedAt: cached.updatedAt ?? null,
       };
@@ -84,8 +109,14 @@ export class MerchantKnowledgeService {
           companyId,
           isMuted: Boolean(row.is_muted),
           geminiApiKey: row.gemini_api_key ?? null,
-          primaryModel: row.primary_model || "gemini-2.5-flash",
-          fallbackModel: row.fallback_model || "gemini-2.5-flash-lite",
+          primaryModel: sanitizeModelName(
+            row.primary_model,
+            DEFAULT_PRIMARY_GEMINI_MODEL,
+          ),
+          fallbackModel: sanitizeModelName(
+            row.fallback_model,
+            DEFAULT_FALLBACK_GEMINI_MODEL,
+          ),
           updatedBy: row.updated_by ?? null,
           updatedAt: row.updated_at ? new Date(row.updated_at) : null,
         };
@@ -98,8 +129,8 @@ export class MerchantKnowledgeService {
       companyId,
       isMuted: false,
       geminiApiKey: null,
-      primaryModel: "gemini-2.5-flash",
-      fallbackModel: "gemini-2.5-flash-lite",
+      primaryModel: DEFAULT_PRIMARY_GEMINI_MODEL,
+      fallbackModel: DEFAULT_FALLBACK_GEMINI_MODEL,
       updatedBy: null,
       updatedAt: null,
     };
@@ -117,12 +148,14 @@ export class MerchantKnowledgeService {
       settings.geminiApiKey !== undefined
         ? settings.geminiApiKey
         : current.geminiApiKey;
-    const primaryModel =
-      settings.primaryModel || current.primaryModel || "gemini-2.5-flash";
-    const fallbackModel =
-      settings.fallbackModel ||
-      current.fallbackModel ||
-      "gemini-2.5-flash-lite";
+    const primaryModel = sanitizeModelName(
+      settings.primaryModel || current.primaryModel,
+      DEFAULT_PRIMARY_GEMINI_MODEL,
+    );
+    const fallbackModel = sanitizeModelName(
+      settings.fallbackModel || current.fallbackModel,
+      DEFAULT_FALLBACK_GEMINI_MODEL,
+    );
 
     try {
       await sql`
@@ -130,8 +163,8 @@ export class MerchantKnowledgeService {
           company_id UUID PRIMARY KEY REFERENCES public.companies(id) ON DELETE CASCADE,
           is_muted BOOLEAN NOT NULL DEFAULT false,
           gemini_api_key TEXT,
-          primary_model VARCHAR(100) NOT NULL DEFAULT 'gemini-2.5-flash',
-          fallback_model VARCHAR(100) NOT NULL DEFAULT 'gemini-2.5-flash-lite',
+          primary_model VARCHAR(100) NOT NULL DEFAULT 'gemini-2.0-flash',
+          fallback_model VARCHAR(100) NOT NULL DEFAULT 'gemini-1.5-flash',
           updated_by UUID REFERENCES public.users(id) ON DELETE SET NULL,
           created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
           updated_at TIMESTAMPTZ NOT NULL DEFAULT now()

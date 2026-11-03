@@ -221,10 +221,10 @@ export const env = {
     false,
   ),
   GEMINI_API_KEY: getEnv("GEMINI_API_KEY", ""),
-  GEMINI_PRIMARY_MODEL: getEnv("GEMINI_PRIMARY_MODEL", "gemini-3.5-flash"),
+  GEMINI_PRIMARY_MODEL: getEnv("GEMINI_PRIMARY_MODEL", "gemini-2.0-flash"),
   GEMINI_FALLBACK_MODEL: getEnv(
     "GEMINI_FALLBACK_MODEL",
-    "gemini-3.5-flash-lite",
+    "gemini-1.5-flash",
   ),
 
   // Logging

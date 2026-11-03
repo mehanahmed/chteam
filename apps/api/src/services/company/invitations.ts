@@ -231,7 +231,7 @@ export async function inviteMember(
       { email, error: deliveryError },
       "Invitation was rolled back because email delivery failed",
     );
-    throw new InvitationDeliveryError(email);
+    throw new InvitationDeliveryError(email, deliveryError);
   }
 
   if (isNewUser) {
@@ -756,7 +756,7 @@ export async function resendInvitation(
       { email: invitation.email, error: deliveryError },
       "Invitation resend was rolled back because email delivery failed",
     );
-    throw new InvitationDeliveryError(invitation.email);
+    throw new InvitationDeliveryError(invitation.email, deliveryError);
   }
 
   return updated as unknown as Invitation;

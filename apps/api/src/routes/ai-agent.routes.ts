@@ -18,6 +18,10 @@ import { successData } from "../lib/response.js";
 import { env } from "../lib/env.js";
 import { GeminiClient } from "../services/ai-agent/gemini/gemini.client.js";
 import {
+  DEFAULT_FALLBACK_GEMINI_MODEL,
+  DEFAULT_PRIMARY_GEMINI_MODEL,
+} from "../services/ai-agent/constants.js";
+import {
   buildSystemPrompt,
   detectCustomerLanguage,
 } from "../services/ai-agent/gemini/prompts.js";
@@ -175,13 +179,17 @@ aiAgentRoutes.post(
   zValidator("json", testApiKeySchema),
   async (c) => {
     const { apiKey, model } = c.req.valid("json");
-    const targetModel = model || "gemini-2.5-flash";
+    const targetModel = model || DEFAULT_PRIMARY_GEMINI_MODEL;
+    const fallbackModel =
+      targetModel === DEFAULT_FALLBACK_GEMINI_MODEL
+        ? DEFAULT_PRIMARY_GEMINI_MODEL
+        : DEFAULT_FALLBACK_GEMINI_MODEL;
 
     try {
       const client = new GeminiClient({
         apiKey: apiKey.trim(),
         primaryModel: targetModel,
-        fallbackModel: "gemini-2.5-flash-lite",
+        fallbackModel,
       });
 
       const res = await client.generateChatResponse({

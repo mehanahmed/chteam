@@ -169,8 +169,8 @@ export function AiAgentSettings() {
   const [isMuted, setIsMuted] = useState(false);
   const [apiKeyInput, setApiKeyInput] = useState("");
   const [showApiKey, setShowApiKey] = useState(false);
-  const [primaryModel, setPrimaryModel] = useState("gemini-2.5-flash");
-  const [fallbackModel, setFallbackModel] = useState("gemini-2.5-flash-lite");
+  const [primaryModel, setPrimaryModel] = useState("gemini-2.0-flash");
+  const [fallbackModel, setFallbackModel] = useState("gemini-1.5-flash");
   const [isTestingKey, setIsTestingKey] = useState(false);
   const [testKeyResult, setTestKeyResult] = useState<{
     valid?: boolean;
@@ -218,8 +218,8 @@ export function AiAgentSettings() {
         if (wsSettings) {
           setWorkspaceSettings(wsSettings);
           setIsMuted(wsSettings.isMuted);
-          setPrimaryModel(wsSettings.primaryModel || "gemini-2.5-flash");
-          setFallbackModel(wsSettings.fallbackModel || "gemini-2.5-flash-lite");
+          setPrimaryModel(wsSettings.primaryModel || "gemini-2.0-flash");
+          setFallbackModel(wsSettings.fallbackModel || "gemini-1.5-flash");
           if (wsSettings.hasCustomApiKey) {
             setApiKeyInput(wsSettings.geminiApiKeyMasked);
           }
@@ -601,17 +601,14 @@ export function AiAgentSettings() {
                 <SelectValue placeholder="Select model" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="gemini-2.5-flash">
-                  Gemini 2.5 Flash (Recommended)
-                </SelectItem>
-                <SelectItem value="gemini-2.5-flash-lite">
-                  Gemini 2.5 Flash-Lite (Fast)
+                <SelectItem value="gemini-2.0-flash">
+                  Gemini 2.0 Flash (Recommended - Fast & Accurate)
                 </SelectItem>
                 <SelectItem value="gemini-1.5-flash">
-                  Gemini 1.5 Flash (Standard)
+                  Gemini 1.5 Flash (Standard - High Rate Limits)
                 </SelectItem>
                 <SelectItem value="gemini-1.5-pro">
-                  Gemini 1.5 Pro (Advanced)
+                  Gemini 1.5 Pro (Advanced Reasoning)
                 </SelectItem>
               </SelectContent>
             </Select>

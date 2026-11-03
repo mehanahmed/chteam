@@ -177,8 +177,12 @@ export class InvitationEmailMismatchError extends ForbiddenError {
 }
 
 export class InvitationDeliveryError extends ServiceUnavailableError {
-  constructor(email: string) {
-    super(`Could not send the invitation email to ${email}`);
+  constructor(email: string, detail?: string) {
+    super(
+      detail
+        ? `Could not send the invitation email to ${email}: ${detail}`
+        : `Could not send the invitation email to ${email}`,
+    );
     this.name = "InvitationDeliveryError";
   }
 }
