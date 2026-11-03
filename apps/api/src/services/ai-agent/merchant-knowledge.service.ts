@@ -37,8 +37,154 @@ export interface MerchantFaq {
   answer: string;
 }
 
+export interface CompanyAiSettings {
+  companyId: string;
+  isMuted: boolean;
+  geminiApiKey?: string | null;
+  primaryModel: string;
+  fallbackModel: string;
+  updatedBy?: string | null;
+  updatedAt?: Date | null;
+}
+
 export class MerchantKnowledgeService {
   private customSettings = new Map<string, Partial<MerchantAiSettings>>();
+  private companyAiSettingsCache = new Map<string, Partial<CompanyAiSettings>>();
+
+  public setCompanyAiSettingsMock(
+    companyId: string,
+    settings: Partial<CompanyAiSettings>,
+  ): void {
+    this.companyAiSettingsCache.set(companyId, settings);
+  }
+
+  async getCompanyAiSettings(companyId: string): Promise<CompanyAiSettings> {
+    const cached = this.companyAiSettingsCache.get(companyId);
+    if (cached) {
+      return {
+        companyId,
+        isMuted: cached.isMuted ?? false,
+        geminiApiKey: cached.geminiApiKey ?? null,
+        primaryModel: cached.primaryModel || "gemini-2.5-flash",
+        fallbackModel: cached.fallbackModel || "gemini-2.5-flash-lite",
+        updatedBy: cached.updatedBy ?? null,
+        updatedAt: cached.updatedAt ?? null,
+      };
+    }
+
+    try {
+      const row = await db
+        .selectFrom("company_ai_settings")
+        .selectAll()
+        .where("company_id", "=", companyId)
+        .executeTakeFirst();
+
+      if (row) {
+        return {
+          companyId,
+          isMuted: Boolean(row.is_muted),
+          geminiApiKey: row.gemini_api_key ?? null,
+          primaryModel: row.primary_model || "gemini-2.5-flash",
+          fallbackModel: row.fallback_model || "gemini-2.5-flash-lite",
+          updatedBy: row.updated_by ?? null,
+          updatedAt: row.updated_at ? new Date(row.updated_at) : null,
+        };
+      }
+    } catch {
+      // Return defaults if table doesn't exist yet or query fails
+    }
+
+    return {
+      companyId,
+      isMuted: false,
+      geminiApiKey: null,
+      primaryModel: "gemini-2.5-flash",
+      fallbackModel: "gemini-2.5-flash-lite",
+      updatedBy: null,
+      updatedAt: null,
+    };
+  }
+
+  async saveCompanyAiSettings(
+    companyId: string,
+    settings: Partial<CompanyAiSettings>,
+    updatedBy?: string,
+  ): Promise<CompanyAiSettings> {
+    const current = await this.getCompanyAiSettings(companyId);
+    const isMuted =
+      settings.isMuted !== undefined ? settings.isMuted : current.isMuted;
+    const geminiApiKey =
+      settings.geminiApiKey !== undefined
+        ? settings.geminiApiKey
+        : current.geminiApiKey;
+    const primaryModel =
+      settings.primaryModel || current.primaryModel || "gemini-2.5-flash";
+    const fallbackModel =
+      settings.fallbackModel ||
+      current.fallbackModel ||
+      "gemini-2.5-flash-lite";
+
+    try {
+      await sql`
+        CREATE TABLE IF NOT EXISTS public.company_ai_settings (
+          company_id UUID PRIMARY KEY REFERENCES public.companies(id) ON DELETE CASCADE,
+          is_muted BOOLEAN NOT NULL DEFAULT false,
+          gemini_api_key TEXT,
+          primary_model VARCHAR(100) NOT NULL DEFAULT 'gemini-2.5-flash',
+          fallback_model VARCHAR(100) NOT NULL DEFAULT 'gemini-2.5-flash-lite',
+          updated_by UUID REFERENCES public.users(id) ON DELETE SET NULL,
+          created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+          updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+        )
+      `.execute(db);
+
+      await sql`
+        INSERT INTO public.company_ai_settings (
+          company_id,
+          is_muted,
+          gemini_api_key,
+          primary_model,
+          fallback_model,
+          updated_by,
+          updated_at
+        ) VALUES (
+          ${companyId}::uuid,
+          ${isMuted},
+          ${geminiApiKey && geminiApiKey.trim().length > 0 ? geminiApiKey.trim() : null},
+          ${primaryModel},
+          ${fallbackModel},
+          ${updatedBy ? sql`${updatedBy}::uuid` : null},
+          now()
+        )
+        ON CONFLICT (company_id)
+        DO UPDATE SET
+          is_muted = EXCLUDED.is_muted,
+          gemini_api_key = EXCLUDED.gemini_api_key,
+          primary_model = EXCLUDED.primary_model,
+          fallback_model = EXCLUDED.fallback_model,
+          updated_by = EXCLUDED.updated_by,
+          updated_at = now()
+      `.execute(db);
+    } catch (err) {
+      console.error("Failed to persist company AI settings:", err);
+    }
+
+    const updated: CompanyAiSettings = {
+      companyId,
+      isMuted,
+      geminiApiKey:
+        geminiApiKey && geminiApiKey.trim().length > 0
+          ? geminiApiKey.trim()
+          : null,
+      primaryModel,
+      fallbackModel,
+      updatedBy: updatedBy || current.updatedBy,
+      updatedAt: new Date(),
+    };
+
+    this.companyAiSettingsCache.set(companyId, updated);
+    return updated;
+  }
 
   public setMerchantSettings(
     companyId: string,

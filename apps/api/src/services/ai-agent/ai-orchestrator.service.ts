@@ -128,22 +128,42 @@ export class AiOrchestratorService {
     this.mockDb = db;
   }
 
-  private getGeminiClient(): GeminiClient | null {
+  async getGeminiClient(companyId?: string): Promise<GeminiClient | null> {
     if (this.geminiClient) {
       return this.geminiClient;
     }
-    const apiKey = env.GEMINI_API_KEY || process.env.GEMINI_API_KEY;
+    let apiKey = env.GEMINI_API_KEY || process.env.GEMINI_API_KEY;
+    let primaryModel =
+      env.GEMINI_PRIMARY_MODEL || process.env.GEMINI_PRIMARY_MODEL;
+    let fallbackModel =
+      env.GEMINI_FALLBACK_MODEL || process.env.GEMINI_FALLBACK_MODEL;
+
+    if (companyId) {
+      try {
+        const companySettings =
+          await merchantKnowledgeService.getCompanyAiSettings(companyId);
+        if (companySettings.geminiApiKey?.trim()) {
+          apiKey = companySettings.geminiApiKey.trim();
+        }
+        if (companySettings.primaryModel?.trim()) {
+          primaryModel = companySettings.primaryModel.trim();
+        }
+        if (companySettings.fallbackModel?.trim()) {
+          fallbackModel = companySettings.fallbackModel.trim();
+        }
+      } catch {
+        // Fall back to env variables
+      }
+    }
+
     if (!apiKey || apiKey.trim().length === 0) {
       return null;
     }
-    this.geminiClient = new GeminiClient({
+    return new GeminiClient({
       apiKey,
-      primaryModel:
-        env.GEMINI_PRIMARY_MODEL || process.env.GEMINI_PRIMARY_MODEL,
-      fallbackModel:
-        env.GEMINI_FALLBACK_MODEL || process.env.GEMINI_FALLBACK_MODEL,
+      primaryModel,
+      fallbackModel,
     });
-    return this.geminiClient;
   }
 
   /**
@@ -243,6 +263,21 @@ export class AiOrchestratorService {
         shouldSuppress: true,
         reason: "ai_disabled",
       };
+    }
+
+    // 3.1 Check if AI is muted for this workspace
+    try {
+      const companySettings =
+        await merchantKnowledgeService.getCompanyAiSettings(companyId);
+      if (companySettings.isMuted) {
+        return {
+          isSuppressed: true,
+          shouldSuppress: true,
+          reason: "ai_muted_by_admin",
+        };
+      }
+    } catch {
+      // Continue
     }
 
     // 3.5 Check if AI is disabled specifically for this connection
@@ -531,7 +566,7 @@ export class AiOrchestratorService {
       }
 
       // 2. Ensure Gemini client is available
-      const geminiClient = this.getGeminiClient();
+      const geminiClient = await this.getGeminiClient(companyId);
       if (!geminiClient) {
         logger.debug(
           { companyId },

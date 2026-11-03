@@ -37,6 +37,18 @@ export interface Database {
   channel_ingress_routes: ChannelIngressRoutesTable;
   channel_message_delivery_outbox: ChannelMessageDeliveryOutboxTable;
   connection_ai_settings: ConnectionAiSettingsTable;
+  company_ai_settings: CompanyAiSettingsTable;
+}
+
+export interface CompanyAiSettingsTable {
+  company_id: string;
+  is_muted: Generated<boolean>;
+  gemini_api_key: string | null;
+  primary_model: Generated<string>;
+  fallback_model: Generated<string>;
+  updated_by: string | null;
+  created_at: Generated<Date>;
+  updated_at: Generated<Date>;
 }
 
 export interface ConnectionAiSettingsTable {

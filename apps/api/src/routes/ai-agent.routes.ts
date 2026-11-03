@@ -40,6 +40,173 @@ aiAgentRoutes.use("/*", tenantMiddleware());
 aiAgentRoutes.use("/contacts/:id/*", requireContactVisibility());
 aiAgentRoutes.use("/contacts/:id", requireContactVisibility());
 
+function maskApiKey(key: string | null | undefined): string {
+  if (!key || key.trim().length === 0) return "";
+  const trimmed = key.trim();
+  if (trimmed.length <= 8) return "••••••••";
+  return `${trimmed.slice(0, 6)}...${trimmed.slice(-4)}`;
+}
+
+const updateCompanyAiSettingsSchema = z.object({
+  isMuted: z.boolean().optional(),
+  geminiApiKey: z.string().max(255).optional().nullable(),
+  primaryModel: z.string().max(100).optional(),
+  fallbackModel: z.string().max(100).optional(),
+});
+
+const toggleMuteSchema = z.object({
+  isMuted: z.boolean(),
+});
+
+const testApiKeySchema = z.object({
+  apiKey: z.string().min(10).max(255),
+  model: z.string().max(100).optional(),
+});
+
+/**
+ * GET /settings
+ * Retrieve workspace AI settings (mute status, custom API key, models)
+ */
+aiAgentRoutes.get(
+  "/settings",
+  requirePermission(PERMISSIONS.CAN_MANAGE_CONNECTIONS),
+  async (c) => {
+    const { companyId } = getRouteContext(c);
+    const settings =
+      await merchantKnowledgeService.getCompanyAiSettings(companyId);
+    const systemHasKey = Boolean(
+      env.GEMINI_API_KEY || process.env.GEMINI_API_KEY,
+    );
+
+    return successData(c, {
+      companyId,
+      isMuted: settings.isMuted,
+      hasCustomApiKey: Boolean(settings.geminiApiKey?.trim()),
+      geminiApiKeyMasked: maskApiKey(settings.geminiApiKey),
+      systemHasApiKey: systemHasKey,
+      primaryModel: settings.primaryModel,
+      fallbackModel: settings.fallbackModel,
+      updatedAt: settings.updatedAt?.toISOString() || null,
+    });
+  },
+);
+
+/**
+ * PUT /settings
+ * Save workspace AI settings (mute status, custom API key, models)
+ */
+aiAgentRoutes.put(
+  "/settings",
+  requirePermission(PERMISSIONS.CAN_MANAGE_CONNECTIONS),
+  zValidator("json", updateCompanyAiSettingsSchema),
+  async (c) => {
+    const { companyId, user } = getRouteContext(c);
+    const body = c.req.valid("json");
+
+    let apiKeyToSave: string | null | undefined = undefined;
+    if (body.geminiApiKey !== undefined) {
+      if (body.geminiApiKey === null || body.geminiApiKey.trim() === "") {
+        apiKeyToSave = null;
+      } else if (!body.geminiApiKey.includes("...")) {
+        apiKeyToSave = body.geminiApiKey.trim();
+      }
+    }
+
+    const saved = await merchantKnowledgeService.saveCompanyAiSettings(
+      companyId,
+      {
+        isMuted: body.isMuted,
+        geminiApiKey: apiKeyToSave,
+        primaryModel: body.primaryModel,
+        fallbackModel: body.fallbackModel,
+      },
+      user.id,
+    );
+
+    const systemHasKey = Boolean(
+      env.GEMINI_API_KEY || process.env.GEMINI_API_KEY,
+    );
+
+    return successData(c, {
+      companyId,
+      isMuted: saved.isMuted,
+      hasCustomApiKey: Boolean(saved.geminiApiKey?.trim()),
+      geminiApiKeyMasked: maskApiKey(saved.geminiApiKey),
+      systemHasApiKey: systemHasKey,
+      primaryModel: saved.primaryModel,
+      fallbackModel: saved.fallbackModel,
+      updatedAt: saved.updatedAt?.toISOString() || null,
+    });
+  },
+);
+
+/**
+ * POST /toggle-mute
+ * Instantly mute or unmute AI autonomous responses for this workspace
+ */
+aiAgentRoutes.post(
+  "/toggle-mute",
+  requirePermission(PERMISSIONS.CAN_MANAGE_CONNECTIONS),
+  zValidator("json", toggleMuteSchema),
+  async (c) => {
+    const { companyId, user } = getRouteContext(c);
+    const { isMuted } = c.req.valid("json");
+
+    const saved = await merchantKnowledgeService.saveCompanyAiSettings(
+      companyId,
+      { isMuted },
+      user.id,
+    );
+
+    return successData(c, {
+      success: true,
+      isMuted: saved.isMuted,
+    });
+  },
+);
+
+/**
+ * POST /test-api-key
+ * Test and validate a Gemini API key against Google's API before saving
+ */
+aiAgentRoutes.post(
+  "/test-api-key",
+  requirePermission(PERMISSIONS.CAN_MANAGE_CONNECTIONS),
+  zValidator("json", testApiKeySchema),
+  async (c) => {
+    const { apiKey, model } = c.req.valid("json");
+    const targetModel = model || "gemini-2.5-flash";
+
+    try {
+      const client = new GeminiClient({
+        apiKey: apiKey.trim(),
+        primaryModel: targetModel,
+        fallbackModel: "gemini-2.5-flash-lite",
+      });
+
+      const res = await client.generateChatResponse({
+        messages: [
+          { role: "user", content: "Reply with 'OK' if you can read this." },
+        ],
+        temperature: 0.1,
+        maxOutputTokens: 20,
+      });
+
+      return successData(c, {
+        valid: true,
+        message: "Gemini API key is verified and operational!",
+        modelUsed: res.modelUsed,
+        latencyMs: res.latencyMs,
+      });
+    } catch (err: any) {
+      return successData(c, {
+        valid: false,
+        error: err.message || "Failed to validate Gemini API key",
+      });
+    }
+  },
+);
+
 /**
  * Validation schema for updating per-connection AI instructions and settings
  */
@@ -205,7 +372,12 @@ aiAgentRoutes.post(
     const detectedLang = detectCustomerLanguage(message);
     const systemInstruction = buildSystemPrompt(promptContext);
 
-    const apiKey = env.GEMINI_API_KEY || process.env.GEMINI_API_KEY;
+    const companySettings =
+      await merchantKnowledgeService.getCompanyAiSettings(companyId);
+    const apiKey =
+      companySettings.geminiApiKey ||
+      env.GEMINI_API_KEY ||
+      process.env.GEMINI_API_KEY;
     if (!apiKey) {
       const sampleReply =
         detectedLang === "bangla"
@@ -227,9 +399,13 @@ aiAgentRoutes.post(
       const geminiClient = new GeminiClient({
         apiKey,
         primaryModel:
-          env.GEMINI_PRIMARY_MODEL || process.env.GEMINI_PRIMARY_MODEL,
+          companySettings.primaryModel ||
+          env.GEMINI_PRIMARY_MODEL ||
+          process.env.GEMINI_PRIMARY_MODEL,
         fallbackModel:
-          env.GEMINI_FALLBACK_MODEL || process.env.GEMINI_FALLBACK_MODEL,
+          companySettings.fallbackModel ||
+          env.GEMINI_FALLBACK_MODEL ||
+          process.env.GEMINI_FALLBACK_MODEL,
       });
 
       const messages = [
