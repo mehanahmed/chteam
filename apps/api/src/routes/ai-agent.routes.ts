@@ -16,7 +16,10 @@ import { z } from "zod";
 import { notFound } from "../lib/errors.js";
 import { successData } from "../lib/response.js";
 import { env } from "../lib/env.js";
-import { GeminiClient } from "../services/ai-agent/gemini/gemini.client.js";
+import {
+  fetchAvailableGeminiModels,
+  GeminiClient,
+} from "../services/ai-agent/gemini/gemini.client.js";
 import {
   DEFAULT_FALLBACK_GEMINI_MODEL,
   DEFAULT_PRIMARY_GEMINI_MODEL,
@@ -212,6 +215,54 @@ aiAgentRoutes.post(
         error: err.message || "Failed to validate Gemini API key",
       });
     }
+  },
+);
+
+/**
+ * GET /models & POST /models
+ * Fetch dynamically available Gemini generation models for this workspace or with a provided API key
+ */
+aiAgentRoutes.get(
+  "/models",
+  requirePermission(PERMISSIONS.CAN_MANAGE_CONNECTIONS),
+  async (c) => {
+    const apiKey = c.req.query("apiKey");
+    const companyId = getRouteContext(c).companyId;
+
+    let keyToUse = apiKey?.trim();
+    if (!keyToUse) {
+      const settings =
+        await merchantKnowledgeService.getCompanyAiSettings(companyId);
+      keyToUse = settings.geminiApiKey || env.GEMINI_API_KEY || "";
+    }
+
+    const models = await fetchAvailableGeminiModels(keyToUse);
+    return successData(c, { models });
+  },
+);
+
+aiAgentRoutes.post(
+  "/models",
+  requirePermission(PERMISSIONS.CAN_MANAGE_CONNECTIONS),
+  zValidator(
+    "json",
+    z.object({
+      apiKey: z.string().optional(),
+    }),
+  ),
+  async (c) => {
+    const { apiKey } = c.req.valid("json");
+    const companyId = getRouteContext(c).companyId;
+
+    let keyToUse = apiKey?.trim();
+    if (!keyToUse) {
+      const settings =
+        await merchantKnowledgeService.getCompanyAiSettings(companyId);
+      keyToUse = settings.geminiApiKey || env.GEMINI_API_KEY || "";
+    }
+
+    const models = await fetchAvailableGeminiModels(keyToUse);
+    return successData(c, { models });
   },
 );
 

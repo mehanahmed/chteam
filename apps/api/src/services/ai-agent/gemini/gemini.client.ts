@@ -8,7 +8,9 @@ import { type GenerateContentConfig, GoogleGenAI } from "@google/genai";
 import { createLogger, formatError } from "../../../lib/logger.js";
 import {
   DEFAULT_FALLBACK_GEMINI_MODEL,
+  DEFAULT_GEMINI_MODELS,
   DEFAULT_PRIMARY_GEMINI_MODEL,
+  type GeminiModelDescriptor,
 } from "../constants.js";
 
 const logger = createLogger("gemini-client");
@@ -285,5 +287,85 @@ export class GeminiClient {
         originalError: lastError,
       },
     );
+  }
+}
+
+/**
+ * Fetch all available generation models from Google Gemini API
+ */
+export async function fetchAvailableGeminiModels(
+  apiKey?: string,
+): Promise<GeminiModelDescriptor[]> {
+  const key = apiKey?.trim();
+  if (!key) {
+    return DEFAULT_GEMINI_MODELS;
+  }
+
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 10000);
+
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models?key=${encodeURIComponent(key)}`,
+      {
+        signal: controller.signal,
+        headers: { "Content-Type": "application/json" },
+      },
+    );
+    clearTimeout(timeout);
+
+    if (!res.ok) {
+      logger.warn(
+        { status: res.status },
+        "Failed to fetch models from Google Gemini API",
+      );
+      return DEFAULT_GEMINI_MODELS;
+    }
+
+    const data = (await res.json()) as { models?: Array<any> };
+    if (!data.models || !Array.isArray(data.models)) {
+      return DEFAULT_GEMINI_MODELS;
+    }
+
+    const filtered = data.models
+      .filter((m: any) => {
+        const methods: string[] = m.supportedGenerationMethods || [];
+        const name: string = m.name || "";
+        return (
+          methods.includes("generateContent") &&
+          name.includes("gemini") &&
+          !name.includes("embedding") &&
+          !name.includes("aqa") &&
+          !name.includes("vision")
+        );
+      })
+      .map((m: any) => {
+        const id = m.name.replace(/^models\//, "");
+        const isRecommended = id === "gemini-2.0-flash";
+        return {
+          id,
+          name: m.displayName || id,
+          description: m.description || "",
+          isRecommended,
+        };
+      });
+
+    if (filtered.length === 0) return DEFAULT_GEMINI_MODELS;
+
+    return filtered.sort((a, b) => {
+      if (a.id === "gemini-2.0-flash") return -1;
+      if (b.id === "gemini-2.0-flash") return 1;
+      if (a.id === "gemini-1.5-flash") return -1;
+      if (b.id === "gemini-1.5-flash") return 1;
+      if (a.id === "gemini-1.5-pro") return -1;
+      if (b.id === "gemini-1.5-pro") return 1;
+      return a.id.localeCompare(b.id);
+    });
+  } catch (err: any) {
+    logger.warn(
+      { error: err.message },
+      "Error fetching Gemini models from Google API",
+    );
+    return DEFAULT_GEMINI_MODELS;
   }
 }

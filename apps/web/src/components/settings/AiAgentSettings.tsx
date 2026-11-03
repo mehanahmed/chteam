@@ -7,6 +7,7 @@ import {
   HelpCircle,
   KeyRound,
   Loader2,
+  RefreshCw,
   Save,
   Sparkles,
   ThumbsDown,
@@ -34,7 +35,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import {
   type ConnectionAiOverviewItem,
+  type GeminiModelOption,
   type WorkspaceAiSettings,
+  getAvailableGeminiModels,
   getConnectionAiOverview,
   getConnectionAiSettings,
   getWorkspaceAiSettings,
@@ -171,6 +174,33 @@ export function AiAgentSettings() {
   const [showApiKey, setShowApiKey] = useState(false);
   const [primaryModel, setPrimaryModel] = useState("gemini-2.0-flash");
   const [fallbackModel, setFallbackModel] = useState("gemini-1.5-flash");
+  const [availableModels, setAvailableModels] = useState<GeminiModelOption[]>([
+    {
+      id: "gemini-2.0-flash",
+      name: "Gemini 2.0 Flash",
+      description: "Next-generation speed and multimodal capabilities",
+      isRecommended: true,
+    },
+    {
+      id: "gemini-1.5-flash",
+      name: "Gemini 1.5 Flash",
+      description: "Fast and versatile standard model with high rate limits",
+      isRecommended: false,
+    },
+    {
+      id: "gemini-1.5-pro",
+      name: "Gemini 1.5 Pro",
+      description: "Advanced reasoning and large context understanding",
+      isRecommended: false,
+    },
+    {
+      id: "gemini-2.0-flash-lite",
+      name: "Gemini 2.0 Flash Lite",
+      description: "Lightweight and cost-effective model optimized for high throughput",
+      isRecommended: false,
+    },
+  ]);
+  const [isLoadingModels, setIsLoadingModels] = useState(false);
   const [isTestingKey, setIsTestingKey] = useState(false);
   const [testKeyResult, setTestKeyResult] = useState<{
     valid?: boolean;
@@ -212,9 +242,13 @@ export function AiAgentSettings() {
     Promise.all([
       getWorkspaceAiSettings().catch(() => null),
       getConnectionAiOverview().catch(() => []),
+      getAvailableGeminiModels().catch(() => null),
     ])
-      .then(([wsSettings, connList]) => {
+      .then(([wsSettings, connList, modelsRes]) => {
         if (!isMounted) return;
+        if (modelsRes?.models && modelsRes.models.length > 0) {
+          setAvailableModels(modelsRes.models);
+        }
         if (wsSettings) {
           setWorkspaceSettings(wsSettings);
           setIsMuted(wsSettings.isMuted);
@@ -308,6 +342,26 @@ export function AiAgentSettings() {
     }
   };
 
+  // Refresh or load dynamic models from Gemini
+  const handleRefreshModels = async (customKey?: string) => {
+    setIsLoadingModels(true);
+    try {
+      const key =
+        customKey ??
+        (apiKeyInput.includes("...") ? undefined : apiKeyInput.trim());
+      const res = await getAvailableGeminiModels(key || undefined);
+      if (res.models && res.models.length > 0) {
+        setAvailableModels(res.models);
+        toast.success(`Loaded ${res.models.length} Gemini models!`);
+      }
+    } catch (err) {
+      console.error("Failed to load Gemini models:", err);
+      toast.error("Could not load dynamic models, using standard list.");
+    } finally {
+      setIsLoadingModels(false);
+    }
+  };
+
   // Test API Key
   const handleTestApiKey = async () => {
     const keyToTest = apiKeyInput.trim();
@@ -322,6 +376,8 @@ export function AiAgentSettings() {
       setTestKeyResult(res);
       if (res.valid) {
         toast.success(res.message || "Gemini API key is verified and working!");
+        // Dynamically fetch available models using this verified key
+        handleRefreshModels(keyToTest);
       } else {
         toast.error(res.error || "Gemini API key validation failed.");
       }
@@ -590,9 +646,22 @@ export function AiAgentSettings() {
           </div>
 
           <div className="space-y-1.5">
-            <Label className="text-xs font-semibold text-slate-700 dark:text-dark-text-primary">
-              Primary Model
-            </Label>
+            <div className="flex items-center justify-between">
+              <Label className="text-xs font-semibold text-slate-700 dark:text-dark-text-primary">
+                Primary Model
+              </Label>
+              <button
+                type="button"
+                onClick={() => handleRefreshModels()}
+                disabled={isLoadingModels}
+                className="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 hover:underline disabled:opacity-50"
+              >
+                <RefreshCw
+                  className={cn("h-3 w-3", isLoadingModels && "animate-spin")}
+                />
+                {isLoadingModels ? "Loading..." : "Load from Gemini"}
+              </button>
+            </div>
             <Select
               value={primaryModel}
               onValueChange={(val) => setPrimaryModel(val)}
@@ -600,16 +669,29 @@ export function AiAgentSettings() {
               <SelectTrigger className="rounded-xl text-xs">
                 <SelectValue placeholder="Select model" />
               </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="gemini-2.0-flash">
-                  Gemini 2.0 Flash (Recommended - Fast & Accurate)
-                </SelectItem>
-                <SelectItem value="gemini-1.5-flash">
-                  Gemini 1.5 Flash (Standard - High Rate Limits)
-                </SelectItem>
-                <SelectItem value="gemini-1.5-pro">
-                  Gemini 1.5 Pro (Advanced Reasoning)
-                </SelectItem>
+              <SelectContent className="max-h-72">
+                {availableModels.map((m) => (
+                  <SelectItem key={m.id} value={m.id}>
+                    <div className="flex items-center gap-2 py-0.5">
+                      <span className="font-medium text-xs text-slate-800 dark:text-slate-100">
+                        {m.name}
+                      </span>
+                      <span className="text-[10px] text-slate-400 font-mono">
+                        ({m.id})
+                      </span>
+                      {m.isRecommended && (
+                        <span className="text-[9px] bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 px-1.5 py-0.2 rounded-full font-semibold">
+                          Recommended
+                        </span>
+                      )}
+                    </div>
+                  </SelectItem>
+                ))}
+                {!availableModels.some((m) => m.id === primaryModel) && (
+                  <SelectItem value={primaryModel}>
+                    <span className="font-medium text-xs">{primaryModel}</span>
+                  </SelectItem>
+                )}
               </SelectContent>
             </Select>
           </div>

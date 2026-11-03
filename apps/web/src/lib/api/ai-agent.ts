@@ -112,6 +112,25 @@ export async function toggleWorkspaceAiMute(
   );
 }
 
+export interface GeminiModelOption {
+  id: string;
+  name: string;
+  description: string;
+  isRecommended: boolean;
+}
+
+/**
+ * Fetch available models from Gemini
+ */
+export async function getAvailableGeminiModels(
+  apiKey?: string,
+): Promise<{ models: GeminiModelOption[] }> {
+  return fetchWithAuth<{ models: GeminiModelOption[] }>("/ai-agent/models", {
+    method: "POST",
+    body: JSON.stringify({ apiKey: apiKey?.trim() || undefined }),
+  });
+}
+
 /**
  * Test a Gemini API key
  */
