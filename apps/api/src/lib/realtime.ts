@@ -149,6 +149,7 @@ async function publishToChannel(
       headers: {
         "Content-Type": "application/json",
         "X-API-Key": env.CENTRIFUGO_API_KEY,
+        Authorization: `apikey ${env.CENTRIFUGO_API_KEY}`,
       },
       body: JSON.stringify({
         channel,
@@ -199,6 +200,7 @@ async function publishToChannels(
       headers: {
         "Content-Type": "application/json",
         "X-API-Key": env.CENTRIFUGO_API_KEY,
+        Authorization: `apikey ${env.CENTRIFUGO_API_KEY}`,
       },
       body: JSON.stringify({
         channels,

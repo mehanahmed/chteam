@@ -8,9 +8,17 @@ import {
 } from "centrifuge";
 import { ApiRequestError, fetchWithAuth, getCompanyId } from "./api/client";
 
-const CENTRIFUGO_URL =
-  import.meta.env.VITE_CENTRIFUGO_URL ||
-  (import.meta.env.DEV ? "ws://localhost:4451/connection/websocket" : "");
+export function getCentrifugoUrl(): string {
+  const envUrl = import.meta.env.VITE_CENTRIFUGO_URL;
+  if (envUrl && typeof envUrl === "string" && envUrl.trim().length > 0) {
+    return envUrl.trim();
+  }
+  if (typeof window !== "undefined" && window.location) {
+    const proto = window.location.protocol === "https:" ? "wss:" : "ws:";
+    return `${proto}//${window.location.host}/connection/websocket`;
+  }
+  return import.meta.env.DEV ? "ws://localhost:4451/connection/websocket" : "";
+}
 
 let realtimeInstance: Centrifuge | null = null;
 let currentCompanyId: string | null = null;
@@ -146,9 +154,9 @@ function dispatchPublication(context: ServerPublicationContext): void {
       publication.type as CompanyRealtimeEventType,
     );
   } else if (
-    currentCompanyId &&
     currentUserId &&
-    context.channel === getUserChannelName(currentCompanyId, currentUserId)
+    (context.channel === getUserChannelName(currentCompanyId || "", currentUserId) ||
+     context.channel.endsWith(`:${currentUserId}`))
   ) {
     handlers = userHandlers.get(publication.type as UserRealtimeEventType);
   }
@@ -159,36 +167,34 @@ function dispatchPublication(context: ServerPublicationContext): void {
 /** Create the singleton client. Call connectRealtime after handlers are bound. */
 export function initializeRealtime(): Centrifuge {
   if (realtimeInstance) return realtimeInstance;
-  if (!CENTRIFUGO_URL) {
+  const targetUrl = getCentrifugoUrl();
+  if (!targetUrl) {
     throw new Error(
-      "VITE_CENTRIFUGO_URL is required for realtime communication",
+      "Centrifugo URL could not be resolved for realtime communication",
     );
   }
 
-  realtimeInstance = new Centrifuge(CENTRIFUGO_URL, {
+  realtimeInstance = new Centrifuge(targetUrl, {
     getToken: getConnectionToken,
   });
   realtimeInstance.on("publication", dispatchPublication);
   realtimeInstance.on("connected", (context) => {
     realtimeClientId = context.client;
+    console.info("[Centrifugo] Connected with client ID:", context.client);
   });
-  realtimeInstance.on("disconnected", () => {
+  realtimeInstance.on("disconnected", (context) => {
     realtimeClientId = undefined;
+    console.warn("[Centrifugo] Disconnected:", context);
   });
 
-  if (import.meta.env.DEV) {
-    realtimeInstance.on("state", (context: StateContext) => {
-      console.log(
-        "[Centrifugo] Connection state changed:",
-        context.oldState,
-        "->",
-        context.newState,
-      );
-    });
-    realtimeInstance.on("error", (context: ErrorContext) => {
-      console.error("[Centrifugo] Connection error:", context.error);
-    });
-  }
+  realtimeInstance.on("state", (context: StateContext) => {
+    console.info(
+      `[Centrifugo] Connection state changed: ${context.oldState} -> ${context.newState}`,
+    );
+  });
+  realtimeInstance.on("error", (context: ErrorContext) => {
+    console.error("[Centrifugo] Connection error:", context.error);
+  });
 
   return realtimeInstance;
 }

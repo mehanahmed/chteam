@@ -110,7 +110,6 @@ export function RealtimeProvider({
   const typingTimeoutsRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(
     new Map(),
   );
-  const isInitializedRef = useRef(false);
   const eventUnsubscribesRef = useRef<(() => void)[]>([]);
 
   // Get current company ID from auth context
@@ -358,12 +357,30 @@ export function RealtimeProvider({
     [],
   );
 
-  // Initialize on mount
-  useEffect(() => {
-    if (isInitializedRef.current) return;
-    isInitializedRef.current = true;
+  const activeCompanyIdRef = useRef<string | null>(null);
+  const activeUserIdRef = useRef<string | null>(null);
 
-    if (autoConnect && currentCompanyId) {
+  // Connect or reconnect whenever currentCompanyId or user becomes available or changes
+  useEffect(() => {
+    if (!autoConnect) return;
+
+    if (!currentCompanyId) {
+      if (activeCompanyIdRef.current) {
+        disconnect();
+        activeCompanyIdRef.current = null;
+        activeUserIdRef.current = null;
+      }
+      return;
+    }
+
+    // Connect if company changed, user changed, or not yet connected
+    if (
+      activeCompanyIdRef.current !== currentCompanyId ||
+      activeUserIdRef.current !== (user?.id ?? null)
+    ) {
+      disconnect();
+      activeCompanyIdRef.current = currentCompanyId;
+      activeUserIdRef.current = user?.id ?? null;
       connect();
       fetchSyncStatus();
     }
@@ -374,9 +391,34 @@ export function RealtimeProvider({
       typingTimeoutsRef.current.forEach((timeout) => clearTimeout(timeout));
       typingTimeoutsRef.current.clear();
       disconnectRealtime();
-      isInitializedRef.current = false;
+      activeCompanyIdRef.current = null;
+      activeUserIdRef.current = null;
     };
-  }, [autoConnect, connect, currentCompanyId, fetchSyncStatus]);
+  }, [autoConnect, connect, disconnect, currentCompanyId, user?.id, fetchSyncStatus]);
+
+  // Reconnect and reconcile active chats on tab focus and online events
+  useEffect(() => {
+    const handleFocusOrOnline = () => {
+      if (!autoConnect || !currentCompanyId) return;
+      const currentState = getConnectionState();
+      if (currentState === "disconnected") {
+        reconnect();
+      } else if (currentState === "connected") {
+        fetchSyncStatus();
+        reconcileRealtimeState(
+          queryClientRef.current,
+          useChatStore.getState().selectedConversationId,
+        );
+      }
+    };
+
+    window.addEventListener("focus", handleFocusOrOnline);
+    window.addEventListener("online", handleFocusOrOnline);
+    return () => {
+      window.removeEventListener("focus", handleFocusOrOnline);
+      window.removeEventListener("online", handleFocusOrOnline);
+    };
+  }, [autoConnect, currentCompanyId, reconnect, fetchSyncStatus]);
 
   const prevStatusRef = useRef<RealtimeConnectionStatus>("disconnected");
 
