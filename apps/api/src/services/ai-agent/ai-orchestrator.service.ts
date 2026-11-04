@@ -1026,10 +1026,12 @@ export class AiOrchestratorService {
 
         // 7. Broadcast realtime update to inbox UI
         broadcastToContactViewers(companyId, contactId, "message:new", {
+          conversationId: contactId,
           message: {
             id: replyMessageId,
             messageId: waMessageId,
             contactId,
+            conversationId: contactId,
             senderType: "user",
             sentByUserId: SYSTEM_AI_USER_ID,
             sentByUserName: `${promptContext.personaName} (AI)`,
@@ -1037,6 +1039,8 @@ export class AiOrchestratorService {
             content: replyContent,
             status: "pending",
             timestamp: createdAt.toISOString(),
+            createdAt: createdAt.toISOString(),
+            updatedAt: createdAt.toISOString(),
           },
         }).catch((err) => {
           logger.warn(

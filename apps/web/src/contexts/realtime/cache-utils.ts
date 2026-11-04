@@ -86,59 +86,67 @@ export function addMessageToCache(
   let isDuplicate = false;
   let added = false;
 
-  queryClient.setQueryData(
-    queryKey,
-    (oldData: InfiniteMessageData | undefined) => {
-      if (!oldData) return oldData;
+  const updater = (oldData: InfiniteMessageData | undefined) => {
+    if (!oldData) return oldData;
 
-      // Check for duplicates unless explicitly skipped
-      if (!options.skipDuplicateCheck) {
-        const messageExists = oldData.pages.some((page) =>
-          page.messages.some((msg) => msg.id === message.id),
-        );
-        if (messageExists) {
-          isDuplicate = true;
-          return oldData;
-        }
+    // Check for duplicates unless explicitly skipped
+    if (!options.skipDuplicateCheck) {
+      const messageExists = oldData.pages.some((page) =>
+        page.messages.some((msg) => msg.id === message.id),
+      );
+      if (messageExists) {
+        isDuplicate = true;
+        return oldData;
+      }
 
-        // Reconcile the optimistic placeholder in place when the realtime
-        // `message:new` echo of the user's own send arrives before POST
-        // `onSuccess`. The optimistic id (`optimistic-<ms>`) never equals the
-        // server uuid, so the id-only dedup above would otherwise treat the
-        // echo as a new message and prepend it beside the placeholder, so the
-        // flat selector renders the same send as two bubbles until a refetch
-        // or POST `onSuccess` closes the gap. Replacing the placeholder in
-        // place collapses the two ids into one rendered row at echo time.
-        for (let pi = 0; pi < oldData.pages.length; pi++) {
-          const page = oldData.pages[pi];
-          for (let mi = 0; mi < page.messages.length; mi++) {
-            if (isOptimisticTwin(page.messages[mi], message)) {
-              const newPages = [...oldData.pages];
-              const newMessages = [...page.messages];
-              newMessages[mi] = message;
-              newPages[pi] = { ...page, messages: newMessages };
-              added = true;
-              return { ...oldData, pages: newPages };
-            }
+      // Reconcile the optimistic placeholder in place when the realtime
+      // `message:new` echo of the user's own send arrives before POST
+      // `onSuccess`.
+      for (let pi = 0; pi < oldData.pages.length; pi++) {
+        const page = oldData.pages[pi];
+        for (let mi = 0; mi < page.messages.length; mi++) {
+          if (isOptimisticTwin(page.messages[mi], message)) {
+            const newPages = [...oldData.pages];
+            const newMessages = [...page.messages];
+            newMessages[mi] = message;
+            newPages[pi] = { ...page, messages: newMessages };
+            added = true;
+            return { ...oldData, pages: newPages };
           }
         }
       }
+    }
 
-      // Add the new message to the first page (most recent)
-      const newPages = [...oldData.pages];
-      if (newPages.length > 0) {
-        newPages[0] = {
-          ...newPages[0],
-          messages: [message, ...newPages[0].messages],
-        };
-        added = true;
-      }
-
-      return {
-        ...oldData,
-        pages: newPages,
+    // Add the new message to the first page (most recent)
+    const newPages = [...oldData.pages];
+    if (newPages.length > 0) {
+      newPages[0] = {
+        ...newPages[0],
+        messages: [message, ...newPages[0].messages],
       };
+      added = true;
+    }
+
+    return {
+      ...oldData,
+      pages: newPages,
+    };
+  };
+
+  queryClient.setQueryData(queryKey, updater);
+
+  // Also update any other matching queries whose key is not the primary queryKey
+  const primaryKeyString = JSON.stringify(queryKey);
+  queryClient.setQueriesData<InfiniteMessageData>(
+    {
+      predicate: (query) =>
+        query.queryKey[0] === "infinite-messages" &&
+        JSON.stringify(query.queryKey) !== primaryKeyString &&
+        query.queryKey.some(
+          (part) => typeof part === "string" && part === conversationId,
+        ),
     },
+    updater,
   );
 
   return { added, isDuplicate };
@@ -260,8 +268,26 @@ export function refetchConversationMessages(
   queryClient: QueryClient,
   conversationId: string,
 ): void {
+  queryClient.invalidateQueries({
+    queryKey: infiniteMessageKeys.list(conversationId),
+  });
+  queryClient.invalidateQueries({
+    predicate: (query) =>
+      query.queryKey[0] === "infinite-messages" &&
+      query.queryKey.some(
+        (part) => typeof part === "string" && part === conversationId,
+      ),
+  });
   queryClient.refetchQueries({
     queryKey: infiniteMessageKeys.list(conversationId),
+    type: "active",
+  });
+  queryClient.refetchQueries({
+    predicate: (query) =>
+      query.queryKey[0] === "infinite-messages" &&
+      query.queryKey.some(
+        (part) => typeof part === "string" && part === conversationId,
+      ),
     type: "active",
   });
 }

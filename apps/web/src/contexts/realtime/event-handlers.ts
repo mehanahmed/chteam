@@ -123,27 +123,29 @@ export function registerRealtimeEventHandlers({
     // members authorized to read the conversation.
     bindUserEvent<NewMessagePayload>("message:new", (data) => {
       const payload = data.payload;
-      addMessageToCache(qc, payload.conversationId, payload.message);
+      const conversationId =
+        payload.conversationId ||
+        (payload as any).contactId ||
+        (payload as any).message?.conversationId ||
+        (payload as any).message?.contactId;
+
+      if (conversationId && payload.message) {
+        addMessageToCache(qc, conversationId, payload.message);
+        refetchConversationMessages(qc, conversationId);
+      }
       // A merged customer's history is keyed by the chat the reader opened,
       // not by the conversation this arrived on, so the cache write above
       // cannot reach it.
       invalidateCustomerTimelines(qc);
       invalidateChatList(qc);
 
-      // Treat realtime as an update signal, not the source of truth. In
-      // particular, WhatsApp can replay several offline messages immediately
-      // after reconnecting while the active infinite-query cache is being
-      // remounted. The optimistic cache write above is instant when that cache
-      // exists; this active-only refetch guarantees the open thread reconciles
-      // with the committed PostgreSQL rows without requiring another click.
-      refetchConversationMessages(qc, payload.conversationId);
-
       const selectedId = useChatStore.getState().selectedConversationId;
       if (
-        selectedId === payload.conversationId &&
-        payload.message.senderType === "contact"
+        conversationId &&
+        selectedId === conversationId &&
+        payload.message?.senderType === "contact"
       ) {
-        markConversationAsRead(payload.conversationId).catch(() => {});
+        markConversationAsRead(conversationId).catch(() => {});
       }
     }),
     bindUserEvent<ChannelMessageNewPayload>("channel_message:new", (data) => {

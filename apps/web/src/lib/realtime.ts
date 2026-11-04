@@ -147,21 +147,34 @@ function dispatchPublication(context: ServerPublicationContext): void {
 
   let handlers: Set<UntypedHandler> | undefined;
   if (
-    currentCompanyId &&
-    context.channel === getCompanyChannelName(currentCompanyId)
+    (currentCompanyId &&
+      context.channel === getCompanyChannelName(currentCompanyId)) ||
+    context.channel.startsWith("company:")
   ) {
     handlers = companyHandlers.get(
       publication.type as CompanyRealtimeEventType,
     );
   } else if (
-    currentUserId &&
-    (context.channel === getUserChannelName(currentCompanyId || "", currentUserId) ||
-     context.channel.endsWith(`:${currentUserId}`))
+    (currentUserId &&
+      (context.channel ===
+        getUserChannelName(currentCompanyId || "", currentUserId) ||
+        context.channel.endsWith(`:${currentUserId}`))) ||
+    context.channel.startsWith("user:")
   ) {
     handlers = userHandlers.get(publication.type as UserRealtimeEventType);
   }
 
-  handlers?.forEach((handler) => handler(publication.data));
+  handlers?.forEach((handler) => {
+    try {
+      handler(publication.data);
+    } catch (err) {
+      console.error(
+        "[Realtime] Error executing handler for event:",
+        publication.type,
+        err,
+      );
+    }
+  });
 }
 
 /** Create the singleton client. Call connectRealtime after handlers are bound. */

@@ -80,6 +80,10 @@ export function useSendMessage() {
       queryClient.invalidateQueries({
         queryKey: infiniteMessageKeys.list(variables.contactId),
       });
+      // Invalidate chat list queries so sidebar preview updates immediately
+      queryClient.invalidateQueries({
+        queryKey: ["chats"],
+      });
     },
   });
 }
